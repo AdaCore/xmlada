@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2014, AdaCore                     --
+--                     Copyright (C) 2004-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -45,16 +45,6 @@ package Schema.Schema_Readers is
    --  An XML reader that parses an XML schema, and store the information in
    --  a grammar
 
-   procedure Parse_Grammar
-     (Handler  : access Schema.Readers.Validating_Reader'Class;
-      URI      : Sax.Symbols.Symbol;
-      Xsd_File : Sax.Symbols.Symbol;
-      Do_Create_NFA : Boolean);
-   --  Parse (if not done already) the specified [Xsd_File], and associate it
-   --  with the given namespace [URI].
-   --  [Handler] is used to convert [Xsd_File] to an absolute URI, and find
-   --  the grammar.
-
    overriding procedure Set_Feature
      (Parser : in out Schema_Reader; Name : String; Value : Boolean);
    overriding function Get_Feature
@@ -68,6 +58,17 @@ package Schema.Schema_Readers is
    --  result in a warning, rather than a fatal error.
    --  As a user, you are free to ignore these. XML/Ada will simply not provide
    --  validation for those elements.
+
+   procedure Parse_Grammar_If_Needed
+     (Handler  : not null access Schema.Readers.Validating_Reader'Class;
+      URI      : Sax.Symbols.Symbol;
+      Xsd_File : Sax.Symbols.Symbol;
+      Do_Create_NFA : Boolean);
+   --  See Schema.Readers.Parse_Grammar.
+   --  This procedure provides the default implementation, which will always
+   --  check whether the Xsd_File was already loaded in Handler.Get_Grammar,
+   --  and if not will parse it.
+   --  Do not call this procedure directly. Instead, call Parse_Grammar.
 
 private
    use Schema.Validators;

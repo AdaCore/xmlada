@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <!--  No targetNamespace so that we can validate files even if they
+         do not use namespaces -->
+
+   <xsd:simpleType name='positiveInteger'>
+      <xsd:restriction base="xsd:integer">
+         <xsd:minInclusive value="0"/>
+         <xsd:maxInclusive value="100"/>
+      </xsd:restriction>
+   </xsd:simpleType>
+   <xsd:element name='root' type='positiveInteger'/>
+</xsd:schema>

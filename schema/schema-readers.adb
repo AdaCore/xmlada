@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2003-2014, AdaCore                     --
+--                     Copyright (C) 2003-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -456,7 +456,7 @@ package body Schema.Readers is
         (Atts, H.XML_Instance_URI, H.No_Namespace_Schema_Location);
       Location_Index : constant Integer := Get_Index
         (Atts, H.XML_Instance_URI, H.Schema_Location);
-      NFA            : constant Schema_NFA_Access := Get_NFA (H.Grammar);
+      NFA            : Schema_NFA_Access;
 
       procedure Compute_Type_From_Attribute
         (Result_Index : out Type_Index;
@@ -655,7 +655,7 @@ package body Schema.Readers is
       Xsi_Descr   : Type_Descr_Access;
       Xsi_Index   : Type_Index;
 
-      Had_Matcher : constant Boolean := Is_Initialized (H.Matcher);
+      Had_Matcher : Boolean;
 
       Element_QName : constant Qualified_Name :=
         (NS    => Get_URI (Get_NS (Elem)),
@@ -685,6 +685,11 @@ package body Schema.Readers is
          Parse_Grammars
            (H, Get_Value (Atts, Location_Index), Do_Create_NFA => True);
       end if;
+
+      --  We now have a grammar set
+
+      Had_Matcher := Is_Initialized (H.Matcher);
+      NFA := Get_NFA (H.Grammar);
 
       --  If we have an inline schema, we must check that the target NS
       --  is not used yet
@@ -1182,5 +1187,19 @@ package body Schema.Readers is
    begin
       Free (Schema.Validators.Abstract_Validation_Reader (Reader));
    end Free;
+
+   -------------------
+   -- Parse_Grammar --
+   -------------------
+
+   procedure Parse_Grammar
+     (Handler  : not null access Validating_Reader;
+      URI      : Sax.Symbols.Symbol;
+      Xsd_File : Sax.Symbols.Symbol;
+      Do_Create_NFA : Boolean := True) is
+   begin
+      Schema.Schema_Readers.Parse_Grammar_If_Needed
+         (Handler, URI, Xsd_File, Do_Create_NFA);
+   end Parse_Grammar;
 
 end Schema.Readers;

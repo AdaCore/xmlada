@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2014, AdaCore                     --
+--                     Copyright (C) 2004-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -81,6 +81,25 @@ package Schema.Readers is
    --
    --  If a symbol table was set for this reader, the grammar must have been
    --  created with the same symbol table.
+
+   procedure Parse_Grammar
+     (Handler  : not null access Validating_Reader;
+      URI      : Sax.Symbols.Symbol;
+      Xsd_File : Sax.Symbols.Symbol;
+      Do_Create_NFA : Boolean := True);
+   --  Parse (if not done already) the specified [Xsd_File], and associate it
+   --  with the given namespace [URI].
+   --  [Handler] is used to convert [Xsd_File] to an absolute URI, and find
+   --  the grammar.
+   --  [Do_Create_NFA] should be true if the grammar needs to be initialized.
+   --
+   --  This procedure can be overridden in your own parsers if you have
+   --  preloaded multiple XSD files and simply want to reuse the resulting
+   --  grammars. This procedure should call Handler.Set_Grammar with the
+   --  appropriate grammar, or perhaps dispatch to the inherited
+   --  Parse_Grammar if the XSD file has not been preloaded yet. The
+   --  default implementation calls
+   --  Schema.Schema_Readers.Parse_Grammar_If_Needed.
 
    overriding procedure Set_Symbol_Table
      (Parser  : in out Validating_Reader;

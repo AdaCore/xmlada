@@ -343,6 +343,9 @@ validating a file.
   automatically parse the corresponding schema files, and use the result
   to validate the file.
 
+  See the section below on optimizing the parsing of the grammars, as a
+  way to avoid parsing the same grammar multiple times.
+
 Validating documents with SAX
 =============================
 
@@ -393,3 +396,127 @@ In particular, it does not currently support XPath, so any part of the
 schema that is related to XPath expressions (for instance `<xsd:key>`
 and `<xsd:unique>`) are not supported currently.
 
+Optimizing the parsing of grammars
+==================================
+
+It is often the case that a given :file:`.xsd` file will be reused multiple
+times to validate XML documents. In such case, you do not want to parse the
+file multiple times, but instead reuse an already existing `XML_Grammar`
+object. Of course, this is a tradeoff between memory used to keep the
+grammar in memory, and the time it would take to reparse the grammar.
+
+This is easily done when you have a single :file:`.xsd` file to reuse
+for all the XML files. Simply call `Set_Grammar` on the parser before
+you parse the file, as in::
+
+   declare
+      G : constant XML_Grammar := ...;  --  parsed earlier
+      R : Validating_Reader;
+      F : File_Input;
+   begin
+      R.Set_Grammar (G);
+      Open ("file.xml", F);
+      R.Parse (F);
+      Close (F);
+      ...;  --  Do something with the resulting tree
+   end;
+      
+The second use case is a bit more complex: you have several XSD files to
+parse, and the XML files will need either of these. If you are using
+namespaces, there is nothing special to do, and the same code as above
+applies: you can simply parse each of the XSD file into the same
+XML_Grammar, and then use that grammar to parse all the XML files,
+as in::
+
+   declare
+      G : XML_Grammar;
+      S : Schema_Reader;
+      F : File_Input;
+      R : Validating_Reader;
+   begin
+      Open ("grammar1.xsd", F);
+      S.Parse (F);
+      F.Close;
+
+      Open ("grammar2.xsd", F);
+      S.Parse (F);
+      F.Close;
+
+      G := S.Get_Grammar;
+
+      R.Set_Grammar (G);
+      Open ("file.xml", F);
+      R.Parse (F);
+      F.Close;
+   end;
+
+If however you are not using namespaces, you cannot use this technics, since
+the grammar from the various XSD files would end up mixed up, and validation
+will most likely fail. So instead you need to have one `XML_Grammar` per
+XSD file, and then set the grammar on the reader dynamically. A full
+example is given in the XML/Ada source distribution, in
+:file:`tests/schema/multiple_xsd`. Here is an overview.
+
+We first need to parse each of the XSD files into its own grammar::
+
+   declare
+      Symbols : Symbol_Table;
+      G1, G2 : XML_Grammar;
+      S      : Schema_Grammar;
+      F      : File_Input;
+   begin
+      --  Since we are going to reuse grammars, we need to ensure their
+      --  symbol tables (where internal strings are stored) across all
+      --  involved parsers).
+      Symbols := Allocate;
+      S.Set_Symbol_Table (Symbols);
+
+      --  Now we can parse each of the XSD file
+      Open ("algo1.xsd", F);
+      S.Parse (F);
+      F.Close;
+      G1 := S.Get_Grammar;
+
+      S.Set_Grammar (No_Grammar);  --  reset
+      Open ("algo2.xsd", F);
+      S.Parse (F);
+      F.Close;
+      G2 := S.Get_Grammar;
+   end;
+
+We then need to create a custom validating reader, which knows how to set
+the grammar based on its name. This is done by overriding one of the
+primitive operations of the parser::
+
+   declare
+      type My_Reader is new Validating_Reader with null record;
+      overriding procedure Parse_Grammar
+         (Self          : not null access Reader_With_Preloaded_XSD;
+          URI, Xsd_File : Sax.Symbols.Symbol;
+          Do_Create_NFA : Boolean := True) is
+      begin
+         if Xsd_File = "algo1.xsd" then
+            Self.Set_Grammar (G1);
+         elsif Xsd_File = "algo2.xsd" then
+            Self.Set_Grammar (G2);
+         end if;
+      end Parse_Grammar;
+
+      R : My_Reader;
+   begin
+      --  Also share the same symbol table
+      R.Set_Symbol_Table (Symbols);
+      R.Set_Feature (Schema_Validation_Feature, True);
+
+      Open ("test1.xml", F);
+      R.Parse (F);
+      F.Close;
+   end;
+
+Where for instance :file:`test1.xml` contains::
+
+   <?xml version="1.0" encoding="UTF-8"?>
+   <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="algo1.xsd">
+      <child>102</child>
+   </root>

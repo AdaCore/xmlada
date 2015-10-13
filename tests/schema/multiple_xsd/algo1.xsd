@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+   <!--  No targetNamespace so that we can validate files even if they
+         do not use namespaces -->
+
+   <xsd:element name='root'>
+      <xsd:complexType>
+         <xsd:complexContent>
+            <xsd:restriction base='xsd:anyType'>
+               <xsd:sequence>
+                  <xsd:element name='child' type='xsd:string'/>
+               </xsd:sequence>
+            </xsd:restriction>
+         </xsd:complexContent>
+      </xsd:complexType>
+   </xsd:element>
+</xsd:schema>

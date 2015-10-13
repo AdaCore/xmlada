@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2014, AdaCore                     --
+--                     Copyright (C) 2004-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -1688,12 +1688,12 @@ package body Schema.Schema_Readers is
       end if;
    end Free;
 
-   -------------------
-   -- Parse_Grammar --
-   -------------------
+   -----------------------------
+   -- Parse_Grammar_If_Needed --
+   -----------------------------
 
-   procedure Parse_Grammar
-     (Handler  : access Validating_Reader'Class;
+   procedure Parse_Grammar_If_Needed
+     (Handler  : not null access Validating_Reader'Class;
       URI      : Symbol;
       Xsd_File : Symbol;
       Do_Create_NFA : Boolean)
@@ -1824,7 +1824,7 @@ package body Schema.Schema_Readers is
          GNAT.Task_Lock.Unlock;
          Close (File);
          raise;
-   end Parse_Grammar;
+   end Parse_Grammar_If_Needed;
 
    --------------------
    -- Internal_Parse --

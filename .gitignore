@@ -32,6 +32,7 @@ tests/schema/xmltests
 tests/schema/xmlschema2006-11-06
 tests/schema/xmltests.2002-01-16
 tests/schema/test_date_time
+tests/schema/multiple_xsd/validate
 test/*/*.diff
 test/*/*.out
 test/*/*.tmp_out

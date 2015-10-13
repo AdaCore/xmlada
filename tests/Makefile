@@ -5,7 +5,9 @@ TESTS= test_unicode \
 		 test_schema \
 		 test_date_time \
 		 test_numbers \
-		 test_adacore_schema
+		 test_adacore_schema \
+		 test_multiple_xsd
+
 
 # Force running all the tests
 .PHONY: ${TESTS}
@@ -66,3 +68,10 @@ generic_test_%:
 
 generic_not_run_%:
 	@echo "$(EXEC) skipped"
+
+test_multiple_xsd:
+	@echo "multiple xsd"
+	@cd schema/multiple_xsd; \
+		gprbuild -q -Pdefault.gpr; \
+		./validate > $(RESULTS)/multiple_xsd.out; \
+		cat $(RESULTS)/multiple_xsd.out
