@@ -74,5 +74,5 @@ test_multiple_xsd:
 	@cd schema/multiple_xsd; \
 		gprbuild -q -Pdefault.gpr; \
 		./validate > $(RESULTS)/multiple_xsd.out; \
-		cat $(RESULTS)/multiple_xsd.out $(RESULTS)/multiple_xsd.diff; \
+		cp $(RESULTS)/multiple_xsd.out $(RESULTS)/multiple_xsd.diff; \
 		cat $(RESULTS)/multiple_xsd.diff
