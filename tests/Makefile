@@ -56,6 +56,7 @@ generic_test_%: DIR=$(dir $(EXEC))
 generic_test_%:
 	@echo "$(EXEC)"
 	@cd $(DIR); \
+		mkdir -p obj; \
 		$(EXECDIR)$(BASE) $(ARGS) > obj/$(BASE).tmp_out; \
 		tr -d '\r' < obj/$(BASE).tmp_out > $(RESULTS)/$(BASE).out ; \
 		diff $(BASE).expected $(RESULTS)/$(BASE).out > $(RESULTS)/$(BASE).diff; \
