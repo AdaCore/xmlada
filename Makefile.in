@@ -11,7 +11,7 @@ prefix=@prefix@
 
 # Set a default value (ignored if set in the environment)
 PROCESSORS?=0
-GPRBUILD=@gprbuild@ -j${PROCESSORS}
+GPRBUILD=@gprbuild@ -j${PROCESSORS} -m
 GPRINSTALL=@gprinstall@
 TARGET=@target@
 HOST=@host@
@@ -49,14 +49,14 @@ install: install-clean install-static
 endif
 
 static:
-	${GPRBUILD} -m -p -XLIBRARY_TYPE=static ${GPROPTS} xmlada.gpr
+	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} xmlada.gpr
 
 shared relocatable:
-	${GPRBUILD} -m -p -XLIBRARY_TYPE=relocatable ${GPROPTS} xmlada.gpr
+	${GPRBUILD} -p -XLIBRARY_TYPE=relocatable ${GPROPTS} xmlada.gpr
 
 # Rebuild the tests (and not the XML/Ada code itself)
 test: force
-	${GPRBUILD} -m -p -XLIBRARY_TYPE=static ${GPROPTS} \
+	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} \
 		-XTESTS_ACTIVATED=Only xmlada.gpr
 
 # Run the tests. This requires an install of XML/Ada first
