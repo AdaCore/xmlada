@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2006-2014, AdaCore                     --
+--                     Copyright (C) 2006-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -257,5 +257,14 @@ package body Schema.Dom_Readers is
    begin
       Read.Warnings_As_Error := Warnings_As_Error;
    end Set_Warnings_As_Errors;
+
+   ------------------
+   -- Current_Node --
+   ------------------
+
+   function Current_Node (Read : Tree_Reader) return Node is
+   begin
+      return Read.Current_Node;
+   end Current_Node;
 
 end Schema.Dom_Readers;

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2006-2014, AdaCore                     --
+--                     Copyright (C) 2006-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -45,6 +45,12 @@ package Schema.Dom_Readers is
    --  You should call Free when you are done with this parser.
 
    function Get_Tree (Read : Tree_Reader) return Document;
+   --  The documented created on the fly by the reader
+
+   function Current_Node (Read : Tree_Reader) return Node;
+   --  The last node created by Start_Element. This function is useful when
+   --  you want to override Start_Element or Characters to do your own
+   --  specific changes.
 
    overriding procedure Free (Read : in out Tree_Reader);
    --  Free the memory associated with the reader. However, this does not
