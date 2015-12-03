@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2005-2014, AdaCore                     --
+--                     Copyright (C) 2005-2015, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -603,25 +603,8 @@ package body Schema.Decimal is
                   return False;
 
                when Standard_Float =>
-                  if F1.Mantiss < 0.0 then
-                     if F2.Mantiss >= 0.0 then
-                        return True;
-                     else
-                        --  Same sign
-                        return F1.Exp > F2.Exp
-                         or else
-                            (F1.Exp = F2.Exp and F1.Mantiss <= F2.Mantiss);
-                     end if;
-
-                  else
-                     if F2.Mantiss < 0.0 then
-                        return False;
-                     else
-                        return F1.Exp < F2.Exp
-                         or else
-                            (F1.Exp = F2.Exp and F1.Mantiss <= F2.Mantiss);
-                     end if;
-                  end if;
+                  return F1.Mantiss * 10.0 ** F1.Exp
+                     <=  F2.Mantiss * 10.0 ** F2.Exp;
             end case;
       end case;
    end "<=";
@@ -672,23 +655,8 @@ package body Schema.Decimal is
                   return False;
 
                when Standard_Float =>
-                  if F1.Mantiss < 0.0 then
-                     if F2.Mantiss >= 0.0 then
-                        return True;
-                     else
-                        --  Same sign
-                        return F1.Exp > F2.Exp
-                         or else (F1.Exp = F2.Exp and F1.Mantiss < F2.Mantiss);
-                     end if;
-
-                  else
-                     if F2.Mantiss < 0.0 then
-                        return False;
-                     else
-                        return F1.Exp < F2.Exp
-                         or else (F1.Exp = F2.Exp and F1.Mantiss < F2.Mantiss);
-                     end if;
-                  end if;
+                  return F1.Mantiss * 10.0 ** F1.Exp
+                     <  F2.Mantiss * 10.0 ** F2.Exp;
             end case;
       end case;
    end "<";
