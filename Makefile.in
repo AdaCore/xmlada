@@ -54,6 +54,9 @@ static:
 shared relocatable:
 	${GPRBUILD} -p -XLIBRARY_TYPE=relocatable ${GPROPTS} xmlada.gpr
 
+static-pic:
+	${GPRBUILD} -p -XLIBRARY_TYPE=static-pic ${GPROPTS} xmlada.gpr
+
 # Rebuild the tests (and not the XML/Ada code itself)
 test: force
 	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} \

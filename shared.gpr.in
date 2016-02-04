@@ -25,7 +25,7 @@ abstract project Shared is
 
    Version := "@PACKAGE_VERSION@";
 
-   type Library_Type_Type is ("relocatable", "static");
+   type Library_Type_Type is ("relocatable", "static", "static-pic");
    Library_Type : Library_Type_Type := external ("LIBRARY_TYPE", "@DEFAULT_LIBRARY_TYPE@");
 
    for Source_Dirs use ();
