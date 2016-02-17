@@ -41,8 +41,8 @@ IPREFIX=${prefix}/${TARGET}
 endif
 
 ifeq (${BUILDS_SHARED},yes)
-all: static relocatable
-install: install-clean install-static install-relocatable
+all: static relocatable static-pic
+install: install-clean install-static install-relocatable install-static-pic
 else
 all: static
 install: install-clean install-static
@@ -105,11 +105,18 @@ install-shared install-relocatable:
 		--build-var=XMLADA_BUILD --build-name=relocatable \
 		--install-name=xmlada xmlada.gpr
 
+install-static-pic:
+	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static-pic ${GPROPTS} \
+		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
+		--build-var=XMLADA_BUILD --build-name=static-pic \
+		--install-name=xmlada xmlada.gpr
+
+
 clean_%: force
 	-gprclean -XLIBRARY_TYPE=$* -q xmlada.gpr
 	-gprclean -XLIBRARY_TYPE=$* -q -XTESTS_ACTIVATED=Yes xmlada.gpr
 
-clean: clean_relocatable clean_static
+clean: clean_relocatable clean_static clean_static-pic
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
