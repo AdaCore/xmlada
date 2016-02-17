@@ -143,6 +143,8 @@ procedure Schematest is
    end record;
 
    Filter : array (Test_Kind) of Boolean := (others => True);
+   Result_Filter : array (Result_Kind) of Boolean := (others => True);
+   Filter_Group_Name : Ada.Strings.Unbounded.Unbounded_String;
 
    function Image (Num : Integer; Width : Natural) return String;
    --  Return the image of [Num], on [Width] characters.
@@ -387,6 +389,10 @@ procedure Schematest is
             Result.Kind := XSD_Should_Pass;
          end if;
 
+         if not Filter (Result.Kind) then
+            return;
+         end if;
+
          begin
             Set_Symbol_Table (XSD_Reader, Symbols);  --  optional (efficiency)
             Set_Grammar (XSD_Reader, Grammar);
@@ -525,6 +531,10 @@ procedure Schematest is
          Result.Kind := XML_Should_Fail;
       end if;
 
+      if not Filter (Result.Kind) then
+         return;
+      end if;
+
       Set_Symbol_Table (Inst_Reader, Symbols);  --  optional, for efficiency
       Use_Basename_In_Error_Messages (Inst_Reader, True);
       Set_Grammar (Inst_Reader, Grammar);
@@ -658,10 +668,16 @@ procedure Schematest is
       Result         : Group_Result;
       Failed_Grammar : Boolean := False;
    begin
-      Reset (Grammar);  --  Optional optimization, keep the metaschema
       Result.Name := To_Unbounded_String (Testset & " / " & Name);
       Result.Counts := (others => (others => 0));
 
+      if Filter_Group_Name /= ""
+         and then Filter_Group_Name /= Result.Name
+      then
+         return;
+      end if;
+
+      Reset (Grammar);  --  Optional optimization, keep the meta-schema
       Set_XSD_Version (Grammar, XSD_Version);
 
       if Find (Groups, To_String (Result.Name)) /= Group_Hash.No_Element then
@@ -795,8 +811,9 @@ procedure Schematest is
       All_Passed : Integer := 0;
       All_Failed : Integer := 0;
    begin
+      --  If one of the tests should be printed, display whole group
       while Has_Element (Cursor) loop
-         if Filter (Test_Result_Lists.Element (Cursor).Kind) then
+         if Result_Filter (Test_Result_Lists.Element (Cursor).Result) then
             Show_Group := True;
             exit;
          end if;
@@ -855,7 +872,7 @@ procedure Schematest is
          while Has_Element (Cursor) loop
             Test := Test_Result_Lists.Element (Cursor);
 
-            if Filter (Test.Kind) then
+            if Result_Filter (Test.Result) then
                case Test.Result is
                   when Passed          => Put ("  OK ");
                   when Failed          => Put ("  KO ");
@@ -1059,18 +1076,18 @@ begin
    end;
 
    loop
-      case Getopt ("v d a h f -filter: -descr -group -hide: -xsd10"
+      case Getopt ("v d a h f -run: -descr -show: -xsd10 -group:"
                    & " -cvs") is
          when 'h'    =>
             Put_Line ("-v   Verbose mode");
             Put_Line ("-d   Debug mode");
             Put_Line ("-f   Show XSD and XML file names in results");
             Put_Line ("-a   Also run ambiguous tests under discussion");
-            Put_Line ("--filter [NA,SP,SF,XP,XF] only show those tests.");
+            Put_Line ("--run [NA,SP,SF,XP,XF] only run those tests.");
             Put_Line ("     Separate categories with commas.");
             Put_Line ("     This will also only matching groups.");
-            Put_Line ("--hide [NA,SP,SF,XP,XF] only show those tests.");
-            Put_Line ("     Opposite of --filter, cannot be combined");
+            Put_Line ("--show [Passed,Failed,NI,IE] only show those results");
+            Put_Line ("--group name     Only run tests from this group");
             Put_Line ("--descr Show group descriptions");
             Put_Line ("--cvs   Check the CVS checkout of W3C (see README file)"
                       & " for more up-to-date data");
@@ -1088,10 +1105,11 @@ begin
             elsif Full_Switch = "-xsd10" then
                XSD_Version := XSD_1_0;
 
-            elsif Full_Switch = "-filter"
-              or else Full_Switch = "-hide"
-            then
-               Setting := Full_Switch = "-filter";
+            elsif Full_Switch = "-group" then
+               Filter_Group_Name := To_Unbounded_String (Parameter);
+
+            elsif Full_Switch = "-run" then
+               Setting := Full_Switch = "-run";
 
                Filter := (others => not Setting);
                declare
@@ -1112,6 +1130,35 @@ begin
                            Filter (XML_Should_Pass) := Setting;
                         elsif F (Prev .. Pos - 1) = "NA" then
                            Filter (Not_Accepted) := Setting;
+                        else
+                           Put_Line ("Invalid filter: " & F (Prev .. Pos - 1));
+                           return;
+                        end if;
+
+                        Prev := Pos + 1;
+                        exit when Pos > F'Last;
+                     end if;
+                  end loop;
+               end;
+
+            elsif Full_Switch = "-show" then
+               Result_Filter := (others => False);
+               declare
+                  F : constant String := Parameter;
+                  Prev : Integer := F'First;
+                  Pos  : Integer := F'First - 1;
+               begin
+                  loop
+                     Pos := Pos + 1;
+                     if Pos > F'Last or else F (Pos) = ',' then
+                        if F (Prev .. Pos - 1) = "Passed" then
+                           Result_Filter (Passed) := True;
+                        elsif F (Prev .. Pos - 1) = "Failed" then
+                           Result_Filter (Failed) := True;
+                        elsif F (Prev .. Pos - 1) = "NI" then
+                           Result_Filter (Not_Implemented) := True;
+                        elsif F (Prev .. Pos - 1) = "IE" then
+                           Result_Filter (Internal_Error) := True;
                         else
                            Put_Line ("Invalid filter: " & F (Prev .. Pos - 1));
                            return;
