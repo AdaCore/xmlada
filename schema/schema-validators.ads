@@ -698,7 +698,7 @@ package Schema.Validators is
      (NFA       : access Schema_NFA'Class;
       Typ       : access Type_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax.Readers.Sax_Attribute_List;
+      Atts      : access Sax.Readers.Sax_Attribute_List;
       Is_Nil    : in out Integer);
    --  Check whether this list of attributes is valid for elements associated
    --  with this validator. By default, this simply check whether the list of

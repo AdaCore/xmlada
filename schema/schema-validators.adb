@@ -66,7 +66,7 @@ package body Schema.Validators is
    procedure Validate_Attribute
      (Attr      : Attribute_Descr;
       Reader    : access Abstract_Validation_Reader'Class;
-      Atts      : in out Sax_Attribute_List;
+      Atts      : access Sax_Attribute_List;
       Index     : Natural);
    --  Validate the value of a single attribute
 
@@ -701,10 +701,10 @@ package body Schema.Validators is
      (NFA    : access Schema_NFA'Class;
       Typ    : access Type_Descr;
       Reader : access Abstract_Validation_Reader'Class;
-      Atts   : in out Sax.Readers.Sax_Attribute_List;
+      Atts   : access Sax.Readers.Sax_Attribute_List;
       Is_Nil : in out Integer)
    is
-      Length      : constant Natural := Get_Length (Atts);
+      Length      : constant Natural := Get_Length (Atts.all);
       Valid_Attrs : Attribute_Validator_Array :=
                       To_Attribute_Array (NFA, Typ.Attributes);
 
@@ -737,7 +737,7 @@ package body Schema.Validators is
          Seen_ID : Boolean := False;
       begin
          for A in 1 .. Length loop
-            if Get_Type (Atts, A) = Sax.Attributes.Id then
+            if Get_Type (Atts.all, A) = Sax.Attributes.Id then
                if Seen_ID then
                   Validation_Error
                     (Reader,
@@ -783,7 +783,7 @@ package body Schema.Validators is
                   when Optional | Default =>
                      if Attr.Default /= No_Symbol then
                         Append
-                           (List       => Atts,
+                           (List       => Atts.all,
                             Local_Name => Attr.Name.Local,
                             Prefix     => No_Symbol,
                             URI        => Attr.Name.NS,
@@ -798,19 +798,19 @@ package body Schema.Validators is
                case Attr.Form is
                   when Qualified =>
                      if Attr.Is_Local
-                       and then Get_Prefix (Atts, Found) = Empty_String
+                       and then Get_Prefix (Atts.all, Found) = Empty_String
                      then
                         Validation_Error
-                          (Reader, "Attribute " & Get_Qname (Atts, Found)
+                          (Reader, "Attribute " & Get_Qname (Atts.all, Found)
                            & " must have a namespace");
                      end if;
 
                   when Unqualified =>
                      if Attr.Is_Local
-                       and then Get_Prefix (Atts, Found) /= Empty_String
+                       and then Get_Prefix (Atts.all, Found) /= Empty_String
                      then
                         Validation_Error
-                          (Reader, "Attribute " & Get_Qname (Atts, Found)
+                          (Reader, "Attribute " & Get_Qname (Atts.all, Found)
                            & " must not have a namespace");
                      end if;
                end case;
@@ -845,17 +845,18 @@ package body Schema.Validators is
       begin
          for A in 1 .. Length loop
             if not Seen (A).Seen
-              and then Get_Name (Atts, A).Local = Attr.Name.Local
+              and then Get_Name (Atts.all, A).Local = Attr.Name.Local
             then
-               Matches := (Is_Local and Get_Prefix (Atts, A) = Empty_String)
-                 or else Get_Name (Atts, A).NS = Attr.Name.NS;
+               Matches :=
+                  (Is_Local and Get_Prefix (Atts.all, A) = Empty_String)
+                   or else Get_Name (Atts.all, A).NS = Attr.Name.NS;
 
                if Matches then
                   if Debug then
                      Debug_Output ("Found attribute: "
-                                   & To_QName (Get_Name (Atts, A))
+                                   & To_QName (Get_Name (Atts.all, A))
                                    & " prefix="
-                                   & Get (Get_Prefix (Atts, A)).all
+                                   & Get (Get_Prefix (Atts.all, A)).all
                                    & " at index" & A'Img
                                    & " Is_Local=" & Is_Local'Img
                                    & " Form=" & Attr.Form'Img);
@@ -871,16 +872,16 @@ package body Schema.Validators is
       --  All the xsi:* attributes should be valid, whatever the schema
 
       for S in Seen'Range loop
-         if Get_Name (Atts, S).NS = Reader.XML_Instance_URI then
-            if Get_Name (Atts, S).Local = Reader.Nil then
+         if Get_Name (Atts.all, S).NS = Reader.XML_Instance_URI then
+            if Get_Name (Atts.all, S).Local = Reader.Nil then
                Is_Nil := S;
                Seen (S).Seen := True;
 
                --  Following attributes are always valid
                --  See "Element Locally Valid (Complex Type)" 3.4.4.2
-            elsif Get_Name (Atts, S).Local = Reader.Typ
-              or else Get_Name (Atts, S).Local = Reader.Schema_Location
-              or else Get_Name (Atts, S).Local =
+            elsif Get_Name (Atts.all, S).Local = Reader.Typ
+              or else Get_Name (Atts.all, S).Local = Reader.Schema_Location
+              or else Get_Name (Atts.all, S).Local =
                         Reader.No_Namespace_Schema_Location
             then
                Seen (S).Seen := True;
@@ -898,21 +899,21 @@ package body Schema.Validators is
          for S in Seen'Range loop
             if not Seen (S).Seen then
                Seen (S).Seen := Match_Any
-                 (Typ.Attributes.Any, Get_Name (Atts, S));
+                 (Typ.Attributes.Any, Get_Name (Atts.all, S));
 
                if not Seen (S).Seen then
                   if Seen (S).Prohibited then
                      Validation_Error
-                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                       (Reader, "Attribute """ & Get_Qname (Atts.all, S)
                         & """ is prohibited in this context "
                           & To_QName (Typ.Name));
                   elsif Typ.Attributes.Any = No_Any_Descr then
                      Validation_Error
-                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                       (Reader, "Attribute """ & Get_Qname (Atts.all, S)
                         & """ invalid for type " & To_QName (Typ.Name));
                   else
                      Validation_Error
-                       (Reader, "Attribute """ & Get_Qname (Atts, S)
+                       (Reader, "Attribute """ & Get_Qname (Atts.all, S)
                         & """ does not match attribute wildcard");
                   end if;
                end if;
@@ -928,16 +929,16 @@ package body Schema.Validators is
                   when Process_Lax =>
                      TRef := Reference_HTables.Get
                        (NFA.References.all,
-                        (Get_Name (Atts, S), Ref_Attribute));
+                        (Get_Name (Atts.all, S), Ref_Attribute));
 
                   when Process_Strict =>
                      TRef := Reference_HTables.Get
                        (NFA.References.all,
-                        (Get_Name (Atts, S), Ref_Attribute));
+                        (Get_Name (Atts.all, S), Ref_Attribute));
                      if TRef = No_Global_Reference then
                         Validation_Error
                           (Reader, "No definition found for """
-                           & Get_Qname (Atts, S) & """");
+                           & Get_Qname (Atts.all, S) & """");
                      end if;
                end case;
 
@@ -991,10 +992,10 @@ package body Schema.Validators is
    procedure Validate_Attribute
      (Attr   : Attribute_Descr;
       Reader : access Abstract_Validation_Reader'Class;
-      Atts   : in out Sax_Attribute_List;
+      Atts   : access Sax_Attribute_List;
       Index  : Natural)
    is
-      Value    : Symbol := Get_Value (Atts, Index);
+      Value    : Symbol := Get_Value (Atts.all, Index);
       Val      : Cst_Byte_Sequence_Access;
       Is_Equal : Boolean;
       Descr    : Simple_Type_Descr;
@@ -1014,11 +1015,11 @@ package body Schema.Validators is
            (Parser => Reader,
             Simple => Attr.Simple_Type,
             Fixed  => Value,
-            Loc    => Get_Location (Atts, Index));
-         Set_Value (Atts, Index, Value);
+            Loc    => Get_Location (Atts.all, Index));
+         Set_Value (Atts.all, Index, Value);
 
          if Descr.Kind = Primitive_ID then
-            Set_Type (Atts, Index, Sax.Attributes.Id);
+            Set_Type (Atts.all, Index, Sax.Attributes.Id);
          end if;
       end if;
 
@@ -1046,7 +1047,7 @@ package body Schema.Validators is
               (Reader, "value must be """
                & To_Graphic_String (Get (Attr.Fixed).all)
                & """ (found """ & To_Graphic_String (Val.all) & """)",
-               Get_Location (Atts, Index));
+               Get_Location (Atts.all, Index));
          end if;
       end if;
    end Validate_Attribute;

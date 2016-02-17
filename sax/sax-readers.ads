@@ -725,7 +725,7 @@ package Sax.Readers is
    type Start_Element_Hook is access procedure
      (Handler : access Sax_Reader'Class;
       Element : Element_Access;
-      Atts    : in out Sax_Attribute_List);
+      Atts    : access Sax_Attribute_List);
    --  This hook should take the opportunity of normalizing attribute values
    --  if necessary (basic normalization is already done by the SAX parser,
    --  but based on information extracted from schemas, further normalization
@@ -1059,7 +1059,7 @@ private
       Buffer_Length : Natural := 0;
       Buffer        : Unicode.CES.Byte_Sequence_Access;
 
-      Attributes    : Sax_Attribute_List;
+      Attributes    : aliased Sax_Attribute_List;
       --  List of attributes for the current element. This array is to limit
       --  the number of memory allocations, by reusing it for each element.
 

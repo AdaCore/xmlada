@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2014, AdaCore                     --
+--                     Copyright (C) 2001-2016, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -4984,25 +4984,9 @@ package body Sax.Readers is
          Parser.Current_Node.NS := NS;
 
          if Parser.Hooks.Start_Element /= null then
-            begin
-               Parser.Hooks.Start_Element
-                 (Parser'Unchecked_Access, Parser.Current_Node,
-                  Parser.Attributes);
-            exception
-               when others =>
-                  --  The above call might be dangerous depending on the
-                  --  compiler optimizations: Parser.Attributes is passed
-                  --  as "in out", and might be modified by the callee (for
-                  --  instance the validation does that). But in case of
-                  --  exceptions, Parser.Attributes might not be updated yes,
-                  --  and still point to memory that has been freed by Append.
-                  --
-                  --  To prevent this, we current prefer a memory leak in
-                  --  such a case, and we just lose the list of attributes.
-
-                  Parser.Attributes.List := null;
-                  raise;
-            end;
+            Parser.Hooks.Start_Element
+              (Parser'Unchecked_Access, Parser.Current_Node,
+               Parser.Attributes'Access);
          end if;
 
          --  This does not take into account the use of the namespace by the

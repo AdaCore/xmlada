@@ -62,7 +62,7 @@ package body Schema.Readers is
    procedure Hook_Start_Element
      (Handler : access Sax_Reader'Class;
       Elem    : Element_Access;
-      Atts    : in out Sax_Attribute_List);
+      Atts    : access Sax_Attribute_List);
    procedure Hook_End_Element
      (Handler : access Sax_Reader'Class;
       Elem    : Element_Access);
@@ -448,14 +448,14 @@ package body Schema.Readers is
    procedure Hook_Start_Element
      (Handler : access Sax_Reader'Class;
       Elem    : Element_Access;
-      Atts    : in out Sax_Attribute_List)
+      Atts    : access Sax_Attribute_List)
    is
       H : constant Validating_Reader_Access :=
         Validating_Reader_Access (Handler);
       No_Index       : constant Integer := Get_Index
-        (Atts, H.XML_Instance_URI, H.No_Namespace_Schema_Location);
+        (Atts.all, H.XML_Instance_URI, H.No_Namespace_Schema_Location);
       Location_Index : constant Integer := Get_Index
-        (Atts, H.XML_Instance_URI, H.Schema_Location);
+        (Atts.all, H.XML_Instance_URI, H.Schema_Location);
       NFA            : Schema_NFA_Access;
 
       procedure Compute_Type_From_Attribute
@@ -597,7 +597,7 @@ package body Schema.Readers is
          Result       : out Type_Descr_Access)
       is
          Xsi_Type_Index     : constant Integer := Get_Index
-           (Atts, H.XML_Instance_URI, H.Typ);
+           (Atts.all, H.XML_Instance_URI, H.Typ);
          TRef : Global_Reference;
       begin
          if Xsi_Type_Index = -1 then
@@ -607,7 +607,7 @@ package body Schema.Readers is
             declare
                Qname : constant Byte_Sequence :=
                  Ada.Strings.Fixed.Trim
-                   (Get (Get_Value (Atts, Xsi_Type_Index)).all,
+                   (Get (Get_Value (Atts.all, Xsi_Type_Index)).all,
                     Ada.Strings.Both);
                Separator : constant Integer := Split_Qname (Qname);
                Prefix    : Symbol;
@@ -677,13 +677,13 @@ package body Schema.Readers is
          Parse_Grammar
            (H,
             URI      => Empty_String,
-            Xsd_File => Get_Value (Atts, No_Index),
+            Xsd_File => Get_Value (Atts.all, No_Index),
             Do_Create_NFA => True);
       end if;
 
       if Location_Index /= -1 then
          Parse_Grammars
-           (H, Get_Value (Atts, Location_Index), Do_Create_NFA => True);
+           (H, Get_Value (Atts.all, Location_Index), Do_Create_NFA => True);
       end if;
 
       --  We now have a grammar set
@@ -915,7 +915,7 @@ package body Schema.Readers is
                end if;
 
                Nil_Index :=
-                 Get_Index (Atts, H.XML_Instance_URI, H.Nil);
+                 Get_Index (Atts.all, H.XML_Instance_URI, H.Nil);
             end if;
 
             Next (H.Matcher, Iter);
@@ -932,7 +932,7 @@ package body Schema.Readers is
                if not Nillable then
                   Validation_Error (H, "Element cannot be nil");
                end if;
-               H.Is_Nil := Get_Value_As_Boolean (Atts, Nil_Index);
+               H.Is_Nil := Get_Value_As_Boolean (Atts.all, Nil_Index);
             else
                H.Is_Nil := False;
             end if;

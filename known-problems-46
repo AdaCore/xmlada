@@ -2,7 +2,7 @@
 Known problems in XML/Ada version 4.6.0
 =======================================
 
-Copyright (C) 2014-2015, AdaCore
+Copyright (C) 2014-2016, AdaCore
 
 The following is a listing of known problems in release 4.5.0. Except where
 specifically noted, all these problems have been corrected in the development
@@ -17,5 +17,14 @@ KP-46-OC02-009 Schema: validation of float facets
               work correctly. Comparison of numbers had a wrong algorithm
 
   Status:     Fixed in XML/Ada 17.0 on 2015-12-02
+
+  Workaround: None.
+
+KP-46-L328-026 Schema: memory leaks with invalid documents
+
+  Problem:    It is possible that validating an invalid XML document
+              results in memory leaks.
+
+  Status:     Fixed in XML/Ada 17.0 on 2016-02-17
 
   Workaround: None.
