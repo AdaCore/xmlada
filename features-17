@@ -2,7 +2,7 @@
 XML/Ada NEW FEATURES LIST
 =========================
 
-Copyright (C) 2001-2015, AdaCore
+Copyright (C) 2001-2016, AdaCore
 
 This file contains a list of new features introduced in XML/Ada.
 A full description of all XML/Ada features can be found in the XML/Ada
@@ -15,7 +15,7 @@ of the feature.
 New features in version 17.0
 ----------------------------
 
-NF-170-OB19-014 new function Schema.Dom_Treader.Current_Node (2015-11-19)
+NF-17-OB19-014 new function Schema.Dom_Treader.Current_Node (2015-11-19)
 
    This function makes it easier to override primitives like Start_Element
    to add custom attributes to elements
