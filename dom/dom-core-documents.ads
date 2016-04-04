@@ -119,7 +119,8 @@ package DOM.Core.Documents is
    --  Returns a NodeList of all the Elements with a given tag name in the
    --  order in which they would be encountered in a preorder traversal
    --  of the Document tree.
-   --  The special case "*" matches all tags
+   --  The special case "*" matches all tags.
+   --  The returned list must be freed with DOM.Core.Free
 
    function Get_Elements_By_Tag_Name_NS
      (Doc : Document;
@@ -127,6 +128,7 @@ package DOM.Core.Documents is
       Local_Name : DOM_String := "*") return Node_List;
    --  Returns a NodeList of all the matching Elements.
    --  "*" matches all namespaces or all local names
+   --  The returned list must be freed with DOM.Core.Free
 
    function Get_Element_By_Id
      (Doc : Document; Element_Id : DOM_String) return Node;
