@@ -2,5 +2,5 @@
 host = git.adacore.com
 port = 29418
 project = xmlada
-defaultbranch = master
+defaultbranch = gpl-2016
 defaultremote = origin
