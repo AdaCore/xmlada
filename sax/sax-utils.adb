@@ -38,24 +38,24 @@ package body Sax.Utils is
      (Digit_Zero .. Digit_Nine => True,
       Latin_Capital_Letter_A .. Latin_Capital_Letter_Z => True,
       Latin_Small_Letter_A .. Latin_Small_Letter_Z => True,
-      Opening_Parenthesis | Closing_Parenthesis => True,
+      Left_Parenthesis | Right_Parenthesis => True,
       Percent_Sign       => True,
       Plus_Sign          => True,
       Comma              => True,
       Hyphen_Minus       => True,
-      Dot                => True,
+      Full_Stop          => True,
       Colon              => True,
       Equals_Sign        => True,
       Commercial_At      => True,
       Semicolon          => True,
       Dollar_Sign        => True,
-      Spacing_Underscore => True,
+      Low_Line => True,
       Exclamation_Mark   => True,
-      Star               => True,
+      Asterisk           => True,
       Apostrophe         => True,
       Question_Mark      => True,
-      Slash              => True,
-      Pound_Sign         => True,
+      Solidus            => True,
+      Number_Sign        => True,
       Tilde              => True,
 --        16#A0#    .. 16#D7FF#  => True,  --  ucschars from RFC 3987
 --        16#F900#  .. 16#FDCF#  => True,
@@ -141,7 +141,7 @@ package body Sax.Utils is
    --  initial character in an XML name.
    --  Automatically generated with:
    --      Char = Colon
-   --      or else Char = Spacing_Underscore
+   --      or else Char = Low_Line
    --      or else Char in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z
    --      or else Char in Latin_Small_Letter_A .. Latin_Small_Letter_Z
    --      or else Char in 16#C0# .. 16#D6#
@@ -178,7 +178,7 @@ package body Sax.Utils is
    --  for XML names.
    --  Automatically generated with:
    --      Char = Hyphen_Minus
-   --      or else Char = Period
+   --      or else Char = Full_Stop
    --      or else (Char in Digit_Zero .. Digit_Nine)
    --      or else Char = 16#B7#
    --      or else Valid_Name_Startchar (Char);
@@ -252,9 +252,9 @@ package body Sax.Utils is
       case Version is
          when XML_1_0_Third_Edition
             | XML_1_0_Fourth_Edition =>
-            return Char = Period
+            return Char = Full_Stop
               or else Char = Hyphen_Minus
-              or else Char = Spacing_Underscore
+              or else Char = Low_Line
               or else Char = Colon
               or else Is_Digit (Char)
               or else Is_Letter (Char)
@@ -294,7 +294,7 @@ package body Sax.Utils is
          when XML_1_0_Third_Edition
             | XML_1_0_Fourth_Edition
             =>
-            return Char = Spacing_Underscore
+            return Char = Low_Line
               or else Is_Letter (Char);
 
          when XML_1_0_Fifth_Edition
@@ -357,9 +357,9 @@ package body Sax.Utils is
       case Version is
          when XML_1_0_Third_Edition
             | XML_1_0_Fourth_Edition =>
-            return Char = Period
+            return Char = Full_Stop
               or else Char = Hyphen_Minus
-              or else Char = Spacing_Underscore
+              or else Char = Low_Line
               or else Is_Digit (Char)
               or else Is_Letter (Char)
               or else Is_Combining_Char (Char)
@@ -502,7 +502,7 @@ package body Sax.Utils is
             First_In_Name := True;
 
          elsif First_In_Name then
-            if C /= Spacing_Underscore
+            if C /= Low_Line
               and then not Is_Letter (C)
             then
                return False;
@@ -707,7 +707,7 @@ package body Sax.Utils is
 
       while Index <= Name'Last loop
          Encoding.Read (Name, Index, C);
-         if C = Unicode.Names.Basic_Latin.Hash then
+         if C = Unicode.Names.Basic_Latin.Number_Sign then
             if Has_Hash then
                --  Two hashes => Invalid URI
                return URI_None;
@@ -801,7 +801,7 @@ package body Sax.Utils is
    begin
       while Index <= Name'Last loop
          Encoding.Read (Name, Index, C);
-         if C = Pound_Sign then
+         if C = Number_Sign then
             return True;
          end if;
       end loop;

@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cjk_Symbols_And_Punct is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Ideographic_Space                       : constant Unicode_Char := 16#3000#;
    Ideographic_Comma                       : constant Unicode_Char := 16#3001#;
    Ideographic_Full_Stop                   : constant Unicode_Char := 16#3002#;
@@ -13,9 +16,7 @@ package Unicode.Names.Cjk_Symbols_And_Punct is
    Left_Angle_Bracket                      : constant Unicode_Char := 16#3008#;
    Right_Angle_Bracket                     : constant Unicode_Char := 16#3009#;
    Left_Double_Angle_Bracket               : constant Unicode_Char := 16#300A#;
-   Z_Notation_Left_Chevron_Bracket         : constant Unicode_Char := 16#300A#;
    Right_Double_Angle_Bracket              : constant Unicode_Char := 16#300B#;
-   Z_Notation_Right_Chevron_Bracket        : constant Unicode_Char := 16#300B#;
    Left_Corner_Bracket                     : constant Unicode_Char := 16#300C#;
    Right_Corner_Bracket                    : constant Unicode_Char := 16#300D#;
    Left_White_Corner_Bracket               : constant Unicode_Char := 16#300E#;
@@ -31,9 +32,7 @@ package Unicode.Names.Cjk_Symbols_And_Punct is
    Left_White_Tortoise_Shell_Bracket       : constant Unicode_Char := 16#3018#;
    Right_White_Tortoise_Shell_Bracket      : constant Unicode_Char := 16#3019#;
    Left_White_Square_Bracket               : constant Unicode_Char := 16#301A#;
-   Z_Notation_Left_Bag_Bracket             : constant Unicode_Char := 16#301A#;
    Right_White_Square_Bracket              : constant Unicode_Char := 16#301B#;
-   Z_Notation_Right_Bag_Bracket            : constant Unicode_Char := 16#301B#;
    Wave_Dash                               : constant Unicode_Char := 16#301C#;
    Reversed_Double_Prime_Quotation_Mark    : constant Unicode_Char := 16#301D#;
    Double_Prime_Quotation_Mark             : constant Unicode_Char := 16#301E#;
@@ -53,9 +52,7 @@ package Unicode.Names.Cjk_Symbols_And_Punct is
    Ideographic_Departing_Tone_Mark         : constant Unicode_Char := 16#302C#;
    Ideographic_Entering_Tone_Mark          : constant Unicode_Char := 16#302D#;
    Hangul_Single_Dot_Tone_Mark             : constant Unicode_Char := 16#302E#;
-   Single_Dot_Bangjeom                     : constant Unicode_Char := 16#302E#;
    Hangul_Double_Dot_Tone_Mark             : constant Unicode_Char := 16#302F#;
-   Double_Dot_Bangjeom                     : constant Unicode_Char := 16#302F#;
    Wavy_Dash                               : constant Unicode_Char := 16#3030#;
    Vertical_Kana_Repeat_Mark               : constant Unicode_Char := 16#3031#;
    Vertical_Kana_Repeat_With_Voiced_Sound_Mark :
@@ -70,5 +67,9 @@ package Unicode.Names.Cjk_Symbols_And_Punct is
    Hangzhou_Numeral_Ten                    : constant Unicode_Char := 16#3038#;
    Hangzhou_Numeral_Twenty                 : constant Unicode_Char := 16#3039#;
    Hangzhou_Numeral_Thirty                 : constant Unicode_Char := 16#303A#;
+   Vertical_Ideographic_Iteration_Mark     : constant Unicode_Char := 16#303B#;
+   Masu_Mark                               : constant Unicode_Char := 16#303C#;
+   Part_Alternation_Mark                   : constant Unicode_Char := 16#303D#;
    Ideographic_Variation_Indicator         : constant Unicode_Char := 16#303E#;
+   Ideographic_Half_Fill_Space             : constant Unicode_Char := 16#303F#;
 end Unicode.Names.Cjk_Symbols_And_Punct;

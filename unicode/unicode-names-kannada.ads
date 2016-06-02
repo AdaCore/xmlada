@@ -1,7 +1,11 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Kannada is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Kannada_Sign_Candrabindu                : constant Unicode_Char := 16#0C81#;
    Kannada_Sign_Anusvara                   : constant Unicode_Char := 16#0C82#;
    Kannada_Sign_Visarga                    : constant Unicode_Char := 16#0C83#;
    Kannada_Letter_A                        : constant Unicode_Char := 16#0C85#;
@@ -53,6 +57,8 @@ package Unicode.Names.Kannada is
    Kannada_Letter_Ssa                      : constant Unicode_Char := 16#0CB7#;
    Kannada_Letter_Sa                       : constant Unicode_Char := 16#0CB8#;
    Kannada_Letter_Ha                       : constant Unicode_Char := 16#0CB9#;
+   Kannada_Sign_Nukta                      : constant Unicode_Char := 16#0CBC#;
+   Kannada_Sign_Avagraha                   : constant Unicode_Char := 16#0CBD#;
    Kannada_Vowel_Sign_Aa                   : constant Unicode_Char := 16#0CBE#;
    Kannada_Vowel_Sign_I                    : constant Unicode_Char := 16#0CBF#;
    Kannada_Vowel_Sign_Ii                   : constant Unicode_Char := 16#0CC0#;
@@ -70,8 +76,12 @@ package Unicode.Names.Kannada is
    Kannada_Length_Mark                     : constant Unicode_Char := 16#0CD5#;
    Kannada_Ai_Length_Mark                  : constant Unicode_Char := 16#0CD6#;
    Kannada_Letter_Fa                       : constant Unicode_Char := 16#0CDE#;
+   Kannada_Letter_Llla                     :
+      Unicode_Char renames Kannada_Letter_Fa;
    Kannada_Letter_Vocalic_Rr               : constant Unicode_Char := 16#0CE0#;
    Kannada_Letter_Vocalic_Ll               : constant Unicode_Char := 16#0CE1#;
+   Kannada_Vowel_Sign_Vocalic_L            : constant Unicode_Char := 16#0CE2#;
+   Kannada_Vowel_Sign_Vocalic_Ll           : constant Unicode_Char := 16#0CE3#;
    Kannada_Digit_Zero                      : constant Unicode_Char := 16#0CE6#;
    Kannada_Digit_One                       : constant Unicode_Char := 16#0CE7#;
    Kannada_Digit_Two                       : constant Unicode_Char := 16#0CE8#;
@@ -82,4 +92,6 @@ package Unicode.Names.Kannada is
    Kannada_Digit_Seven                     : constant Unicode_Char := 16#0CED#;
    Kannada_Digit_Eight                     : constant Unicode_Char := 16#0CEE#;
    Kannada_Digit_Nine                      : constant Unicode_Char := 16#0CEF#;
+   Kannada_Sign_Jihvamuliya                : constant Unicode_Char := 16#0CF1#;
+   Kannada_Sign_Upadhmaniya                : constant Unicode_Char := 16#0CF2#;
 end Unicode.Names.Kannada;

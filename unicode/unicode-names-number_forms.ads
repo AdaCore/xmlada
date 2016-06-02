@@ -1,7 +1,13 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Number_Forms is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Vulgar_Fraction_One_Seventh             : constant Unicode_Char := 16#2150#;
+   Vulgar_Fraction_One_Ninth               : constant Unicode_Char := 16#2151#;
+   Vulgar_Fraction_One_Tenth               : constant Unicode_Char := 16#2152#;
    Vulgar_Fraction_One_Third               : constant Unicode_Char := 16#2153#;
    Vulgar_Fraction_Two_Thirds              : constant Unicode_Char := 16#2154#;
    Vulgar_Fraction_One_Fifth               : constant Unicode_Char := 16#2155#;
@@ -51,4 +57,12 @@ package Unicode.Names.Number_Forms is
    Roman_Numeral_Five_Thousand             : constant Unicode_Char := 16#2181#;
    Roman_Numeral_Ten_Thousand              : constant Unicode_Char := 16#2182#;
    Roman_Numeral_Reversed_One_Hundred      : constant Unicode_Char := 16#2183#;
+   Latin_Small_Letter_Reversed_C           : constant Unicode_Char := 16#2184#;
+   Roman_Numeral_Six_Late_Form             : constant Unicode_Char := 16#2185#;
+   Roman_Numeral_Fifty_Early_Form          : constant Unicode_Char := 16#2186#;
+   Roman_Numeral_Fifty_Thousand            : constant Unicode_Char := 16#2187#;
+   Roman_Numeral_One_Hundred_Thousand      : constant Unicode_Char := 16#2188#;
+   Vulgar_Fraction_Zero_Thirds             : constant Unicode_Char := 16#2189#;
+   Turned_Digit_Two                        : constant Unicode_Char := 16#218A#;
+   Turned_Digit_Three                      : constant Unicode_Char := 16#218B#;
 end Unicode.Names.Number_Forms;

@@ -1,9 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Arabic_Present_FormsA is
+   pragma Preelaborate;
    pragma Style_Checks (Off);
-   Hebrew_Ligature_Alef_Lamed              : constant Unicode_Char := 16#FB4F#;
+
    Arabic_Letter_Alef_Wasla_Isolated_Form  : constant Unicode_Char := 16#FB50#;
    Arabic_Letter_Alef_Wasla_Final_Form     : constant Unicode_Char := 16#FB51#;
    Arabic_Letter_Beeh_Isolated_Form        : constant Unicode_Char := 16#FB52#;
@@ -110,6 +111,24 @@ package Unicode.Names.Arabic_Present_FormsA is
       constant Unicode_Char := 16#FBB0#;
    Arabic_Letter_Yeh_Barree_With_Hamza_Above_Final_Form :
       constant Unicode_Char := 16#FBB1#;
+   Arabic_Symbol_Dot_Above                 : constant Unicode_Char := 16#FBB2#;
+   Arabic_Symbol_Dot_Below                 : constant Unicode_Char := 16#FBB3#;
+   Arabic_Symbol_Two_Dots_Above            : constant Unicode_Char := 16#FBB4#;
+   Arabic_Symbol_Two_Dots_Below            : constant Unicode_Char := 16#FBB5#;
+   Arabic_Symbol_Three_Dots_Above          : constant Unicode_Char := 16#FBB6#;
+   Arabic_Symbol_Three_Dots_Below          : constant Unicode_Char := 16#FBB7#;
+   Arabic_Symbol_Three_Dots_Pointing_Downwards_Above :
+      constant Unicode_Char := 16#FBB8#;
+   Arabic_Symbol_Three_Dots_Pointing_Downwards_Below :
+      constant Unicode_Char := 16#FBB9#;
+   Arabic_Symbol_Four_Dots_Above           : constant Unicode_Char := 16#FBBA#;
+   Arabic_Symbol_Four_Dots_Below           : constant Unicode_Char := 16#FBBB#;
+   Arabic_Symbol_Double_Vertical_Bar_Below : constant Unicode_Char := 16#FBBC#;
+   Arabic_Symbol_Two_Dots_Vertically_Above : constant Unicode_Char := 16#FBBD#;
+   Arabic_Symbol_Two_Dots_Vertically_Below : constant Unicode_Char := 16#FBBE#;
+   Arabic_Symbol_Ring                      : constant Unicode_Char := 16#FBBF#;
+   Arabic_Symbol_Small_Tah_Above           : constant Unicode_Char := 16#FBC0#;
+   Arabic_Symbol_Small_Tah_Below           : constant Unicode_Char := 16#FBC1#;
    Arabic_Letter_Ng_Isolated_Form          : constant Unicode_Char := 16#FBD3#;
    Arabic_Letter_Ng_Final_Form             : constant Unicode_Char := 16#FBD4#;
    Arabic_Letter_Ng_Initial_Form           : constant Unicode_Char := 16#FBD5#;
@@ -1047,4 +1066,7 @@ package Unicode.Names.Arabic_Present_FormsA is
    Arabic_Ligature_Sallallahou_Alayhe_Wasallam :
       constant Unicode_Char := 16#FDFA#;
    Arabic_Ligature_Jallajalalouhou         : constant Unicode_Char := 16#FDFB#;
+   Rial_Sign                               : constant Unicode_Char := 16#FDFC#;
+   Arabic_Ligature_Bismillah_Ar_Rahman_Ar_Raheem :
+      constant Unicode_Char := 16#FDFD#;
 end Unicode.Names.Arabic_Present_FormsA;

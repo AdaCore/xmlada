@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Ideograph_Descr_Chars is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Ideographic_Description_Character_Left_To_Right :
       constant Unicode_Char := 16#2FF0#;
    Ideographic_Description_Character_Above_To_Below :

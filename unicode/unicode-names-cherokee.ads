@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cherokee is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Cherokee_Letter_A                       : constant Unicode_Char := 16#13A0#;
    Cherokee_Letter_E                       : constant Unicode_Char := 16#13A1#;
    Cherokee_Letter_I                       : constant Unicode_Char := 16#13A2#;
@@ -87,4 +90,11 @@ package Unicode.Names.Cherokee is
    Cherokee_Letter_Yo                      : constant Unicode_Char := 16#13F2#;
    Cherokee_Letter_Yu                      : constant Unicode_Char := 16#13F3#;
    Cherokee_Letter_Yv                      : constant Unicode_Char := 16#13F4#;
+   Cherokee_Letter_Mv                      : constant Unicode_Char := 16#13F5#;
+   Cherokee_Small_Letter_Ye                : constant Unicode_Char := 16#13F8#;
+   Cherokee_Small_Letter_Yi                : constant Unicode_Char := 16#13F9#;
+   Cherokee_Small_Letter_Yo                : constant Unicode_Char := 16#13FA#;
+   Cherokee_Small_Letter_Yu                : constant Unicode_Char := 16#13FB#;
+   Cherokee_Small_Letter_Yv                : constant Unicode_Char := 16#13FC#;
+   Cherokee_Small_Letter_Mv                : constant Unicode_Char := 16#13FD#;
 end Unicode.Names.Cherokee;

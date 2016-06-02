@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Enclosed_Alphanumerics is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Circled_Digit_One                       : constant Unicode_Char := 16#2460#;
    Circled_Digit_Two                       : constant Unicode_Char := 16#2461#;
    Circled_Digit_Three                     : constant Unicode_Char := 16#2462#;
@@ -141,4 +144,25 @@ package Unicode.Names.Enclosed_Alphanumerics is
    Circled_Latin_Small_Letter_Y            : constant Unicode_Char := 16#24E8#;
    Circled_Latin_Small_Letter_Z            : constant Unicode_Char := 16#24E9#;
    Circled_Digit_Zero                      : constant Unicode_Char := 16#24EA#;
+   Negative_Circled_Number_Eleven          : constant Unicode_Char := 16#24EB#;
+   Negative_Circled_Number_Twelve          : constant Unicode_Char := 16#24EC#;
+   Negative_Circled_Number_Thirteen        : constant Unicode_Char := 16#24ED#;
+   Negative_Circled_Number_Fourteen        : constant Unicode_Char := 16#24EE#;
+   Negative_Circled_Number_Fifteen         : constant Unicode_Char := 16#24EF#;
+   Negative_Circled_Number_Sixteen         : constant Unicode_Char := 16#24F0#;
+   Negative_Circled_Number_Seventeen       : constant Unicode_Char := 16#24F1#;
+   Negative_Circled_Number_Eighteen        : constant Unicode_Char := 16#24F2#;
+   Negative_Circled_Number_Nineteen        : constant Unicode_Char := 16#24F3#;
+   Negative_Circled_Number_Twenty          : constant Unicode_Char := 16#24F4#;
+   Double_Circled_Digit_One                : constant Unicode_Char := 16#24F5#;
+   Double_Circled_Digit_Two                : constant Unicode_Char := 16#24F6#;
+   Double_Circled_Digit_Three              : constant Unicode_Char := 16#24F7#;
+   Double_Circled_Digit_Four               : constant Unicode_Char := 16#24F8#;
+   Double_Circled_Digit_Five               : constant Unicode_Char := 16#24F9#;
+   Double_Circled_Digit_Six                : constant Unicode_Char := 16#24FA#;
+   Double_Circled_Digit_Seven              : constant Unicode_Char := 16#24FB#;
+   Double_Circled_Digit_Eight              : constant Unicode_Char := 16#24FC#;
+   Double_Circled_Digit_Nine               : constant Unicode_Char := 16#24FD#;
+   Double_Circled_Number_Ten               : constant Unicode_Char := 16#24FE#;
+   Negative_Circled_Digit_Zero             : constant Unicode_Char := 16#24FF#;
 end Unicode.Names.Enclosed_Alphanumerics;

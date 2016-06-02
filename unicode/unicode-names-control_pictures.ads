@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Control_Pictures is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Symbol_For_Null                         : constant Unicode_Char := 16#2400#;
    Symbol_For_Start_Of_Heading             : constant Unicode_Char := 16#2401#;
    Symbol_For_Start_Of_Text                : constant Unicode_Char := 16#2402#;

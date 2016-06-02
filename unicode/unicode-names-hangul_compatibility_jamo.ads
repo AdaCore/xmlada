@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Hangul_Compatibility_Jamo is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Hangul_Letter_Kiyeok                    : constant Unicode_Char := 16#3131#;
    Hangul_Letter_Ssangkiyeok               : constant Unicode_Char := 16#3132#;
    Hangul_Letter_Kiyeok_Sios               : constant Unicode_Char := 16#3133#;
@@ -54,7 +57,6 @@ package Unicode.Names.Hangul_Compatibility_Jamo is
    Hangul_Letter_Yi                        : constant Unicode_Char := 16#3162#;
    Hangul_Letter_I                         : constant Unicode_Char := 16#3163#;
    Hangul_Filler                           : constant Unicode_Char := 16#3164#;
-   Hangul_Cae_Om                           : constant Unicode_Char := 16#3164#;
    Hangul_Letter_Ssangnieun                : constant Unicode_Char := 16#3165#;
    Hangul_Letter_Nieun_Tikeut              : constant Unicode_Char := 16#3166#;
    Hangul_Letter_Nieun_Sios                : constant Unicode_Char := 16#3167#;

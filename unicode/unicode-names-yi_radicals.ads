@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Yi_Radicals is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Yi_Radical_Qot                          : constant Unicode_Char := 16#A490#;
    Yi_Radical_Li                           : constant Unicode_Char := 16#A491#;
    Yi_Radical_Kit                          : constant Unicode_Char := 16#A492#;
@@ -20,6 +23,8 @@ package Unicode.Names.Yi_Radicals is
    Yi_Radical_Hxuo                         : constant Unicode_Char := 16#A49F#;
    Yi_Radical_Tat                          : constant Unicode_Char := 16#A4A0#;
    Yi_Radical_Ga                           : constant Unicode_Char := 16#A4A1#;
+   Yi_Radical_Zup                          : constant Unicode_Char := 16#A4A2#;
+   Yi_Radical_Cyt                          : constant Unicode_Char := 16#A4A3#;
    Yi_Radical_Ddur                         : constant Unicode_Char := 16#A4A4#;
    Yi_Radical_Bur                          : constant Unicode_Char := 16#A4A5#;
    Yi_Radical_Gguo                         : constant Unicode_Char := 16#A4A6#;
@@ -36,6 +41,7 @@ package Unicode.Names.Yi_Radicals is
    Yi_Radical_Vep                          : constant Unicode_Char := 16#A4B1#;
    Yi_Radical_Za                           : constant Unicode_Char := 16#A4B2#;
    Yi_Radical_Jo                           : constant Unicode_Char := 16#A4B3#;
+   Yi_Radical_Nzup                         : constant Unicode_Char := 16#A4B4#;
    Yi_Radical_Jjy                          : constant Unicode_Char := 16#A4B5#;
    Yi_Radical_Got                          : constant Unicode_Char := 16#A4B6#;
    Yi_Radical_Jjie                         : constant Unicode_Char := 16#A4B7#;
@@ -48,8 +54,10 @@ package Unicode.Names.Yi_Radicals is
    Yi_Radical_Cip                          : constant Unicode_Char := 16#A4BE#;
    Yi_Radical_Hxop                         : constant Unicode_Char := 16#A4BF#;
    Yi_Radical_Shat                         : constant Unicode_Char := 16#A4C0#;
+   Yi_Radical_Zur                          : constant Unicode_Char := 16#A4C1#;
    Yi_Radical_Shop                         : constant Unicode_Char := 16#A4C2#;
    Yi_Radical_Che                          : constant Unicode_Char := 16#A4C3#;
    Yi_Radical_Zziet                        : constant Unicode_Char := 16#A4C4#;
+   Yi_Radical_Nbie                         : constant Unicode_Char := 16#A4C5#;
    Yi_Radical_Ke                           : constant Unicode_Char := 16#A4C6#;
 end Unicode.Names.Yi_Radicals;

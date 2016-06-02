@@ -1,8 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Bopomofo_Extended is
-   Ideographic_Annotation_Man_Mark         : constant Unicode_Char := 16#319F#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Bopomofo_Letter_Bu                      : constant Unicode_Char := 16#31A0#;
    Bopomofo_Letter_Zi                      : constant Unicode_Char := 16#31A1#;
    Bopomofo_Letter_Ji                      : constant Unicode_Char := 16#31A2#;
@@ -27,4 +29,7 @@ package Unicode.Names.Bopomofo_Extended is
    Bopomofo_Final_Letter_T                 : constant Unicode_Char := 16#31B5#;
    Bopomofo_Final_Letter_K                 : constant Unicode_Char := 16#31B6#;
    Bopomofo_Final_Letter_H                 : constant Unicode_Char := 16#31B7#;
+   Bopomofo_Letter_Gh                      : constant Unicode_Char := 16#31B8#;
+   Bopomofo_Letter_Lh                      : constant Unicode_Char := 16#31B9#;
+   Bopomofo_Letter_Zy                      : constant Unicode_Char := 16#31BA#;
 end Unicode.Names.Bopomofo_Extended;

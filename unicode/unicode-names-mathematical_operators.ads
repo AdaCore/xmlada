@@ -1,36 +1,28 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Mathematical_Operators is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    For_All                                 : constant Unicode_Char := 16#2200#;
    Complement                              : constant Unicode_Char := 16#2201#;
    Partial_Differential                    : constant Unicode_Char := 16#2202#;
    There_Exists                            : constant Unicode_Char := 16#2203#;
    There_Does_Not_Exist                    : constant Unicode_Char := 16#2204#;
    Empty_Set                               : constant Unicode_Char := 16#2205#;
-   Null_Set                                : constant Unicode_Char := 16#2205#;
    Increment                               : constant Unicode_Char := 16#2206#;
-   Laplace_Operator                        : constant Unicode_Char := 16#2206#;
-   Forward_Difference                      : constant Unicode_Char := 16#2206#;
    Nabla                                   : constant Unicode_Char := 16#2207#;
-   --  Duplicate entry for Laplace_Operator
-   Backward_Difference                     : constant Unicode_Char := 16#2207#;
-   Del                                     : constant Unicode_Char := 16#2207#;
    Element_Of                              : constant Unicode_Char := 16#2208#;
    Not_An_Element_Of                       : constant Unicode_Char := 16#2209#;
    Small_Element_Of                        : constant Unicode_Char := 16#220A#;
    Contains_As_Member                      : constant Unicode_Char := 16#220B#;
-   Such_That                               : constant Unicode_Char := 16#220B#;
    Does_Not_Contain_As_Member              : constant Unicode_Char := 16#220C#;
    Small_Contains_As_Member                : constant Unicode_Char := 16#220D#;
    End_Of_Proof                            : constant Unicode_Char := 16#220E#;
-   Q_E_D                                   : constant Unicode_Char := 16#220E#;
    N_Ary_Product                           : constant Unicode_Char := 16#220F#;
-   Product_Sign                            : constant Unicode_Char := 16#220F#;
    N_Ary_Coproduct                         : constant Unicode_Char := 16#2210#;
-   Coproduct_Sign                          : constant Unicode_Char := 16#2210#;
    N_Ary_Summation                         : constant Unicode_Char := 16#2211#;
-   Summation_Sign                          : constant Unicode_Char := 16#2211#;
    Minus_Sign                              : constant Unicode_Char := 16#2212#;
    Minus_Or_Plus_Sign                      : constant Unicode_Char := 16#2213#;
    Dot_Plus                                : constant Unicode_Char := 16#2214#;
@@ -38,11 +30,8 @@ package Unicode.Names.Mathematical_Operators is
    Set_Minus                               : constant Unicode_Char := 16#2216#;
    Asterisk_Operator                       : constant Unicode_Char := 16#2217#;
    Ring_Operator                           : constant Unicode_Char := 16#2218#;
-   Composite_Function                      : constant Unicode_Char := 16#2218#;
-   Apl_Jot                                 : constant Unicode_Char := 16#2218#;
    Bullet_Operator                         : constant Unicode_Char := 16#2219#;
    Square_Root                             : constant Unicode_Char := 16#221A#;
-   Radical_Sign                            : constant Unicode_Char := 16#221A#;
    Cube_Root                               : constant Unicode_Char := 16#221B#;
    Fourth_Root                             : constant Unicode_Char := 16#221C#;
    Proportional_To                         : constant Unicode_Char := 16#221D#;
@@ -51,24 +40,14 @@ package Unicode.Names.Mathematical_Operators is
    Angle                                   : constant Unicode_Char := 16#2220#;
    Measured_Angle                          : constant Unicode_Char := 16#2221#;
    Spherical_Angle                         : constant Unicode_Char := 16#2222#;
-   Angle_Arc                               : constant Unicode_Char := 16#2222#;
    Divides                                 : constant Unicode_Char := 16#2223#;
-   --  Duplicate entry for Such_That
-   Apl_Stile                               : constant Unicode_Char := 16#2223#;
    Does_Not_Divide                         : constant Unicode_Char := 16#2224#;
    Parallel_To                             : constant Unicode_Char := 16#2225#;
    Not_Parallel_To                         : constant Unicode_Char := 16#2226#;
    Logical_And                             : constant Unicode_Char := 16#2227#;
-   Wedge                                   : constant Unicode_Char := 16#2227#;
-   Conjunction                             : constant Unicode_Char := 16#2227#;
    Logical_Or                              : constant Unicode_Char := 16#2228#;
-   Vee                                     : constant Unicode_Char := 16#2228#;
-   Disjunction                             : constant Unicode_Char := 16#2228#;
    Intersection                            : constant Unicode_Char := 16#2229#;
-   Cap                                     : constant Unicode_Char := 16#2229#;
-   Hat                                     : constant Unicode_Char := 16#2229#;
    Union                                   : constant Unicode_Char := 16#222A#;
-   Cup                                     : constant Unicode_Char := 16#222A#;
    Integral                                : constant Unicode_Char := 16#222B#;
    Double_Integral                         : constant Unicode_Char := 16#222C#;
    Triple_Integral                         : constant Unicode_Char := 16#222D#;
@@ -83,24 +62,13 @@ package Unicode.Names.Mathematical_Operators is
    Ratio                                   : constant Unicode_Char := 16#2236#;
    Proportion                              : constant Unicode_Char := 16#2237#;
    Dot_Minus                               : constant Unicode_Char := 16#2238#;
-   Symmetric_Difference                    : constant Unicode_Char := 16#2238#;
    Excess                                  : constant Unicode_Char := 16#2239#;
    Geometric_Proportion                    : constant Unicode_Char := 16#223A#;
    Homothetic                              : constant Unicode_Char := 16#223B#;
    Tilde_Operator                          : constant Unicode_Char := 16#223C#;
-   Varies_With                             : constant Unicode_Char := 16#223C#;
-   Difference_Between                      : constant Unicode_Char := 16#223C#;
-   Similar_To                              : constant Unicode_Char := 16#223C#;
-   --  Real Unicode name is not
-   Unicode_Not                             : constant Unicode_Char := 16#223C#;
-   Cycle                                   : constant Unicode_Char := 16#223C#;
-   Apl_Tilde                               : constant Unicode_Char := 16#223C#;
    Reversed_Tilde                          : constant Unicode_Char := 16#223D#;
-   Lazy_S                                  : constant Unicode_Char := 16#223D#;
    Inverted_Lazy_S                         : constant Unicode_Char := 16#223E#;
-   Most_Positive                           : constant Unicode_Char := 16#223E#;
    Sine_Wave                               : constant Unicode_Char := 16#223F#;
-   Alternating_Current                     : constant Unicode_Char := 16#223F#;
    Wreath_Product                          : constant Unicode_Char := 16#2240#;
    Not_Tilde                               : constant Unicode_Char := 16#2241#;
    Minus_Tilde                             : constant Unicode_Char := 16#2242#;
@@ -111,33 +79,27 @@ package Unicode.Names.Mathematical_Operators is
    Neither_Approximately_Nor_Actually_Equal_To :
       constant Unicode_Char := 16#2247#;
    Almost_Equal_To                         : constant Unicode_Char := 16#2248#;
-   Asymptotic_To                           : constant Unicode_Char := 16#2248#;
    Not_Almost_Equal_To                     : constant Unicode_Char := 16#2249#;
    Almost_Equal_Or_Equal_To                : constant Unicode_Char := 16#224A#;
    Triple_Tilde                            : constant Unicode_Char := 16#224B#;
    All_Equal_To                            : constant Unicode_Char := 16#224C#;
    Equivalent_To                           : constant Unicode_Char := 16#224D#;
    Geometrically_Equivalent_To             : constant Unicode_Char := 16#224E#;
-   --  Duplicate entry for Difference_Between
+   Difference_Between                      : constant Unicode_Char := 16#224F#;
    Approaches_The_Limit                    : constant Unicode_Char := 16#2250#;
    Geometrically_Equal_To                  : constant Unicode_Char := 16#2251#;
    Approximately_Equal_To_Or_The_Image_Of  : constant Unicode_Char := 16#2252#;
-   Nearly_Equals                           : constant Unicode_Char := 16#2252#;
    Image_Of_Or_Approximately_Equal_To      : constant Unicode_Char := 16#2253#;
    Colon_Equals                            : constant Unicode_Char := 16#2254#;
    Equals_Colon                            : constant Unicode_Char := 16#2255#;
    Ring_In_Equal_To                        : constant Unicode_Char := 16#2256#;
    Ring_Equal_To                           : constant Unicode_Char := 16#2257#;
-   --  Duplicate entry for Approximately_Equal_To
    Corresponds_To                          : constant Unicode_Char := 16#2258#;
    Estimates                               : constant Unicode_Char := 16#2259#;
-   --  Duplicate entry for Corresponds_To
    Equiangular_To                          : constant Unicode_Char := 16#225A#;
    Star_Equals                             : constant Unicode_Char := 16#225B#;
    Delta_Equal_To                          : constant Unicode_Char := 16#225C#;
-   Equiangular                             : constant Unicode_Char := 16#225C#;
-   Equal_To_By_Definition                  : constant Unicode_Char := 16#225C#;
-   --  Duplicate entry for Equal_To_By_Definition
+   Equal_To_By_Definition                  : constant Unicode_Char := 16#225D#;
    Measured_By                             : constant Unicode_Char := 16#225E#;
    Questioned_Equal_To                     : constant Unicode_Char := 16#225F#;
    Not_Equal_To                            : constant Unicode_Char := 16#2260#;
@@ -153,8 +115,6 @@ package Unicode.Names.Mathematical_Operators is
    Much_Less_Than                          : constant Unicode_Char := 16#226A#;
    Much_Greater_Than                       : constant Unicode_Char := 16#226B#;
    Between                                 : constant Unicode_Char := 16#226C#;
-   Plaintiff                               : constant Unicode_Char := 16#226C#;
-   Quantic                                 : constant Unicode_Char := 16#226C#;
    Not_Equivalent_To                       : constant Unicode_Char := 16#226D#;
    Not_Less_Than                           : constant Unicode_Char := 16#226E#;
    Not_Greater_Than                        : constant Unicode_Char := 16#226F#;
@@ -169,9 +129,7 @@ package Unicode.Names.Mathematical_Operators is
    Neither_Less_Than_Nor_Greater_Than      : constant Unicode_Char := 16#2278#;
    Neither_Greater_Than_Nor_Less_Than      : constant Unicode_Char := 16#2279#;
    Precedes                                : constant Unicode_Char := 16#227A#;
-   Lower_Rank_Than                         : constant Unicode_Char := 16#227A#;
    Succeeds                                : constant Unicode_Char := 16#227B#;
-   Higher_Rank_Than                        : constant Unicode_Char := 16#227B#;
    Precedes_Or_Equal_To                    : constant Unicode_Char := 16#227C#;
    Succeeds_Or_Equal_To                    : constant Unicode_Char := 16#227D#;
    Precedes_Or_Equivalent_To               : constant Unicode_Char := 16#227E#;
@@ -179,9 +137,7 @@ package Unicode.Names.Mathematical_Operators is
    Does_Not_Precede                        : constant Unicode_Char := 16#2280#;
    Does_Not_Succeed                        : constant Unicode_Char := 16#2281#;
    Subset_Of                               : constant Unicode_Char := 16#2282#;
-   Included_In_Set                         : constant Unicode_Char := 16#2282#;
    Superset_Of                             : constant Unicode_Char := 16#2283#;
-   Includes_In_Set                         : constant Unicode_Char := 16#2283#;
    Not_A_Subset_Of                         : constant Unicode_Char := 16#2284#;
    Not_A_Superset_Of                       : constant Unicode_Char := 16#2285#;
    Subset_Of_Or_Equal_To                   : constant Unicode_Char := 16#2286#;
@@ -193,7 +149,6 @@ package Unicode.Names.Mathematical_Operators is
    Multiset                                : constant Unicode_Char := 16#228C#;
    Multiset_Multiplication                 : constant Unicode_Char := 16#228D#;
    Multiset_Union                          : constant Unicode_Char := 16#228E#;
-   Z_Notation_Bag_Addition                 : constant Unicode_Char := 16#228E#;
    Square_Image_Of                         : constant Unicode_Char := 16#228F#;
    Square_Original_Of                      : constant Unicode_Char := 16#2290#;
    Square_Image_Of_Or_Equal_To             : constant Unicode_Char := 16#2291#;
@@ -201,17 +156,10 @@ package Unicode.Names.Mathematical_Operators is
    Square_Cap                              : constant Unicode_Char := 16#2293#;
    Square_Cup                              : constant Unicode_Char := 16#2294#;
    Circled_Plus                            : constant Unicode_Char := 16#2295#;
-   Direct_Sum                              : constant Unicode_Char := 16#2295#;
-   Vector_Pointing_Into_Page               : constant Unicode_Char := 16#2295#;
    Circled_Minus                           : constant Unicode_Char := 16#2296#;
-   --  Duplicate entry for Symmetric_Difference
    Circled_Times                           : constant Unicode_Char := 16#2297#;
-   Tensor_Product                          : constant Unicode_Char := 16#2297#;
-   --  Duplicate entry for Vector_Pointing_Into_Page
    Circled_Division_Slash                  : constant Unicode_Char := 16#2298#;
    Circled_Dot_Operator                    : constant Unicode_Char := 16#2299#;
-   Direct_Product                          : constant Unicode_Char := 16#2299#;
-   Vector_Pointing_Out_Of_Page             : constant Unicode_Char := 16#2299#;
    Circled_Ring_Operator                   : constant Unicode_Char := 16#229A#;
    Circled_Asterisk_Operator               : constant Unicode_Char := 16#229B#;
    Circled_Equals                          : constant Unicode_Char := 16#229C#;
@@ -221,30 +169,12 @@ package Unicode.Names.Mathematical_Operators is
    Squared_Times                           : constant Unicode_Char := 16#22A0#;
    Squared_Dot_Operator                    : constant Unicode_Char := 16#22A1#;
    Right_Tack                              : constant Unicode_Char := 16#22A2#;
-   Turnstile                               : constant Unicode_Char := 16#22A2#;
-   Proves                                  : constant Unicode_Char := 16#22A2#;
-   Implies                                 : constant Unicode_Char := 16#22A2#;
-   Yields                                  : constant Unicode_Char := 16#22A2#;
-   Reducible                               : constant Unicode_Char := 16#22A2#;
    Left_Tack                               : constant Unicode_Char := 16#22A3#;
-   Reverse_Turnstile                       : constant Unicode_Char := 16#22A3#;
-   Non_Theorem                             : constant Unicode_Char := 16#22A3#;
-   Does_Not_Yield                          : constant Unicode_Char := 16#22A3#;
    Down_Tack                               : constant Unicode_Char := 16#22A4#;
-   Top                                     : constant Unicode_Char := 16#22A4#;
    Up_Tack                                 : constant Unicode_Char := 16#22A5#;
-   Orthogonal_To                           : constant Unicode_Char := 16#22A5#;
-   Perpendicular                           : constant Unicode_Char := 16#22A5#;
-   Base                                    : constant Unicode_Char := 16#22A5#;
    Assertion                               : constant Unicode_Char := 16#22A6#;
-   Reduces_To                              : constant Unicode_Char := 16#22A6#;
    Models                                  : constant Unicode_Char := 16#22A7#;
    True                                    : constant Unicode_Char := 16#22A8#;
-   Statement_Is_True                       : constant Unicode_Char := 16#22A8#;
-   Valid                                   : constant Unicode_Char := 16#22A8#;
-   Is_A_Tautology                          : constant Unicode_Char := 16#22A8#;
-   Satisfies                               : constant Unicode_Char := 16#22A8#;
-   Results_In                              : constant Unicode_Char := 16#22A8#;
    Forces                                  : constant Unicode_Char := 16#22A9#;
    Triple_Vertical_Bar_Right_Turnstile     : constant Unicode_Char := 16#22AA#;
    Double_Vertical_Bar_Double_Right_Turnstile :
@@ -274,9 +204,7 @@ package Unicode.Names.Mathematical_Operators is
    N_Ary_Logical_And                       : constant Unicode_Char := 16#22C0#;
    N_Ary_Logical_Or                        : constant Unicode_Char := 16#22C1#;
    N_Ary_Intersection                      : constant Unicode_Char := 16#22C2#;
-   Z_Notation_Generalised_Intersection     : constant Unicode_Char := 16#22C2#;
    N_Ary_Union                             : constant Unicode_Char := 16#22C3#;
-   Z_Notation_Generalised_Union            : constant Unicode_Char := 16#22C3#;
    Diamond_Operator                        : constant Unicode_Char := 16#22C4#;
    Dot_Operator                            : constant Unicode_Char := 16#22C5#;
    Star_Operator                           : constant Unicode_Char := 16#22C6#;
@@ -294,7 +222,6 @@ package Unicode.Names.Mathematical_Operators is
    Double_Intersection                     : constant Unicode_Char := 16#22D2#;
    Double_Union                            : constant Unicode_Char := 16#22D3#;
    Pitchfork                               : constant Unicode_Char := 16#22D4#;
-   Proper_Intersection                     : constant Unicode_Char := 16#22D4#;
    Equal_And_Parallel_To                   : constant Unicode_Char := 16#22D5#;
    Less_Than_With_Dot                      : constant Unicode_Char := 16#22D6#;
    Greater_Than_With_Dot                   : constant Unicode_Char := 16#22D7#;
@@ -325,4 +252,22 @@ package Unicode.Names.Mathematical_Operators is
    Midline_Horizontal_Ellipsis             : constant Unicode_Char := 16#22EF#;
    Up_Right_Diagonal_Ellipsis              : constant Unicode_Char := 16#22F0#;
    Down_Right_Diagonal_Ellipsis            : constant Unicode_Char := 16#22F1#;
+   Element_Of_With_Long_Horizontal_Stroke  : constant Unicode_Char := 16#22F2#;
+   Element_Of_With_Vertical_Bar_At_End_Of_Horizontal_Stroke :
+      constant Unicode_Char := 16#22F3#;
+   Small_Element_Of_With_Vertical_Bar_At_End_Of_Horizontal_Stroke :
+      constant Unicode_Char := 16#22F4#;
+   Element_Of_With_Dot_Above               : constant Unicode_Char := 16#22F5#;
+   Element_Of_With_Overbar                 : constant Unicode_Char := 16#22F6#;
+   Small_Element_Of_With_Overbar           : constant Unicode_Char := 16#22F7#;
+   Element_Of_With_Underbar                : constant Unicode_Char := 16#22F8#;
+   Element_Of_With_Two_Horizontal_Strokes  : constant Unicode_Char := 16#22F9#;
+   Contains_With_Long_Horizontal_Stroke    : constant Unicode_Char := 16#22FA#;
+   Contains_With_Vertical_Bar_At_End_Of_Horizontal_Stroke :
+      constant Unicode_Char := 16#22FB#;
+   Small_Contains_With_Vertical_Bar_At_End_Of_Horizontal_Stroke :
+      constant Unicode_Char := 16#22FC#;
+   Contains_With_Overbar                   : constant Unicode_Char := 16#22FD#;
+   Small_Contains_With_Overbar             : constant Unicode_Char := 16#22FE#;
+   Z_Notation_Bag_Membership               : constant Unicode_Char := 16#22FF#;
 end Unicode.Names.Mathematical_Operators;

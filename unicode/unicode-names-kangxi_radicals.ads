@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Kangxi_Radicals is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Kangxi_Radical_One                      : constant Unicode_Char := 16#2F00#;
    Kangxi_Radical_Line                     : constant Unicode_Char := 16#2F01#;
    Kangxi_Radical_Dot                      : constant Unicode_Char := 16#2F02#;

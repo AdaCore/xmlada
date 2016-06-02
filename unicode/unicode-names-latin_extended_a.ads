@@ -1,8 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Latin_Extended_A is
-   Latin_Small_Letter_Y_With_Diaeresis     : constant Unicode_Char := 16#00FF#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Latin_Capital_Letter_A_With_Macron      : constant Unicode_Char := 16#0100#;
    Latin_Small_Letter_A_With_Macron        : constant Unicode_Char := 16#0101#;
    Latin_Capital_Letter_A_With_Breve       : constant Unicode_Char := 16#0102#;
@@ -52,7 +54,6 @@ package Unicode.Names.Latin_Extended_A is
    Latin_Capital_Letter_I_With_Ogonek      : constant Unicode_Char := 16#012E#;
    Latin_Small_Letter_I_With_Ogonek        : constant Unicode_Char := 16#012F#;
    Latin_Capital_Letter_I_With_Dot_Above   : constant Unicode_Char := 16#0130#;
-   Latin_Capital_Letter_I_Dot              : constant Unicode_Char := 16#0130#;
    Latin_Small_Letter_Dotless_I            : constant Unicode_Char := 16#0131#;
    Latin_Capital_Ligature_Ij               : constant Unicode_Char := 16#0132#;
    Latin_Small_Ligature_Ij                 : constant Unicode_Char := 16#0133#;
@@ -79,7 +80,6 @@ package Unicode.Names.Latin_Extended_A is
    Latin_Small_Letter_N_With_Caron         : constant Unicode_Char := 16#0148#;
    Latin_Small_Letter_N_Preceded_By_Apostrophe :
       constant Unicode_Char := 16#0149#;
-   Latin_Small_Letter_Apostrophe_N         : constant Unicode_Char := 16#0149#;
    Latin_Capital_Letter_Eng                : constant Unicode_Char := 16#014A#;
    Latin_Small_Letter_Eng                  : constant Unicode_Char := 16#014B#;
    Latin_Capital_Letter_O_With_Macron      : constant Unicode_Char := 16#014C#;
@@ -91,8 +91,6 @@ package Unicode.Names.Latin_Extended_A is
    Latin_Small_Letter_O_With_Double_Acute  : constant Unicode_Char := 16#0151#;
    Latin_Capital_Ligature_Oe               : constant Unicode_Char := 16#0152#;
    Latin_Small_Ligature_Oe                 : constant Unicode_Char := 16#0153#;
-   Latin_Small_Letter_O_E                  : constant Unicode_Char := 16#0153#;
-   Ethel                                   : constant Unicode_Char := 16#0153#;
    Latin_Capital_Letter_R_With_Acute       : constant Unicode_Char := 16#0154#;
    Latin_Small_Letter_R_With_Acute         : constant Unicode_Char := 16#0155#;
    Latin_Capital_Letter_R_With_Cedilla     : constant Unicode_Char := 16#0156#;
@@ -137,4 +135,5 @@ package Unicode.Names.Latin_Extended_A is
    Latin_Small_Letter_Z_With_Dot_Above     : constant Unicode_Char := 16#017C#;
    Latin_Capital_Letter_Z_With_Caron       : constant Unicode_Char := 16#017D#;
    Latin_Small_Letter_Z_With_Caron         : constant Unicode_Char := 16#017E#;
+   Latin_Small_Letter_Long_S               : constant Unicode_Char := 16#017F#;
 end Unicode.Names.Latin_Extended_A;

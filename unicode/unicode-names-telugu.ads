@@ -1,7 +1,11 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Telugu is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Telugu_Sign_Combining_Candrabindu_Above : constant Unicode_Char := 16#0C00#;
    Telugu_Sign_Candrabindu                 : constant Unicode_Char := 16#0C01#;
    Telugu_Sign_Anusvara                    : constant Unicode_Char := 16#0C02#;
    Telugu_Sign_Visarga                     : constant Unicode_Char := 16#0C03#;
@@ -49,11 +53,13 @@ package Unicode.Names.Telugu is
    Telugu_Letter_Rra                       : constant Unicode_Char := 16#0C31#;
    Telugu_Letter_La                        : constant Unicode_Char := 16#0C32#;
    Telugu_Letter_Lla                       : constant Unicode_Char := 16#0C33#;
+   Telugu_Letter_Llla                      : constant Unicode_Char := 16#0C34#;
    Telugu_Letter_Va                        : constant Unicode_Char := 16#0C35#;
    Telugu_Letter_Sha                       : constant Unicode_Char := 16#0C36#;
    Telugu_Letter_Ssa                       : constant Unicode_Char := 16#0C37#;
    Telugu_Letter_Sa                        : constant Unicode_Char := 16#0C38#;
    Telugu_Letter_Ha                        : constant Unicode_Char := 16#0C39#;
+   Telugu_Sign_Avagraha                    : constant Unicode_Char := 16#0C3D#;
    Telugu_Vowel_Sign_Aa                    : constant Unicode_Char := 16#0C3E#;
    Telugu_Vowel_Sign_I                     : constant Unicode_Char := 16#0C3F#;
    Telugu_Vowel_Sign_Ii                    : constant Unicode_Char := 16#0C40#;
@@ -70,8 +76,13 @@ package Unicode.Names.Telugu is
    Telugu_Sign_Virama                      : constant Unicode_Char := 16#0C4D#;
    Telugu_Length_Mark                      : constant Unicode_Char := 16#0C55#;
    Telugu_Ai_Length_Mark                   : constant Unicode_Char := 16#0C56#;
+   Telugu_Letter_Tsa                       : constant Unicode_Char := 16#0C58#;
+   Telugu_Letter_Dza                       : constant Unicode_Char := 16#0C59#;
+   Telugu_Letter_Rrra                      : constant Unicode_Char := 16#0C5A#;
    Telugu_Letter_Vocalic_Rr                : constant Unicode_Char := 16#0C60#;
    Telugu_Letter_Vocalic_Ll                : constant Unicode_Char := 16#0C61#;
+   Telugu_Vowel_Sign_Vocalic_L             : constant Unicode_Char := 16#0C62#;
+   Telugu_Vowel_Sign_Vocalic_Ll            : constant Unicode_Char := 16#0C63#;
    Telugu_Digit_Zero                       : constant Unicode_Char := 16#0C66#;
    Telugu_Digit_One                        : constant Unicode_Char := 16#0C67#;
    Telugu_Digit_Two                        : constant Unicode_Char := 16#0C68#;
@@ -82,4 +93,19 @@ package Unicode.Names.Telugu is
    Telugu_Digit_Seven                      : constant Unicode_Char := 16#0C6D#;
    Telugu_Digit_Eight                      : constant Unicode_Char := 16#0C6E#;
    Telugu_Digit_Nine                       : constant Unicode_Char := 16#0C6F#;
+   Telugu_Fraction_Digit_Zero_For_Odd_Powers_Of_Four :
+      constant Unicode_Char := 16#0C78#;
+   Telugu_Fraction_Digit_One_For_Odd_Powers_Of_Four :
+      constant Unicode_Char := 16#0C79#;
+   Telugu_Fraction_Digit_Two_For_Odd_Powers_Of_Four :
+      constant Unicode_Char := 16#0C7A#;
+   Telugu_Fraction_Digit_Three_For_Odd_Powers_Of_Four :
+      constant Unicode_Char := 16#0C7B#;
+   Telugu_Fraction_Digit_One_For_Even_Powers_Of_Four :
+      constant Unicode_Char := 16#0C7C#;
+   Telugu_Fraction_Digit_Two_For_Even_Powers_Of_Four :
+      constant Unicode_Char := 16#0C7D#;
+   Telugu_Fraction_Digit_Three_For_Even_Powers_Of_Four :
+      constant Unicode_Char := 16#0C7E#;
+   Telugu_Sign_Tuumu                       : constant Unicode_Char := 16#0C7F#;
 end Unicode.Names.Telugu;

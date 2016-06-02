@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Oriya is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Oriya_Sign_Candrabindu                  : constant Unicode_Char := 16#0B01#;
    Oriya_Sign_Anusvara                     : constant Unicode_Char := 16#0B02#;
    Oriya_Sign_Visarga                      : constant Unicode_Char := 16#0B03#;
@@ -40,14 +43,13 @@ package Unicode.Names.Oriya is
    Oriya_Letter_Pa                         : constant Unicode_Char := 16#0B2A#;
    Oriya_Letter_Pha                        : constant Unicode_Char := 16#0B2B#;
    Oriya_Letter_Ba                         : constant Unicode_Char := 16#0B2C#;
-   Oriya_Va                                : constant Unicode_Char := 16#0B2C#;
-   Wa                                      : constant Unicode_Char := 16#0B2C#;
    Oriya_Letter_Bha                        : constant Unicode_Char := 16#0B2D#;
    Oriya_Letter_Ma                         : constant Unicode_Char := 16#0B2E#;
    Oriya_Letter_Ya                         : constant Unicode_Char := 16#0B2F#;
    Oriya_Letter_Ra                         : constant Unicode_Char := 16#0B30#;
    Oriya_Letter_La                         : constant Unicode_Char := 16#0B32#;
    Oriya_Letter_Lla                        : constant Unicode_Char := 16#0B33#;
+   Oriya_Letter_Va                         : constant Unicode_Char := 16#0B35#;
    Oriya_Letter_Sha                        : constant Unicode_Char := 16#0B36#;
    Oriya_Letter_Ssa                        : constant Unicode_Char := 16#0B37#;
    Oriya_Letter_Sa                         : constant Unicode_Char := 16#0B38#;
@@ -60,6 +62,7 @@ package Unicode.Names.Oriya is
    Oriya_Vowel_Sign_U                      : constant Unicode_Char := 16#0B41#;
    Oriya_Vowel_Sign_Uu                     : constant Unicode_Char := 16#0B42#;
    Oriya_Vowel_Sign_Vocalic_R              : constant Unicode_Char := 16#0B43#;
+   Oriya_Vowel_Sign_Vocalic_Rr             : constant Unicode_Char := 16#0B44#;
    Oriya_Vowel_Sign_E                      : constant Unicode_Char := 16#0B47#;
    Oriya_Vowel_Sign_Ai                     : constant Unicode_Char := 16#0B48#;
    Oriya_Vowel_Sign_O                      : constant Unicode_Char := 16#0B4B#;
@@ -72,6 +75,8 @@ package Unicode.Names.Oriya is
    Oriya_Letter_Yya                        : constant Unicode_Char := 16#0B5F#;
    Oriya_Letter_Vocalic_Rr                 : constant Unicode_Char := 16#0B60#;
    Oriya_Letter_Vocalic_Ll                 : constant Unicode_Char := 16#0B61#;
+   Oriya_Vowel_Sign_Vocalic_L              : constant Unicode_Char := 16#0B62#;
+   Oriya_Vowel_Sign_Vocalic_Ll             : constant Unicode_Char := 16#0B63#;
    Oriya_Digit_Zero                        : constant Unicode_Char := 16#0B66#;
    Oriya_Digit_One                         : constant Unicode_Char := 16#0B67#;
    Oriya_Digit_Two                         : constant Unicode_Char := 16#0B68#;
@@ -83,4 +88,11 @@ package Unicode.Names.Oriya is
    Oriya_Digit_Eight                       : constant Unicode_Char := 16#0B6E#;
    Oriya_Digit_Nine                        : constant Unicode_Char := 16#0B6F#;
    Oriya_Isshar                            : constant Unicode_Char := 16#0B70#;
+   Oriya_Letter_Wa                         : constant Unicode_Char := 16#0B71#;
+   Oriya_Fraction_One_Quarter              : constant Unicode_Char := 16#0B72#;
+   Oriya_Fraction_One_Half                 : constant Unicode_Char := 16#0B73#;
+   Oriya_Fraction_Three_Quarters           : constant Unicode_Char := 16#0B74#;
+   Oriya_Fraction_One_Sixteenth            : constant Unicode_Char := 16#0B75#;
+   Oriya_Fraction_One_Eighth               : constant Unicode_Char := 16#0B76#;
+   Oriya_Fraction_Three_Sixteenths         : constant Unicode_Char := 16#0B77#;
 end Unicode.Names.Oriya;

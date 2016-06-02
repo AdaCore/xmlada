@@ -15,6 +15,23 @@ of the feature.
 New features in version 17.0
 ----------------------------
 
+NF-17-P406-028 unicode names from the Unicode 8 standard (2016-06-02)
+
+   The unicode-names-* packages were updated to match the Unicode 8 standard.
+   The new bindings are generated via a new importer, which fixes a number of
+   issues with the previous bindings:
+      - some characters were put in the wrong block (and thus wrong package)
+      - some typos due to incorrect parsing of the Unicode files
+      - some name aliases would hide canonical names occurring later (for
+        instance 1F5E2 was hidden by 1F48B)
+      - some unofficial aliases were used (Bell is not long valid, for
+        instance)
+   This change is not fully backward compatible, due to changes in the Unicode
+   standard itself, since some blocks were renamed, as well as some
+   characters.
+
+   Contributed by Nicolas Boulenguez
+
 NF-17-OB19-014 new function Schema.Dom_Treader.Current_Node (2015-11-19)
 
    This function makes it easier to override primitives like Start_Element

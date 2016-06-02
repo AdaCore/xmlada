@@ -1,8 +1,13 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Gurmukhi is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Gurmukhi_Sign_Adak_Bindi                : constant Unicode_Char := 16#0A01#;
    Gurmukhi_Sign_Bindi                     : constant Unicode_Char := 16#0A02#;
+   Gurmukhi_Sign_Visarga                   : constant Unicode_Char := 16#0A03#;
    Gurmukhi_Letter_A                       : constant Unicode_Char := 16#0A05#;
    Gurmukhi_Letter_Aa                      : constant Unicode_Char := 16#0A06#;
    Gurmukhi_Letter_I                       : constant Unicode_Char := 16#0A07#;
@@ -57,6 +62,7 @@ package Unicode.Names.Gurmukhi is
    Gurmukhi_Vowel_Sign_Oo                  : constant Unicode_Char := 16#0A4B#;
    Gurmukhi_Vowel_Sign_Au                  : constant Unicode_Char := 16#0A4C#;
    Gurmukhi_Sign_Virama                    : constant Unicode_Char := 16#0A4D#;
+   Gurmukhi_Sign_Udaat                     : constant Unicode_Char := 16#0A51#;
    Gurmukhi_Letter_Khha                    : constant Unicode_Char := 16#0A59#;
    Gurmukhi_Letter_Ghha                    : constant Unicode_Char := 16#0A5A#;
    Gurmukhi_Letter_Za                      : constant Unicode_Char := 16#0A5B#;
@@ -77,4 +83,5 @@ package Unicode.Names.Gurmukhi is
    Gurmukhi_Iri                            : constant Unicode_Char := 16#0A72#;
    Gurmukhi_Ura                            : constant Unicode_Char := 16#0A73#;
    Gurmukhi_Ek_Onkar                       : constant Unicode_Char := 16#0A74#;
+   Gurmukhi_Sign_Yakash                    : constant Unicode_Char := 16#0A75#;
 end Unicode.Names.Gurmukhi;

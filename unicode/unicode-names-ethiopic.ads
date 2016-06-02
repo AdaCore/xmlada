@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Ethiopic is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Ethiopic_Syllable_Ha                    : constant Unicode_Char := 16#1200#;
    Ethiopic_Syllable_Hu                    : constant Unicode_Char := 16#1201#;
    Ethiopic_Syllable_Hi                    : constant Unicode_Char := 16#1202#;
@@ -9,6 +12,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Hee                   : constant Unicode_Char := 16#1204#;
    Ethiopic_Syllable_He                    : constant Unicode_Char := 16#1205#;
    Ethiopic_Syllable_Ho                    : constant Unicode_Char := 16#1206#;
+   Ethiopic_Syllable_Hoa                   : constant Unicode_Char := 16#1207#;
    Ethiopic_Syllable_La                    : constant Unicode_Char := 16#1208#;
    Ethiopic_Syllable_Lu                    : constant Unicode_Char := 16#1209#;
    Ethiopic_Syllable_Li                    : constant Unicode_Char := 16#120A#;
@@ -72,6 +76,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Qee                   : constant Unicode_Char := 16#1244#;
    Ethiopic_Syllable_Qe                    : constant Unicode_Char := 16#1245#;
    Ethiopic_Syllable_Qo                    : constant Unicode_Char := 16#1246#;
+   Ethiopic_Syllable_Qoa                   : constant Unicode_Char := 16#1247#;
    Ethiopic_Syllable_Qwa                   : constant Unicode_Char := 16#1248#;
    Ethiopic_Syllable_Qwi                   : constant Unicode_Char := 16#124A#;
    Ethiopic_Syllable_Qwaa                  : constant Unicode_Char := 16#124B#;
@@ -128,6 +133,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Xee                   : constant Unicode_Char := 16#1284#;
    Ethiopic_Syllable_Xe                    : constant Unicode_Char := 16#1285#;
    Ethiopic_Syllable_Xo                    : constant Unicode_Char := 16#1286#;
+   Ethiopic_Syllable_Xoa                   : constant Unicode_Char := 16#1287#;
    Ethiopic_Syllable_Xwa                   : constant Unicode_Char := 16#1288#;
    Ethiopic_Syllable_Xwi                   : constant Unicode_Char := 16#128A#;
    Ethiopic_Syllable_Xwaa                  : constant Unicode_Char := 16#128B#;
@@ -164,6 +170,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Kee                   : constant Unicode_Char := 16#12AC#;
    Ethiopic_Syllable_Ke                    : constant Unicode_Char := 16#12AD#;
    Ethiopic_Syllable_Ko                    : constant Unicode_Char := 16#12AE#;
+   Ethiopic_Syllable_Koa                   : constant Unicode_Char := 16#12AF#;
    Ethiopic_Syllable_Kwa                   : constant Unicode_Char := 16#12B0#;
    Ethiopic_Syllable_Kwi                   : constant Unicode_Char := 16#12B2#;
    Ethiopic_Syllable_Kwaa                  : constant Unicode_Char := 16#12B3#;
@@ -188,6 +195,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Wee                   : constant Unicode_Char := 16#12CC#;
    Ethiopic_Syllable_We                    : constant Unicode_Char := 16#12CD#;
    Ethiopic_Syllable_Wo                    : constant Unicode_Char := 16#12CE#;
+   Ethiopic_Syllable_Woa                   : constant Unicode_Char := 16#12CF#;
    Ethiopic_Syllable_Pharyngeal_A          : constant Unicode_Char := 16#12D0#;
    Ethiopic_Syllable_Pharyngeal_U          : constant Unicode_Char := 16#12D1#;
    Ethiopic_Syllable_Pharyngeal_I          : constant Unicode_Char := 16#12D2#;
@@ -218,6 +226,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Yee                   : constant Unicode_Char := 16#12EC#;
    Ethiopic_Syllable_Ye                    : constant Unicode_Char := 16#12ED#;
    Ethiopic_Syllable_Yo                    : constant Unicode_Char := 16#12EE#;
+   Ethiopic_Syllable_Yoa                   : constant Unicode_Char := 16#12EF#;
    Ethiopic_Syllable_Da                    : constant Unicode_Char := 16#12F0#;
    Ethiopic_Syllable_Du                    : constant Unicode_Char := 16#12F1#;
    Ethiopic_Syllable_Di                    : constant Unicode_Char := 16#12F2#;
@@ -249,6 +258,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Gee                   : constant Unicode_Char := 16#130C#;
    Ethiopic_Syllable_Ge                    : constant Unicode_Char := 16#130D#;
    Ethiopic_Syllable_Go                    : constant Unicode_Char := 16#130E#;
+   Ethiopic_Syllable_Goa                   : constant Unicode_Char := 16#130F#;
    Ethiopic_Syllable_Gwa                   : constant Unicode_Char := 16#1310#;
    Ethiopic_Syllable_Gwi                   : constant Unicode_Char := 16#1312#;
    Ethiopic_Syllable_Gwaa                  : constant Unicode_Char := 16#1313#;
@@ -261,6 +271,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Ggee                  : constant Unicode_Char := 16#131C#;
    Ethiopic_Syllable_Gge                   : constant Unicode_Char := 16#131D#;
    Ethiopic_Syllable_Ggo                   : constant Unicode_Char := 16#131E#;
+   Ethiopic_Syllable_Ggwaa                 : constant Unicode_Char := 16#131F#;
    Ethiopic_Syllable_Tha                   : constant Unicode_Char := 16#1320#;
    Ethiopic_Syllable_Thu                   : constant Unicode_Char := 16#1321#;
    Ethiopic_Syllable_Thi                   : constant Unicode_Char := 16#1322#;
@@ -300,6 +311,7 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Tzee                  : constant Unicode_Char := 16#1344#;
    Ethiopic_Syllable_Tze                   : constant Unicode_Char := 16#1345#;
    Ethiopic_Syllable_Tzo                   : constant Unicode_Char := 16#1346#;
+   Ethiopic_Syllable_Tzoa                  : constant Unicode_Char := 16#1347#;
    Ethiopic_Syllable_Fa                    : constant Unicode_Char := 16#1348#;
    Ethiopic_Syllable_Fu                    : constant Unicode_Char := 16#1349#;
    Ethiopic_Syllable_Fi                    : constant Unicode_Char := 16#134A#;
@@ -319,6 +331,11 @@ package Unicode.Names.Ethiopic is
    Ethiopic_Syllable_Rya                   : constant Unicode_Char := 16#1358#;
    Ethiopic_Syllable_Mya                   : constant Unicode_Char := 16#1359#;
    Ethiopic_Syllable_Fya                   : constant Unicode_Char := 16#135A#;
+   Ethiopic_Combining_Gemination_And_Vowel_Length_Mark :
+      constant Unicode_Char := 16#135D#;
+   Ethiopic_Combining_Vowel_Length_Mark    : constant Unicode_Char := 16#135E#;
+   Ethiopic_Combining_Gemination_Mark      : constant Unicode_Char := 16#135F#;
+   Ethiopic_Section_Mark                   : constant Unicode_Char := 16#1360#;
    Ethiopic_Wordspace                      : constant Unicode_Char := 16#1361#;
    Ethiopic_Full_Stop                      : constant Unicode_Char := 16#1362#;
    Ethiopic_Comma                          : constant Unicode_Char := 16#1363#;

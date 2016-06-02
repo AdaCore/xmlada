@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cjk_Letters_Months is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Parenthesized_Hangul_Kiyeok             : constant Unicode_Char := 16#3200#;
    Parenthesized_Hangul_Nieun              : constant Unicode_Char := 16#3201#;
    Parenthesized_Hangul_Tikeut             : constant Unicode_Char := 16#3202#;
@@ -31,6 +34,8 @@ package Unicode.Names.Cjk_Letters_Months is
    Parenthesized_Hangul_Phieuph_A          : constant Unicode_Char := 16#321A#;
    Parenthesized_Hangul_Hieuh_A            : constant Unicode_Char := 16#321B#;
    Parenthesized_Hangul_Cieuc_U            : constant Unicode_Char := 16#321C#;
+   Parenthesized_Korean_Character_Ojeon    : constant Unicode_Char := 16#321D#;
+   Parenthesized_Korean_Character_O_Hu     : constant Unicode_Char := 16#321E#;
    Parenthesized_Ideograph_One             : constant Unicode_Char := 16#3220#;
    Parenthesized_Ideograph_Two             : constant Unicode_Char := 16#3221#;
    Parenthesized_Ideograph_Three           : constant Unicode_Char := 16#3222#;
@@ -67,6 +72,34 @@ package Unicode.Names.Cjk_Letters_Months is
    Parenthesized_Ideograph_Rest            : constant Unicode_Char := 16#3241#;
    Parenthesized_Ideograph_Self            : constant Unicode_Char := 16#3242#;
    Parenthesized_Ideograph_Reach           : constant Unicode_Char := 16#3243#;
+   Circled_Ideograph_Question              : constant Unicode_Char := 16#3244#;
+   Circled_Ideograph_Kindergarten          : constant Unicode_Char := 16#3245#;
+   Circled_Ideograph_School                : constant Unicode_Char := 16#3246#;
+   Circled_Ideograph_Koto                  : constant Unicode_Char := 16#3247#;
+   Circled_Number_Ten_On_Black_Square      : constant Unicode_Char := 16#3248#;
+   Circled_Number_Twenty_On_Black_Square   : constant Unicode_Char := 16#3249#;
+   Circled_Number_Thirty_On_Black_Square   : constant Unicode_Char := 16#324A#;
+   Circled_Number_Forty_On_Black_Square    : constant Unicode_Char := 16#324B#;
+   Circled_Number_Fifty_On_Black_Square    : constant Unicode_Char := 16#324C#;
+   Circled_Number_Sixty_On_Black_Square    : constant Unicode_Char := 16#324D#;
+   Circled_Number_Seventy_On_Black_Square  : constant Unicode_Char := 16#324E#;
+   Circled_Number_Eighty_On_Black_Square   : constant Unicode_Char := 16#324F#;
+   Partnership_Sign                        : constant Unicode_Char := 16#3250#;
+   Circled_Number_Twenty_One               : constant Unicode_Char := 16#3251#;
+   Circled_Number_Twenty_Two               : constant Unicode_Char := 16#3252#;
+   Circled_Number_Twenty_Three             : constant Unicode_Char := 16#3253#;
+   Circled_Number_Twenty_Four              : constant Unicode_Char := 16#3254#;
+   Circled_Number_Twenty_Five              : constant Unicode_Char := 16#3255#;
+   Circled_Number_Twenty_Six               : constant Unicode_Char := 16#3256#;
+   Circled_Number_Twenty_Seven             : constant Unicode_Char := 16#3257#;
+   Circled_Number_Twenty_Eight             : constant Unicode_Char := 16#3258#;
+   Circled_Number_Twenty_Nine              : constant Unicode_Char := 16#3259#;
+   Circled_Number_Thirty                   : constant Unicode_Char := 16#325A#;
+   Circled_Number_Thirty_One               : constant Unicode_Char := 16#325B#;
+   Circled_Number_Thirty_Two               : constant Unicode_Char := 16#325C#;
+   Circled_Number_Thirty_Three             : constant Unicode_Char := 16#325D#;
+   Circled_Number_Thirty_Four              : constant Unicode_Char := 16#325E#;
+   Circled_Number_Thirty_Five              : constant Unicode_Char := 16#325F#;
    Circled_Hangul_Kiyeok                   : constant Unicode_Char := 16#3260#;
    Circled_Hangul_Nieun                    : constant Unicode_Char := 16#3261#;
    Circled_Hangul_Tikeut                   : constant Unicode_Char := 16#3262#;
@@ -95,10 +128,11 @@ package Unicode.Names.Cjk_Letters_Months is
    Circled_Hangul_Thieuth_A                : constant Unicode_Char := 16#3279#;
    Circled_Hangul_Phieuph_A                : constant Unicode_Char := 16#327A#;
    Circled_Hangul_Hieuh_A                  : constant Unicode_Char := 16#327B#;
+   Circled_Korean_Character_Chamko         : constant Unicode_Char := 16#327C#;
+   Circled_Korean_Character_Jueui          : constant Unicode_Char := 16#327D#;
+   Circled_Hangul_Ieung_U                  : constant Unicode_Char := 16#327E#;
    Korean_Standard_Symbol                  : constant Unicode_Char := 16#327F#;
    Circled_Ideograph_One                   : constant Unicode_Char := 16#3280#;
-   Maru_Iti                                : constant Unicode_Char := 16#3280#;
-   Symbol_Of_Unification                   : constant Unicode_Char := 16#3280#;
    Circled_Ideograph_Two                   : constant Unicode_Char := 16#3281#;
    Circled_Ideograph_Three                 : constant Unicode_Char := 16#3282#;
    Circled_Ideograph_Four                  : constant Unicode_Char := 16#3283#;
@@ -147,6 +181,21 @@ package Unicode.Names.Cjk_Letters_Months is
    Circled_Ideograph_Resource              : constant Unicode_Char := 16#32AE#;
    Circled_Ideograph_Alliance              : constant Unicode_Char := 16#32AF#;
    Circled_Ideograph_Night                 : constant Unicode_Char := 16#32B0#;
+   Circled_Number_Thirty_Six               : constant Unicode_Char := 16#32B1#;
+   Circled_Number_Thirty_Seven             : constant Unicode_Char := 16#32B2#;
+   Circled_Number_Thirty_Eight             : constant Unicode_Char := 16#32B3#;
+   Circled_Number_Thirty_Nine              : constant Unicode_Char := 16#32B4#;
+   Circled_Number_Forty                    : constant Unicode_Char := 16#32B5#;
+   Circled_Number_Forty_One                : constant Unicode_Char := 16#32B6#;
+   Circled_Number_Forty_Two                : constant Unicode_Char := 16#32B7#;
+   Circled_Number_Forty_Three              : constant Unicode_Char := 16#32B8#;
+   Circled_Number_Forty_Four               : constant Unicode_Char := 16#32B9#;
+   Circled_Number_Forty_Five               : constant Unicode_Char := 16#32BA#;
+   Circled_Number_Forty_Six                : constant Unicode_Char := 16#32BB#;
+   Circled_Number_Forty_Seven              : constant Unicode_Char := 16#32BC#;
+   Circled_Number_Forty_Eight              : constant Unicode_Char := 16#32BD#;
+   Circled_Number_Forty_Nine               : constant Unicode_Char := 16#32BE#;
+   Circled_Number_Fifty                    : constant Unicode_Char := 16#32BF#;
    Ideographic_Telegraph_Symbol_For_January :
       constant Unicode_Char := 16#32C0#;
    Ideographic_Telegraph_Symbol_For_February :
@@ -165,6 +214,10 @@ package Unicode.Names.Cjk_Letters_Months is
       constant Unicode_Char := 16#32CA#;
    Ideographic_Telegraph_Symbol_For_December :
       constant Unicode_Char := 16#32CB#;
+   Square_Hg                               : constant Unicode_Char := 16#32CC#;
+   Square_Erg                              : constant Unicode_Char := 16#32CD#;
+   Square_Ev                               : constant Unicode_Char := 16#32CE#;
+   Limited_Liability_Sign                  : constant Unicode_Char := 16#32CF#;
    Circled_Katakana_A                      : constant Unicode_Char := 16#32D0#;
    Circled_Katakana_I                      : constant Unicode_Char := 16#32D1#;
    Circled_Katakana_U                      : constant Unicode_Char := 16#32D2#;

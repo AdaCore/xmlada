@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cjk_Compatibility is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Square_Apaato                           : constant Unicode_Char := 16#3300#;
    Square_Aruhua                           : constant Unicode_Char := 16#3301#;
    Square_Anpea                            : constant Unicode_Char := 16#3302#;
@@ -146,12 +149,15 @@ package Unicode.Names.Cjk_Compatibility is
    Square_Bar                              : constant Unicode_Char := 16#3374#;
    Square_Ov                               : constant Unicode_Char := 16#3375#;
    Square_Pc                               : constant Unicode_Char := 16#3376#;
+   Square_Dm                               : constant Unicode_Char := 16#3377#;
+   Square_Dm_Squared                       : constant Unicode_Char := 16#3378#;
+   Square_Dm_Cubed                         : constant Unicode_Char := 16#3379#;
+   Square_Iu                               : constant Unicode_Char := 16#337A#;
    Square_Era_Name_Heisei                  : constant Unicode_Char := 16#337B#;
    Square_Era_Name_Syouwa                  : constant Unicode_Char := 16#337C#;
    Square_Era_Name_Taisyou                 : constant Unicode_Char := 16#337D#;
    Square_Era_Name_Meizi                   : constant Unicode_Char := 16#337E#;
    Square_Corporation                      : constant Unicode_Char := 16#337F#;
-   Kabusiki_Gaisya                         : constant Unicode_Char := 16#337F#;
    Square_Pa_Amps                          : constant Unicode_Char := 16#3380#;
    Square_Na                               : constant Unicode_Char := 16#3381#;
    Square_Mu_A                             : constant Unicode_Char := 16#3382#;
@@ -246,6 +252,8 @@ package Unicode.Names.Cjk_Compatibility is
    Square_Sr                               : constant Unicode_Char := 16#33DB#;
    Square_Sv                               : constant Unicode_Char := 16#33DC#;
    Square_Wb                               : constant Unicode_Char := 16#33DD#;
+   Square_V_Over_M                         : constant Unicode_Char := 16#33DE#;
+   Square_A_Over_M                         : constant Unicode_Char := 16#33DF#;
    Ideographic_Telegraph_Symbol_For_Day_One :
       constant Unicode_Char := 16#33E0#;
    Ideographic_Telegraph_Symbol_For_Day_Two :
@@ -308,4 +316,5 @@ package Unicode.Names.Cjk_Compatibility is
       constant Unicode_Char := 16#33FD#;
    Ideographic_Telegraph_Symbol_For_Day_Thirty_One :
       constant Unicode_Char := 16#33FE#;
+   Square_Gal                              : constant Unicode_Char := 16#33FF#;
 end Unicode.Names.Cjk_Compatibility;

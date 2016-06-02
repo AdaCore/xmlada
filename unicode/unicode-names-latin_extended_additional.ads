@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Latin_Extended_Additional is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Latin_Capital_Letter_A_With_Ring_Below  : constant Unicode_Char := 16#1E00#;
    Latin_Small_Letter_A_With_Ring_Below    : constant Unicode_Char := 16#1E01#;
    Latin_Capital_Letter_B_With_Dot_Above   : constant Unicode_Char := 16#1E02#;
@@ -206,6 +209,12 @@ package Unicode.Names.Latin_Extended_Additional is
       constant Unicode_Char := 16#1E9A#;
    Latin_Small_Letter_Long_S_With_Dot_Above :
       constant Unicode_Char := 16#1E9B#;
+   Latin_Small_Letter_Long_S_With_Diagonal_Stroke :
+      constant Unicode_Char := 16#1E9C#;
+   Latin_Small_Letter_Long_S_With_High_Stroke :
+      constant Unicode_Char := 16#1E9D#;
+   Latin_Capital_Letter_Sharp_S            : constant Unicode_Char := 16#1E9E#;
+   Latin_Small_Letter_Delta                : constant Unicode_Char := 16#1E9F#;
    Latin_Capital_Letter_A_With_Dot_Below   : constant Unicode_Char := 16#1EA0#;
    Latin_Small_Letter_A_With_Dot_Below     : constant Unicode_Char := 16#1EA1#;
    Latin_Capital_Letter_A_With_Hook_Above  : constant Unicode_Char := 16#1EA2#;
@@ -356,4 +365,10 @@ package Unicode.Names.Latin_Extended_Additional is
    Latin_Small_Letter_Y_With_Hook_Above    : constant Unicode_Char := 16#1EF7#;
    Latin_Capital_Letter_Y_With_Tilde       : constant Unicode_Char := 16#1EF8#;
    Latin_Small_Letter_Y_With_Tilde         : constant Unicode_Char := 16#1EF9#;
+   Latin_Capital_Letter_Middle_Welsh_Ll    : constant Unicode_Char := 16#1EFA#;
+   Latin_Small_Letter_Middle_Welsh_Ll      : constant Unicode_Char := 16#1EFB#;
+   Latin_Capital_Letter_Middle_Welsh_V     : constant Unicode_Char := 16#1EFC#;
+   Latin_Small_Letter_Middle_Welsh_V       : constant Unicode_Char := 16#1EFD#;
+   Latin_Capital_Letter_Y_With_Loop        : constant Unicode_Char := 16#1EFE#;
+   Latin_Small_Letter_Y_With_Loop          : constant Unicode_Char := 16#1EFF#;
 end Unicode.Names.Latin_Extended_Additional;

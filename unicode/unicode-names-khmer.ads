@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Khmer is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Khmer_Letter_Ka                         : constant Unicode_Char := 16#1780#;
    Khmer_Letter_Kha                        : constant Unicode_Char := 16#1781#;
    Khmer_Letter_Ko                         : constant Unicode_Char := 16#1782#;
@@ -73,9 +76,7 @@ package Unicode.Names.Khmer is
    Khmer_Vowel_Sign_Oo                     : constant Unicode_Char := 16#17C4#;
    Khmer_Vowel_Sign_Au                     : constant Unicode_Char := 16#17C5#;
    Khmer_Sign_Nikahit                      : constant Unicode_Char := 16#17C6#;
-   Anusvara                                : constant Unicode_Char := 16#17C6#;
    Khmer_Sign_Reahmuk                      : constant Unicode_Char := 16#17C7#;
-   Visarga                                 : constant Unicode_Char := 16#17C7#;
    Khmer_Sign_Yuukaleapintu                : constant Unicode_Char := 16#17C8#;
    Khmer_Sign_Muusikatoan                  : constant Unicode_Char := 16#17C9#;
    Khmer_Sign_Triisap                      : constant Unicode_Char := 16#17CA#;
@@ -97,6 +98,7 @@ package Unicode.Names.Khmer is
    Khmer_Sign_Koomuut                      : constant Unicode_Char := 16#17DA#;
    Khmer_Currency_Symbol_Riel              : constant Unicode_Char := 16#17DB#;
    Khmer_Sign_Avakrahasanya                : constant Unicode_Char := 16#17DC#;
+   Khmer_Sign_Atthacan                     : constant Unicode_Char := 16#17DD#;
    Khmer_Digit_Zero                        : constant Unicode_Char := 16#17E0#;
    Khmer_Digit_One                         : constant Unicode_Char := 16#17E1#;
    Khmer_Digit_Two                         : constant Unicode_Char := 16#17E2#;
@@ -107,4 +109,14 @@ package Unicode.Names.Khmer is
    Khmer_Digit_Seven                       : constant Unicode_Char := 16#17E7#;
    Khmer_Digit_Eight                       : constant Unicode_Char := 16#17E8#;
    Khmer_Digit_Nine                        : constant Unicode_Char := 16#17E9#;
+   Khmer_Symbol_Lek_Attak_Son              : constant Unicode_Char := 16#17F0#;
+   Khmer_Symbol_Lek_Attak_Muoy             : constant Unicode_Char := 16#17F1#;
+   Khmer_Symbol_Lek_Attak_Pii              : constant Unicode_Char := 16#17F2#;
+   Khmer_Symbol_Lek_Attak_Bei              : constant Unicode_Char := 16#17F3#;
+   Khmer_Symbol_Lek_Attak_Buon             : constant Unicode_Char := 16#17F4#;
+   Khmer_Symbol_Lek_Attak_Pram             : constant Unicode_Char := 16#17F5#;
+   Khmer_Symbol_Lek_Attak_Pram_Muoy        : constant Unicode_Char := 16#17F6#;
+   Khmer_Symbol_Lek_Attak_Pram_Pii         : constant Unicode_Char := 16#17F7#;
+   Khmer_Symbol_Lek_Attak_Pram_Bei         : constant Unicode_Char := 16#17F8#;
+   Khmer_Symbol_Lek_Attak_Pram_Buon        : constant Unicode_Char := 16#17F9#;
 end Unicode.Names.Khmer;

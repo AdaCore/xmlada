@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Miscellaneous_Technical is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Diameter_Sign                           : constant Unicode_Char := 16#2300#;
    Electric_Arrow                          : constant Unicode_Char := 16#2301#;
    House                                   : constant Unicode_Char := 16#2302#;
@@ -11,17 +14,14 @@ package Unicode.Names.Miscellaneous_Technical is
    Perspective                             : constant Unicode_Char := 16#2306#;
    Wavy_Line                               : constant Unicode_Char := 16#2307#;
    Left_Ceiling                            : constant Unicode_Char := 16#2308#;
-   Apl_Upstile                             : constant Unicode_Char := 16#2308#;
    Right_Ceiling                           : constant Unicode_Char := 16#2309#;
    Left_Floor                              : constant Unicode_Char := 16#230A#;
-   Apl_Downstile                           : constant Unicode_Char := 16#230A#;
    Right_Floor                             : constant Unicode_Char := 16#230B#;
    Bottom_Right_Crop                       : constant Unicode_Char := 16#230C#;
    Bottom_Left_Crop                        : constant Unicode_Char := 16#230D#;
    Top_Right_Crop                          : constant Unicode_Char := 16#230E#;
    Top_Left_Crop                           : constant Unicode_Char := 16#230F#;
    Reversed_Not_Sign                       : constant Unicode_Char := 16#2310#;
-   Beginning_Of_Line                       : constant Unicode_Char := 16#2310#;
    Square_Lozenge                          : constant Unicode_Char := 16#2311#;
    Arc                                     : constant Unicode_Char := 16#2312#;
    Segment                                 : constant Unicode_Char := 16#2313#;
@@ -30,9 +30,7 @@ package Unicode.Names.Miscellaneous_Technical is
    Position_Indicator                      : constant Unicode_Char := 16#2316#;
    Viewdata_Square                         : constant Unicode_Char := 16#2317#;
    Place_Of_Interest_Sign                  : constant Unicode_Char := 16#2318#;
-   Command_Key                             : constant Unicode_Char := 16#2318#;
    Turned_Not_Sign                         : constant Unicode_Char := 16#2319#;
-   Line_Marker                             : constant Unicode_Char := 16#2319#;
    Watch                                   : constant Unicode_Char := 16#231A#;
    Hourglass                               : constant Unicode_Char := 16#231B#;
    Top_Left_Corner                         : constant Unicode_Char := 16#231C#;
@@ -45,21 +43,13 @@ package Unicode.Names.Miscellaneous_Technical is
    Smile                                   : constant Unicode_Char := 16#2323#;
    Up_Arrowhead_Between_Two_Horizontal_Bars :
       constant Unicode_Char := 16#2324#;
-   Enter_Key                               : constant Unicode_Char := 16#2324#;
    Option_Key                              : constant Unicode_Char := 16#2325#;
    Erase_To_The_Right                      : constant Unicode_Char := 16#2326#;
-   Delete_To_The_Right_Key                 : constant Unicode_Char := 16#2326#;
    X_In_A_Rectangle_Box                    : constant Unicode_Char := 16#2327#;
-   Clear_Key                               : constant Unicode_Char := 16#2327#;
    Keyboard                                : constant Unicode_Char := 16#2328#;
    Left_Pointing_Angle_Bracket             : constant Unicode_Char := 16#2329#;
-   Bra                                     : constant Unicode_Char := 16#2329#;
-   Z_Notation_Left_Sequence_Bracket        : constant Unicode_Char := 16#2329#;
    Right_Pointing_Angle_Bracket            : constant Unicode_Char := 16#232A#;
-   Ket                                     : constant Unicode_Char := 16#232A#;
-   Z_Notation_Right_Sequence_Bracket       : constant Unicode_Char := 16#232A#;
    Erase_To_The_Left                       : constant Unicode_Char := 16#232B#;
-   Delete_To_The_Left_Key                  : constant Unicode_Char := 16#232B#;
    Benzene_Ring                            : constant Unicode_Char := 16#232C#;
    Cylindricity                            : constant Unicode_Char := 16#232D#;
    All_Around_Profile                      : constant Unicode_Char := 16#232E#;
@@ -147,6 +137,7 @@ package Unicode.Names.Miscellaneous_Technical is
    Apl_Functional_Symbol_Omega_Underbar    : constant Unicode_Char := 16#2379#;
    Apl_Functional_Symbol_Alpha             : constant Unicode_Char := 16#237A#;
    Not_Check_Mark                          : constant Unicode_Char := 16#237B#;
+   Right_Angle_With_Downwards_Zigzag_Arrow : constant Unicode_Char := 16#237C#;
    Shouldered_Open_Box                     : constant Unicode_Char := 16#237D#;
    Bell_Symbol                             : constant Unicode_Char := 16#237E#;
    Vertical_Line_With_Middle_Dot           : constant Unicode_Char := 16#237F#;
@@ -159,7 +150,6 @@ package Unicode.Names.Miscellaneous_Technical is
    Enter_Symbol                            : constant Unicode_Char := 16#2386#;
    Alternative_Key_Symbol                  : constant Unicode_Char := 16#2387#;
    Helm_Symbol                             : constant Unicode_Char := 16#2388#;
-   Control                                 : constant Unicode_Char := 16#2388#;
    Circled_Horizontal_Bar_With_Notch       : constant Unicode_Char := 16#2389#;
    Circled_Triangle_Down                   : constant Unicode_Char := 16#238A#;
    Broken_Circle_With_Northwest_Arrow      : constant Unicode_Char := 16#238B#;
@@ -178,4 +168,121 @@ package Unicode.Names.Miscellaneous_Technical is
    Next_Page                               : constant Unicode_Char := 16#2398#;
    Print_Screen_Symbol                     : constant Unicode_Char := 16#2399#;
    Clear_Screen_Symbol                     : constant Unicode_Char := 16#239A#;
+   Left_Parenthesis_Upper_Hook             : constant Unicode_Char := 16#239B#;
+   Left_Parenthesis_Extension              : constant Unicode_Char := 16#239C#;
+   Left_Parenthesis_Lower_Hook             : constant Unicode_Char := 16#239D#;
+   Right_Parenthesis_Upper_Hook            : constant Unicode_Char := 16#239E#;
+   Right_Parenthesis_Extension             : constant Unicode_Char := 16#239F#;
+   Right_Parenthesis_Lower_Hook            : constant Unicode_Char := 16#23A0#;
+   Left_Square_Bracket_Upper_Corner        : constant Unicode_Char := 16#23A1#;
+   Left_Square_Bracket_Extension           : constant Unicode_Char := 16#23A2#;
+   Left_Square_Bracket_Lower_Corner        : constant Unicode_Char := 16#23A3#;
+   Right_Square_Bracket_Upper_Corner       : constant Unicode_Char := 16#23A4#;
+   Right_Square_Bracket_Extension          : constant Unicode_Char := 16#23A5#;
+   Right_Square_Bracket_Lower_Corner       : constant Unicode_Char := 16#23A6#;
+   Left_Curly_Bracket_Upper_Hook           : constant Unicode_Char := 16#23A7#;
+   Left_Curly_Bracket_Middle_Piece         : constant Unicode_Char := 16#23A8#;
+   Left_Curly_Bracket_Lower_Hook           : constant Unicode_Char := 16#23A9#;
+   Curly_Bracket_Extension                 : constant Unicode_Char := 16#23AA#;
+   Right_Curly_Bracket_Upper_Hook          : constant Unicode_Char := 16#23AB#;
+   Right_Curly_Bracket_Middle_Piece        : constant Unicode_Char := 16#23AC#;
+   Right_Curly_Bracket_Lower_Hook          : constant Unicode_Char := 16#23AD#;
+   Integral_Extension                      : constant Unicode_Char := 16#23AE#;
+   Horizontal_Line_Extension               : constant Unicode_Char := 16#23AF#;
+   Upper_Left_Or_Lower_Right_Curly_Bracket_Section :
+      constant Unicode_Char := 16#23B0#;
+   Upper_Right_Or_Lower_Left_Curly_Bracket_Section :
+      constant Unicode_Char := 16#23B1#;
+   Summation_Top                           : constant Unicode_Char := 16#23B2#;
+   Summation_Bottom                        : constant Unicode_Char := 16#23B3#;
+   Top_Square_Bracket                      : constant Unicode_Char := 16#23B4#;
+   Bottom_Square_Bracket                   : constant Unicode_Char := 16#23B5#;
+   Bottom_Square_Bracket_Over_Top_Square_Bracket :
+      constant Unicode_Char := 16#23B6#;
+   Radical_Symbol_Bottom                   : constant Unicode_Char := 16#23B7#;
+   Left_Vertical_Box_Line                  : constant Unicode_Char := 16#23B8#;
+   Right_Vertical_Box_Line                 : constant Unicode_Char := 16#23B9#;
+   Horizontal_Scan_Line_1                  : constant Unicode_Char := 16#23BA#;
+   Horizontal_Scan_Line_3                  : constant Unicode_Char := 16#23BB#;
+   Horizontal_Scan_Line_7                  : constant Unicode_Char := 16#23BC#;
+   Horizontal_Scan_Line_9                  : constant Unicode_Char := 16#23BD#;
+   Dentistry_Symbol_Light_Vertical_And_Top_Right :
+      constant Unicode_Char := 16#23BE#;
+   Dentistry_Symbol_Light_Vertical_And_Bottom_Right :
+      constant Unicode_Char := 16#23BF#;
+   Dentistry_Symbol_Light_Vertical_With_Circle :
+      constant Unicode_Char := 16#23C0#;
+   Dentistry_Symbol_Light_Down_And_Horizontal_With_Circle :
+      constant Unicode_Char := 16#23C1#;
+   Dentistry_Symbol_Light_Up_And_Horizontal_With_Circle :
+      constant Unicode_Char := 16#23C2#;
+   Dentistry_Symbol_Light_Vertical_With_Triangle :
+      constant Unicode_Char := 16#23C3#;
+   Dentistry_Symbol_Light_Down_And_Horizontal_With_Triangle :
+      constant Unicode_Char := 16#23C4#;
+   Dentistry_Symbol_Light_Up_And_Horizontal_With_Triangle :
+      constant Unicode_Char := 16#23C5#;
+   Dentistry_Symbol_Light_Vertical_And_Wave :
+      constant Unicode_Char := 16#23C6#;
+   Dentistry_Symbol_Light_Down_And_Horizontal_With_Wave :
+      constant Unicode_Char := 16#23C7#;
+   Dentistry_Symbol_Light_Up_And_Horizontal_With_Wave :
+      constant Unicode_Char := 16#23C8#;
+   Dentistry_Symbol_Light_Down_And_Horizontal :
+      constant Unicode_Char := 16#23C9#;
+   Dentistry_Symbol_Light_Up_And_Horizontal :
+      constant Unicode_Char := 16#23CA#;
+   Dentistry_Symbol_Light_Vertical_And_Top_Left :
+      constant Unicode_Char := 16#23CB#;
+   Dentistry_Symbol_Light_Vertical_And_Bottom_Left :
+      constant Unicode_Char := 16#23CC#;
+   Square_Foot                             : constant Unicode_Char := 16#23CD#;
+   Return_Symbol                           : constant Unicode_Char := 16#23CE#;
+   Eject_Symbol                            : constant Unicode_Char := 16#23CF#;
+   Vertical_Line_Extension                 : constant Unicode_Char := 16#23D0#;
+   Metrical_Breve                          : constant Unicode_Char := 16#23D1#;
+   Metrical_Long_Over_Short                : constant Unicode_Char := 16#23D2#;
+   Metrical_Short_Over_Long                : constant Unicode_Char := 16#23D3#;
+   Metrical_Long_Over_Two_Shorts           : constant Unicode_Char := 16#23D4#;
+   Metrical_Two_Shorts_Over_Long           : constant Unicode_Char := 16#23D5#;
+   Metrical_Two_Shorts_Joined              : constant Unicode_Char := 16#23D6#;
+   Metrical_Triseme                        : constant Unicode_Char := 16#23D7#;
+   Metrical_Tetraseme                      : constant Unicode_Char := 16#23D8#;
+   Metrical_Pentaseme                      : constant Unicode_Char := 16#23D9#;
+   Earth_Ground                            : constant Unicode_Char := 16#23DA#;
+   Fuse                                    : constant Unicode_Char := 16#23DB#;
+   Top_Parenthesis                         : constant Unicode_Char := 16#23DC#;
+   Bottom_Parenthesis                      : constant Unicode_Char := 16#23DD#;
+   Top_Curly_Bracket                       : constant Unicode_Char := 16#23DE#;
+   Bottom_Curly_Bracket                    : constant Unicode_Char := 16#23DF#;
+   Top_Tortoise_Shell_Bracket              : constant Unicode_Char := 16#23E0#;
+   Bottom_Tortoise_Shell_Bracket           : constant Unicode_Char := 16#23E1#;
+   White_Trapezium                         : constant Unicode_Char := 16#23E2#;
+   Benzene_Ring_With_Circle                : constant Unicode_Char := 16#23E3#;
+   Straightness                            : constant Unicode_Char := 16#23E4#;
+   Flatness                                : constant Unicode_Char := 16#23E5#;
+   Ac_Current                              : constant Unicode_Char := 16#23E6#;
+   Electrical_Intersection                 : constant Unicode_Char := 16#23E7#;
+   Decimal_Exponent_Symbol                 : constant Unicode_Char := 16#23E8#;
+   Black_Right_Pointing_Double_Triangle    : constant Unicode_Char := 16#23E9#;
+   Black_Left_Pointing_Double_Triangle     : constant Unicode_Char := 16#23EA#;
+   Black_Up_Pointing_Double_Triangle       : constant Unicode_Char := 16#23EB#;
+   Black_Down_Pointing_Double_Triangle     : constant Unicode_Char := 16#23EC#;
+   Black_Right_Pointing_Double_Triangle_With_Vertical_Bar :
+      constant Unicode_Char := 16#23ED#;
+   Black_Left_Pointing_Double_Triangle_With_Vertical_Bar :
+      constant Unicode_Char := 16#23EE#;
+   Black_Right_Pointing_Triangle_With_Double_Vertical_Bar :
+      constant Unicode_Char := 16#23EF#;
+   Alarm_Clock                             : constant Unicode_Char := 16#23F0#;
+   Stopwatch                               : constant Unicode_Char := 16#23F1#;
+   Timer_Clock                             : constant Unicode_Char := 16#23F2#;
+   Hourglass_With_Flowing_Sand             : constant Unicode_Char := 16#23F3#;
+   Black_Medium_Left_Pointing_Triangle     : constant Unicode_Char := 16#23F4#;
+   Black_Medium_Right_Pointing_Triangle    : constant Unicode_Char := 16#23F5#;
+   Black_Medium_Up_Pointing_Triangle       : constant Unicode_Char := 16#23F6#;
+   Black_Medium_Down_Pointing_Triangle     : constant Unicode_Char := 16#23F7#;
+   Double_Vertical_Bar                     : constant Unicode_Char := 16#23F8#;
+   Black_Square_For_Stop                   : constant Unicode_Char := 16#23F9#;
+   Black_Circle_For_Record                 : constant Unicode_Char := 16#23FA#;
 end Unicode.Names.Miscellaneous_Technical;

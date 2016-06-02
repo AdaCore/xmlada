@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Yi_Syllables is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Yi_Syllable_It                          : constant Unicode_Char := 16#A000#;
    Yi_Syllable_Ix                          : constant Unicode_Char := 16#A001#;
    Yi_Syllable_I                           : constant Unicode_Char := 16#A002#;
@@ -24,6 +27,8 @@ package Unicode.Names.Yi_Syllables is
    Yi_Syllable_Ex                          : constant Unicode_Char := 16#A013#;
    Yi_Syllable_E                           : constant Unicode_Char := 16#A014#;
    Yi_Syllable_Wu                          : constant Unicode_Char := 16#A015#;
+   Yi_Syllable_Iteration_Mark              :
+      Unicode_Char renames Yi_Syllable_Wu;
    Yi_Syllable_Bit                         : constant Unicode_Char := 16#A016#;
    Yi_Syllable_Bix                         : constant Unicode_Char := 16#A017#;
    Yi_Syllable_Bi                          : constant Unicode_Char := 16#A018#;

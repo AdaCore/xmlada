@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Georgian is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Georgian_Capital_Letter_An              : constant Unicode_Char := 16#10A0#;
    Georgian_Capital_Letter_Ban             : constant Unicode_Char := 16#10A1#;
    Georgian_Capital_Letter_Gan             : constant Unicode_Char := 16#10A2#;
@@ -40,6 +43,8 @@ package Unicode.Names.Georgian is
    Georgian_Capital_Letter_We              : constant Unicode_Char := 16#10C3#;
    Georgian_Capital_Letter_Har             : constant Unicode_Char := 16#10C4#;
    Georgian_Capital_Letter_Hoe             : constant Unicode_Char := 16#10C5#;
+   Georgian_Capital_Letter_Yn              : constant Unicode_Char := 16#10C7#;
+   Georgian_Capital_Letter_Aen             : constant Unicode_Char := 16#10CD#;
    Georgian_Letter_An                      : constant Unicode_Char := 16#10D0#;
    Georgian_Letter_Ban                     : constant Unicode_Char := 16#10D1#;
    Georgian_Letter_Gan                     : constant Unicode_Char := 16#10D2#;
@@ -79,5 +84,13 @@ package Unicode.Names.Georgian is
    Georgian_Letter_Har                     : constant Unicode_Char := 16#10F4#;
    Georgian_Letter_Hoe                     : constant Unicode_Char := 16#10F5#;
    Georgian_Letter_Fi                      : constant Unicode_Char := 16#10F6#;
+   Georgian_Letter_Yn                      : constant Unicode_Char := 16#10F7#;
+   Georgian_Letter_Elifi                   : constant Unicode_Char := 16#10F8#;
+   Georgian_Letter_Turned_Gan              : constant Unicode_Char := 16#10F9#;
+   Georgian_Letter_Ain                     : constant Unicode_Char := 16#10FA#;
    Georgian_Paragraph_Separator            : constant Unicode_Char := 16#10FB#;
+   Modifier_Letter_Georgian_Nar            : constant Unicode_Char := 16#10FC#;
+   Georgian_Letter_Aen                     : constant Unicode_Char := 16#10FD#;
+   Georgian_Letter_Hard_Sign               : constant Unicode_Char := 16#10FE#;
+   Georgian_Letter_Labial_Sign             : constant Unicode_Char := 16#10FF#;
 end Unicode.Names.Georgian;

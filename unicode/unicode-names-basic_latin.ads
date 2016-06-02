@@ -1,79 +1,131 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Basic_Latin is
-   pragma Preelaborate (Unicode.Names.Basic_Latin);
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
 
    --  Real Unicode name is NULL
-   Nul                                     : constant Unicode_Char := 16#0000#;
+   Unicode_Null                            : constant Unicode_Char := 16#0000#;
+   Nul                                     : Unicode_Char renames Unicode_Null;
    Start_Of_Heading                        : constant Unicode_Char := 16#0001#;
+   Soh                                     :
+      Unicode_Char renames Start_Of_Heading;
    Start_Of_Text                           : constant Unicode_Char := 16#0002#;
+   Stx                                     :
+      Unicode_Char renames Start_Of_Text;
    End_Of_Text                             : constant Unicode_Char := 16#0003#;
+   Etx                                     : Unicode_Char renames End_Of_Text;
    End_Of_Transmission                     : constant Unicode_Char := 16#0004#;
+   Eot                                     :
+      Unicode_Char renames End_Of_Transmission;
    Enquiry                                 : constant Unicode_Char := 16#0005#;
+   Enq                                     : Unicode_Char renames Enquiry;
    Acknowledge                             : constant Unicode_Char := 16#0006#;
-   Bell                                    : constant Unicode_Char := 16#0007#;
+   Ack                                     : Unicode_Char renames Acknowledge;
+   Alert                                   : constant Unicode_Char := 16#0007#;
+   Bel                                     : Unicode_Char renames Alert;
    Backspace                               : constant Unicode_Char := 16#0008#;
-   Horizontal_Tabulation                   : constant Unicode_Char := 16#0009#;
+   Bs                                      : Unicode_Char renames Backspace;
+   Character_Tabulation                    : constant Unicode_Char := 16#0009#;
+   Horizontal_Tabulation                   :
+      Unicode_Char renames Character_Tabulation;
+   Ht                                      :
+      Unicode_Char renames Character_Tabulation;
+   Tab                                     :
+      Unicode_Char renames Character_Tabulation;
    Line_Feed                               : constant Unicode_Char := 16#000A#;
-   Vertical_Tabulation                     : constant Unicode_Char := 16#000B#;
+   New_Line                                : Unicode_Char renames Line_Feed;
+   End_Of_Line                             : Unicode_Char renames Line_Feed;
+   Lf                                      : Unicode_Char renames Line_Feed;
+   Nl                                      : Unicode_Char renames Line_Feed;
+   Eol                                     : Unicode_Char renames Line_Feed;
+   Line_Tabulation                         : constant Unicode_Char := 16#000B#;
+   Vertical_Tabulation                     :
+      Unicode_Char renames Line_Tabulation;
+   Vt                                      :
+      Unicode_Char renames Line_Tabulation;
    Form_Feed                               : constant Unicode_Char := 16#000C#;
+   Ff                                      : Unicode_Char renames Form_Feed;
    Carriage_Return                         : constant Unicode_Char := 16#000D#;
+   Cr                                      :
+      Unicode_Char renames Carriage_Return;
    Shift_Out                               : constant Unicode_Char := 16#000E#;
+   Locking_Shift_One                       : Unicode_Char renames Shift_Out;
+   So                                      : Unicode_Char renames Shift_Out;
    Shift_In                                : constant Unicode_Char := 16#000F#;
+   Locking_Shift_Zero                      : Unicode_Char renames Shift_In;
+   Si                                      : Unicode_Char renames Shift_In;
    Data_Link_Escape                        : constant Unicode_Char := 16#0010#;
+   Dle                                     :
+      Unicode_Char renames Data_Link_Escape;
    Device_Control_One                      : constant Unicode_Char := 16#0011#;
+   Dc1                                     :
+      Unicode_Char renames Device_Control_One;
    Device_Control_Two                      : constant Unicode_Char := 16#0012#;
+   Dc2                                     :
+      Unicode_Char renames Device_Control_Two;
    Device_Control_Three                    : constant Unicode_Char := 16#0013#;
+   Dc3                                     :
+      Unicode_Char renames Device_Control_Three;
    Device_Control_Four                     : constant Unicode_Char := 16#0014#;
+   Dc4                                     :
+      Unicode_Char renames Device_Control_Four;
    Negative_Acknowledge                    : constant Unicode_Char := 16#0015#;
+   Nak                                     :
+      Unicode_Char renames Negative_Acknowledge;
    Synchronous_Idle                        : constant Unicode_Char := 16#0016#;
+   Syn                                     :
+      Unicode_Char renames Synchronous_Idle;
    End_Of_Transmission_Block               : constant Unicode_Char := 16#0017#;
+   Etb                                     :
+      Unicode_Char renames End_Of_Transmission_Block;
    Cancel                                  : constant Unicode_Char := 16#0018#;
+   Can                                     : Unicode_Char renames Cancel;
    End_Of_Medium                           : constant Unicode_Char := 16#0019#;
+   Eom                                     :
+      Unicode_Char renames End_Of_Medium;
    Substitute                              : constant Unicode_Char := 16#001A#;
+   Sub                                     : Unicode_Char renames Substitute;
    Escape                                  : constant Unicode_Char := 16#001B#;
-   File_Separator                          : constant Unicode_Char := 16#001C#;
-   Group_Separator                         : constant Unicode_Char := 16#001D#;
-   Record_Separator                        : constant Unicode_Char := 16#001E#;
-   Unit_Separator                          : constant Unicode_Char := 16#001F#;
+   Esc                                     : Unicode_Char renames Escape;
+   Information_Separator_Four              : constant Unicode_Char := 16#001C#;
+   File_Separator                          :
+      Unicode_Char renames Information_Separator_Four;
+   Fs                                      :
+      Unicode_Char renames Information_Separator_Four;
+   Information_Separator_Three             : constant Unicode_Char := 16#001D#;
+   Group_Separator                         :
+      Unicode_Char renames Information_Separator_Three;
+   Gs                                      :
+      Unicode_Char renames Information_Separator_Three;
+   Information_Separator_Two               : constant Unicode_Char := 16#001E#;
+   Record_Separator                        :
+      Unicode_Char renames Information_Separator_Two;
+   Rs                                      :
+      Unicode_Char renames Information_Separator_Two;
+   Information_Separator_One               : constant Unicode_Char := 16#001F#;
+   Unit_Separator                          :
+      Unicode_Char renames Information_Separator_One;
+   Us                                      :
+      Unicode_Char renames Information_Separator_One;
    Space                                   : constant Unicode_Char := 16#0020#;
+   Sp                                      : Unicode_Char renames Space;
    Exclamation_Mark                        : constant Unicode_Char := 16#0021#;
-   Factorial                               : constant Unicode_Char := 16#0021#;
-   Bang                                    : constant Unicode_Char := 16#0021#;
    Quotation_Mark                          : constant Unicode_Char := 16#0022#;
-   Apl_Quote                               : constant Unicode_Char := 16#0022#;
    Number_Sign                             : constant Unicode_Char := 16#0023#;
-   Pound_Sign                              : constant Unicode_Char := 16#0023#;
-   Hash                                    : constant Unicode_Char := 16#0023#;
-   Crosshatch                              : constant Unicode_Char := 16#0023#;
-   Octothorpe                              : constant Unicode_Char := 16#0023#;
    Dollar_Sign                             : constant Unicode_Char := 16#0024#;
-   Milreis                                 : constant Unicode_Char := 16#0024#;
-   Escudo                                  : constant Unicode_Char := 16#0024#;
    Percent_Sign                            : constant Unicode_Char := 16#0025#;
    Ampersand                               : constant Unicode_Char := 16#0026#;
    Apostrophe                              : constant Unicode_Char := 16#0027#;
-   Apostrophe_Quote                        : constant Unicode_Char := 16#0027#;
    Left_Parenthesis                        : constant Unicode_Char := 16#0028#;
-   Opening_Parenthesis                     : constant Unicode_Char := 16#0028#;
    Right_Parenthesis                       : constant Unicode_Char := 16#0029#;
-   Closing_Parenthesis                     : constant Unicode_Char := 16#0029#;
    Asterisk                                : constant Unicode_Char := 16#002A#;
-   Star                                    : constant Unicode_Char := 16#002A#;
    Plus_Sign                               : constant Unicode_Char := 16#002B#;
    Comma                                   : constant Unicode_Char := 16#002C#;
-   Decimal_Separator                       : constant Unicode_Char := 16#002C#;
    Hyphen_Minus                            : constant Unicode_Char := 16#002D#;
-   Hyphen_Or_Minus_Sign                    : constant Unicode_Char := 16#002D#;
    Full_Stop                               : constant Unicode_Char := 16#002E#;
-   Period                                  : constant Unicode_Char := 16#002E#;
-   Dot                                     : constant Unicode_Char := 16#002E#;
-   Decimal_Point                           : constant Unicode_Char := 16#002E#;
    Solidus                                 : constant Unicode_Char := 16#002F#;
-   Slash                                   : constant Unicode_Char := 16#002F#;
-   Virgule                                 : constant Unicode_Char := 16#002F#;
-   Shilling                                : constant Unicode_Char := 16#002F#;
    Digit_Zero                              : constant Unicode_Char := 16#0030#;
    Digit_One                               : constant Unicode_Char := 16#0031#;
    Digit_Two                               : constant Unicode_Char := 16#0032#;
@@ -118,14 +170,10 @@ package Unicode.Names.Basic_Latin is
    Latin_Capital_Letter_Y                  : constant Unicode_Char := 16#0059#;
    Latin_Capital_Letter_Z                  : constant Unicode_Char := 16#005A#;
    Left_Square_Bracket                     : constant Unicode_Char := 16#005B#;
-   Opening_Square_Bracket                  : constant Unicode_Char := 16#005B#;
    Reverse_Solidus                         : constant Unicode_Char := 16#005C#;
-   Backslash                               : constant Unicode_Char := 16#005C#;
    Right_Square_Bracket                    : constant Unicode_Char := 16#005D#;
-   Closing_Square_Bracket                  : constant Unicode_Char := 16#005D#;
    Circumflex_Accent                       : constant Unicode_Char := 16#005E#;
    Low_Line                                : constant Unicode_Char := 16#005F#;
-   Spacing_Underscore                      : constant Unicode_Char := 16#005F#;
    Grave_Accent                            : constant Unicode_Char := 16#0060#;
    Latin_Small_Letter_A                    : constant Unicode_Char := 16#0061#;
    Latin_Small_Letter_B                    : constant Unicode_Char := 16#0062#;
@@ -154,12 +202,9 @@ package Unicode.Names.Basic_Latin is
    Latin_Small_Letter_Y                    : constant Unicode_Char := 16#0079#;
    Latin_Small_Letter_Z                    : constant Unicode_Char := 16#007A#;
    Left_Curly_Bracket                      : constant Unicode_Char := 16#007B#;
-   Opening_Curly_Bracket                   : constant Unicode_Char := 16#007B#;
-   Opening_Brace                           : constant Unicode_Char := 16#007B#;
    Vertical_Line                           : constant Unicode_Char := 16#007C#;
-   Vertical_Bar                            : constant Unicode_Char := 16#007C#;
    Right_Curly_Bracket                     : constant Unicode_Char := 16#007D#;
-   Closing_Curly_Bracket                   : constant Unicode_Char := 16#007D#;
-   Closing_Brace                           : constant Unicode_Char := 16#007D#;
    Tilde                                   : constant Unicode_Char := 16#007E#;
+   Delete                                  : constant Unicode_Char := 16#007F#;
+   Del                                     : Unicode_Char renames Delete;
 end Unicode.Names.Basic_Latin;

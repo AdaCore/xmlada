@@ -1,8 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cjk_Radicals_Supplement is
-   Braille_Pattern_Dots_12345678           : constant Unicode_Char := 16#28FF#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Cjk_Radical_Repeat                      : constant Unicode_Char := 16#2E80#;
    Cjk_Radical_Cliff                       : constant Unicode_Char := 16#2E81#;
    Cjk_Radical_Second_One                  : constant Unicode_Char := 16#2E82#;

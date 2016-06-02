@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Runic is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Runic_Letter_Fehu_Feoh_Fe_F             : constant Unicode_Char := 16#16A0#;
    Runic_Letter_V                          : constant Unicode_Char := 16#16A1#;
    Runic_Letter_Uruz_Ur_U                  : constant Unicode_Char := 16#16A2#;
@@ -83,4 +86,12 @@ package Unicode.Names.Runic is
    Runic_Arlaug_Symbol                     : constant Unicode_Char := 16#16EE#;
    Runic_Tvimadur_Symbol                   : constant Unicode_Char := 16#16EF#;
    Runic_Belgthor_Symbol                   : constant Unicode_Char := 16#16F0#;
+   Runic_Letter_K                          : constant Unicode_Char := 16#16F1#;
+   Runic_Letter_Sh                         : constant Unicode_Char := 16#16F2#;
+   Runic_Letter_Oo                         : constant Unicode_Char := 16#16F3#;
+   Runic_Letter_Franks_Casket_Os           : constant Unicode_Char := 16#16F4#;
+   Runic_Letter_Franks_Casket_Is           : constant Unicode_Char := 16#16F5#;
+   Runic_Letter_Franks_Casket_Eh           : constant Unicode_Char := 16#16F6#;
+   Runic_Letter_Franks_Casket_Ac           : constant Unicode_Char := 16#16F7#;
+   Runic_Letter_Franks_Casket_Aesc         : constant Unicode_Char := 16#16F8#;
 end Unicode.Names.Runic;

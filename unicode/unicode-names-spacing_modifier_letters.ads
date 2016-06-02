@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Spacing_Modifier_Letters is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Modifier_Letter_Small_H                 : constant Unicode_Char := 16#02B0#;
    Modifier_Letter_Small_H_With_Hook       : constant Unicode_Char := 16#02B1#;
    Modifier_Letter_Small_J                 : constant Unicode_Char := 16#02B2#;
@@ -17,7 +20,6 @@ package Unicode.Names.Spacing_Modifier_Letters is
    Modifier_Letter_Double_Prime            : constant Unicode_Char := 16#02BA#;
    Modifier_Letter_Turned_Comma            : constant Unicode_Char := 16#02BB#;
    Modifier_Letter_Apostrophe              : constant Unicode_Char := 16#02BC#;
-   Apostrophe                              : constant Unicode_Char := 16#02BC#;
    Modifier_Letter_Reversed_Comma          : constant Unicode_Char := 16#02BD#;
    Modifier_Letter_Right_Half_Ring         : constant Unicode_Char := 16#02BE#;
    Modifier_Letter_Left_Half_Ring          : constant Unicode_Char := 16#02BF#;
@@ -29,7 +31,6 @@ package Unicode.Names.Spacing_Modifier_Letters is
    Modifier_Letter_Down_Arrowhead          : constant Unicode_Char := 16#02C5#;
    Modifier_Letter_Circumflex_Accent       : constant Unicode_Char := 16#02C6#;
    Caron                                   : constant Unicode_Char := 16#02C7#;
-   Hacek                                   : constant Unicode_Char := 16#02C7#;
    Modifier_Letter_Vertical_Line           : constant Unicode_Char := 16#02C8#;
    Modifier_Letter_Macron                  : constant Unicode_Char := 16#02C9#;
    Modifier_Letter_Acute_Accent            : constant Unicode_Char := 16#02CA#;
@@ -71,4 +72,23 @@ package Unicode.Names.Spacing_Modifier_Letters is
    Modifier_Letter_Voicing                 : constant Unicode_Char := 16#02EC#;
    Modifier_Letter_Unaspirated             : constant Unicode_Char := 16#02ED#;
    Modifier_Letter_Double_Apostrophe       : constant Unicode_Char := 16#02EE#;
+   Modifier_Letter_Low_Down_Arrowhead      : constant Unicode_Char := 16#02EF#;
+   Modifier_Letter_Low_Up_Arrowhead        : constant Unicode_Char := 16#02F0#;
+   Modifier_Letter_Low_Left_Arrowhead      : constant Unicode_Char := 16#02F1#;
+   Modifier_Letter_Low_Right_Arrowhead     : constant Unicode_Char := 16#02F2#;
+   Modifier_Letter_Low_Ring                : constant Unicode_Char := 16#02F3#;
+   Modifier_Letter_Middle_Grave_Accent     : constant Unicode_Char := 16#02F4#;
+   Modifier_Letter_Middle_Double_Grave_Accent :
+      constant Unicode_Char := 16#02F5#;
+   Modifier_Letter_Middle_Double_Acute_Accent :
+      constant Unicode_Char := 16#02F6#;
+   Modifier_Letter_Low_Tilde               : constant Unicode_Char := 16#02F7#;
+   Modifier_Letter_Raised_Colon            : constant Unicode_Char := 16#02F8#;
+   Modifier_Letter_Begin_High_Tone         : constant Unicode_Char := 16#02F9#;
+   Modifier_Letter_End_High_Tone           : constant Unicode_Char := 16#02FA#;
+   Modifier_Letter_Begin_Low_Tone          : constant Unicode_Char := 16#02FB#;
+   Modifier_Letter_End_Low_Tone            : constant Unicode_Char := 16#02FC#;
+   Modifier_Letter_Shelf                   : constant Unicode_Char := 16#02FD#;
+   Modifier_Letter_Open_Shelf              : constant Unicode_Char := 16#02FE#;
+   Modifier_Letter_Low_Left_Arrow          : constant Unicode_Char := 16#02FF#;
 end Unicode.Names.Spacing_Modifier_Letters;

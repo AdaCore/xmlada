@@ -1,12 +1,15 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Devanagari is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Devanagari_Sign_Inverted_Candrabindu    : constant Unicode_Char := 16#0900#;
    Devanagari_Sign_Candrabindu             : constant Unicode_Char := 16#0901#;
-   Anunasika                               : constant Unicode_Char := 16#0901#;
    Devanagari_Sign_Anusvara                : constant Unicode_Char := 16#0902#;
-   Bindu                                   : constant Unicode_Char := 16#0902#;
    Devanagari_Sign_Visarga                 : constant Unicode_Char := 16#0903#;
+   Devanagari_Letter_Short_A               : constant Unicode_Char := 16#0904#;
    Devanagari_Letter_A                     : constant Unicode_Char := 16#0905#;
    Devanagari_Letter_Aa                    : constant Unicode_Char := 16#0906#;
    Devanagari_Letter_I                     : constant Unicode_Char := 16#0907#;
@@ -60,6 +63,8 @@ package Unicode.Names.Devanagari is
    Devanagari_Letter_Ssa                   : constant Unicode_Char := 16#0937#;
    Devanagari_Letter_Sa                    : constant Unicode_Char := 16#0938#;
    Devanagari_Letter_Ha                    : constant Unicode_Char := 16#0939#;
+   Devanagari_Vowel_Sign_Oe                : constant Unicode_Char := 16#093A#;
+   Devanagari_Vowel_Sign_Ooe               : constant Unicode_Char := 16#093B#;
    Devanagari_Sign_Nukta                   : constant Unicode_Char := 16#093C#;
    Devanagari_Sign_Avagraha                : constant Unicode_Char := 16#093D#;
    Devanagari_Vowel_Sign_Aa                : constant Unicode_Char := 16#093E#;
@@ -70,7 +75,6 @@ package Unicode.Names.Devanagari is
    Devanagari_Vowel_Sign_Vocalic_R         : constant Unicode_Char := 16#0943#;
    Devanagari_Vowel_Sign_Vocalic_Rr        : constant Unicode_Char := 16#0944#;
    Devanagari_Vowel_Sign_Candra_E          : constant Unicode_Char := 16#0945#;
-   Candra                                  : constant Unicode_Char := 16#0945#;
    Devanagari_Vowel_Sign_Short_E           : constant Unicode_Char := 16#0946#;
    Devanagari_Vowel_Sign_E                 : constant Unicode_Char := 16#0947#;
    Devanagari_Vowel_Sign_Ai                : constant Unicode_Char := 16#0948#;
@@ -79,12 +83,16 @@ package Unicode.Names.Devanagari is
    Devanagari_Vowel_Sign_O                 : constant Unicode_Char := 16#094B#;
    Devanagari_Vowel_Sign_Au                : constant Unicode_Char := 16#094C#;
    Devanagari_Sign_Virama                  : constant Unicode_Char := 16#094D#;
-   Halant                                  : constant Unicode_Char := 16#094D#;
+   Devanagari_Vowel_Sign_Prishthamatra_E   : constant Unicode_Char := 16#094E#;
+   Devanagari_Vowel_Sign_Aw                : constant Unicode_Char := 16#094F#;
    Devanagari_Om                           : constant Unicode_Char := 16#0950#;
    Devanagari_Stress_Sign_Udatta           : constant Unicode_Char := 16#0951#;
    Devanagari_Stress_Sign_Anudatta         : constant Unicode_Char := 16#0952#;
    Devanagari_Grave_Accent                 : constant Unicode_Char := 16#0953#;
    Devanagari_Acute_Accent                 : constant Unicode_Char := 16#0954#;
+   Devanagari_Vowel_Sign_Candra_Long_E     : constant Unicode_Char := 16#0955#;
+   Devanagari_Vowel_Sign_Ue                : constant Unicode_Char := 16#0956#;
+   Devanagari_Vowel_Sign_Uue               : constant Unicode_Char := 16#0957#;
    Devanagari_Letter_Qa                    : constant Unicode_Char := 16#0958#;
    Devanagari_Letter_Khha                  : constant Unicode_Char := 16#0959#;
    Devanagari_Letter_Ghha                  : constant Unicode_Char := 16#095A#;
@@ -98,7 +106,6 @@ package Unicode.Names.Devanagari is
    Devanagari_Vowel_Sign_Vocalic_L         : constant Unicode_Char := 16#0962#;
    Devanagari_Vowel_Sign_Vocalic_Ll        : constant Unicode_Char := 16#0963#;
    Devanagari_Danda                        : constant Unicode_Char := 16#0964#;
-   Phrase_Separator                        : constant Unicode_Char := 16#0964#;
    Devanagari_Double_Danda                 : constant Unicode_Char := 16#0965#;
    Devanagari_Digit_Zero                   : constant Unicode_Char := 16#0966#;
    Devanagari_Digit_One                    : constant Unicode_Char := 16#0967#;
@@ -111,4 +118,19 @@ package Unicode.Names.Devanagari is
    Devanagari_Digit_Eight                  : constant Unicode_Char := 16#096E#;
    Devanagari_Digit_Nine                   : constant Unicode_Char := 16#096F#;
    Devanagari_Abbreviation_Sign            : constant Unicode_Char := 16#0970#;
+   Devanagari_Sign_High_Spacing_Dot        : constant Unicode_Char := 16#0971#;
+   Devanagari_Letter_Candra_A              : constant Unicode_Char := 16#0972#;
+   Devanagari_Letter_Oe                    : constant Unicode_Char := 16#0973#;
+   Devanagari_Letter_Ooe                   : constant Unicode_Char := 16#0974#;
+   Devanagari_Letter_Aw                    : constant Unicode_Char := 16#0975#;
+   Devanagari_Letter_Ue                    : constant Unicode_Char := 16#0976#;
+   Devanagari_Letter_Uue                   : constant Unicode_Char := 16#0977#;
+   Devanagari_Letter_Marwari_Dda           : constant Unicode_Char := 16#0978#;
+   Devanagari_Letter_Zha                   : constant Unicode_Char := 16#0979#;
+   Devanagari_Letter_Heavy_Ya              : constant Unicode_Char := 16#097A#;
+   Devanagari_Letter_Gga                   : constant Unicode_Char := 16#097B#;
+   Devanagari_Letter_Jja                   : constant Unicode_Char := 16#097C#;
+   Devanagari_Letter_Glottal_Stop          : constant Unicode_Char := 16#097D#;
+   Devanagari_Letter_Ddda                  : constant Unicode_Char := 16#097E#;
+   Devanagari_Letter_Bba                   : constant Unicode_Char := 16#097F#;
 end Unicode.Names.Devanagari;

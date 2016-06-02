@@ -1,8 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Small_Form_Variants is
-   Wavy_Low_Line                           : constant Unicode_Char := 16#FE4F#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Small_Comma                             : constant Unicode_Char := 16#FE50#;
    Small_Ideographic_Comma                 : constant Unicode_Char := 16#FE51#;
    Small_Full_Stop                         : constant Unicode_Char := 16#FE52#;

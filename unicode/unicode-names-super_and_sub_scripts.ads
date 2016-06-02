@@ -1,9 +1,12 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Super_And_Sub_Scripts is
-   Nominal_Digit_Shapes                    : constant Unicode_Char := 16#206F#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Superscript_Zero                        : constant Unicode_Char := 16#2070#;
+   Superscript_Latin_Small_Letter_I        : constant Unicode_Char := 16#2071#;
    Superscript_Four                        : constant Unicode_Char := 16#2074#;
    Superscript_Five                        : constant Unicode_Char := 16#2075#;
    Superscript_Six                         : constant Unicode_Char := 16#2076#;
@@ -31,4 +34,17 @@ package Unicode.Names.Super_And_Sub_Scripts is
    Subscript_Equals_Sign                   : constant Unicode_Char := 16#208C#;
    Subscript_Left_Parenthesis              : constant Unicode_Char := 16#208D#;
    Subscript_Right_Parenthesis             : constant Unicode_Char := 16#208E#;
+   Latin_Subscript_Small_Letter_A          : constant Unicode_Char := 16#2090#;
+   Latin_Subscript_Small_Letter_E          : constant Unicode_Char := 16#2091#;
+   Latin_Subscript_Small_Letter_O          : constant Unicode_Char := 16#2092#;
+   Latin_Subscript_Small_Letter_X          : constant Unicode_Char := 16#2093#;
+   Latin_Subscript_Small_Letter_Schwa      : constant Unicode_Char := 16#2094#;
+   Latin_Subscript_Small_Letter_H          : constant Unicode_Char := 16#2095#;
+   Latin_Subscript_Small_Letter_K          : constant Unicode_Char := 16#2096#;
+   Latin_Subscript_Small_Letter_L          : constant Unicode_Char := 16#2097#;
+   Latin_Subscript_Small_Letter_M          : constant Unicode_Char := 16#2098#;
+   Latin_Subscript_Small_Letter_N          : constant Unicode_Char := 16#2099#;
+   Latin_Subscript_Small_Letter_P          : constant Unicode_Char := 16#209A#;
+   Latin_Subscript_Small_Letter_S          : constant Unicode_Char := 16#209B#;
+   Latin_Subscript_Small_Letter_T          : constant Unicode_Char := 16#209C#;
 end Unicode.Names.Super_And_Sub_Scripts;

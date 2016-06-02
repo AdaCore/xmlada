@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Armenian is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Armenian_Capital_Letter_Ayb             : constant Unicode_Char := 16#0531#;
    Armenian_Capital_Letter_Ben             : constant Unicode_Char := 16#0532#;
    Armenian_Capital_Letter_Gim             : constant Unicode_Char := 16#0533#;
@@ -42,18 +45,11 @@ package Unicode.Names.Armenian is
    Armenian_Capital_Letter_Feh             : constant Unicode_Char := 16#0556#;
    Armenian_Modifier_Letter_Left_Half_Ring : constant Unicode_Char := 16#0559#;
    Armenian_Apostrophe                     : constant Unicode_Char := 16#055A#;
-   Armenian_Modifier_Letter_Right_Half_Ring :
-      constant Unicode_Char := 16#055A#;
    Armenian_Emphasis_Mark                  : constant Unicode_Char := 16#055B#;
-   Shesht                                  : constant Unicode_Char := 16#055B#;
    Armenian_Exclamation_Mark               : constant Unicode_Char := 16#055C#;
-   Batsaganchakan_Nshan                    : constant Unicode_Char := 16#055C#;
    Armenian_Comma                          : constant Unicode_Char := 16#055D#;
-   Bowt                                    : constant Unicode_Char := 16#055D#;
    Armenian_Question_Mark                  : constant Unicode_Char := 16#055E#;
-   Hartsakan_Nshan                         : constant Unicode_Char := 16#055E#;
    Armenian_Abbreviation_Mark              : constant Unicode_Char := 16#055F#;
-   Patiw                                   : constant Unicode_Char := 16#055F#;
    Armenian_Small_Letter_Ayb               : constant Unicode_Char := 16#0561#;
    Armenian_Small_Letter_Ben               : constant Unicode_Char := 16#0562#;
    Armenian_Small_Letter_Gim               : constant Unicode_Char := 16#0563#;
@@ -94,7 +90,8 @@ package Unicode.Names.Armenian is
    Armenian_Small_Letter_Feh               : constant Unicode_Char := 16#0586#;
    Armenian_Small_Ligature_Ech_Yiwn        : constant Unicode_Char := 16#0587#;
    Armenian_Full_Stop                      : constant Unicode_Char := 16#0589#;
-   Vertsaket                               : constant Unicode_Char := 16#0589#;
    Armenian_Hyphen                         : constant Unicode_Char := 16#058A#;
-   Yentamna                                : constant Unicode_Char := 16#058A#;
+   Right_Facing_Armenian_Eternity_Sign     : constant Unicode_Char := 16#058D#;
+   Left_Facing_Armenian_Eternity_Sign      : constant Unicode_Char := 16#058E#;
+   Armenian_Dram_Sign                      : constant Unicode_Char := 16#058F#;
 end Unicode.Names.Armenian;

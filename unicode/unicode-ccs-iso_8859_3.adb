@@ -41,7 +41,7 @@ package body Unicode.CCS.Iso_8859_3 is
       16#00A6# => Latin_Capital_Letter_H_With_Circumflex,
       16#00A7# => Section_Sign,
       16#00A8# => Diaeresis,
-      16#00A9# => Latin_Capital_Letter_I_Dot,
+      16#00A9# => Latin_Capital_Letter_I_With_Dot_Above,
       16#00AA# => Latin_Capital_Letter_S_With_Cedilla,
       16#00AB# => Latin_Capital_Letter_G_With_Breve,
       16#00AC# => Latin_Capital_Letter_J_With_Circumflex,
@@ -159,7 +159,7 @@ package body Unicode.CCS.Iso_8859_3 is
          when Latin_Capital_Letter_H_With_Stroke     => return 16#00A1#;
          when Breve                                  => return 16#00A2#;
          when Latin_Capital_Letter_H_With_Circumflex => return 16#00A6#;
-         when Latin_Capital_Letter_I_Dot             => return 16#00A9#;
+         when Latin_Capital_Letter_I_With_Dot_Above  => return 16#00A9#;
          when Latin_Capital_Letter_S_With_Cedilla    => return 16#00AA#;
          when Latin_Capital_Letter_G_With_Breve      => return 16#00AB#;
          when Latin_Capital_Letter_J_With_Circumflex => return 16#00AC#;

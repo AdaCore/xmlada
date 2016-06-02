@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cyrillic is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Cyrillic_Capital_Letter_Ie_With_Grave   : constant Unicode_Char := 16#0400#;
    Cyrillic_Capital_Letter_Io              : constant Unicode_Char := 16#0401#;
    Cyrillic_Capital_Letter_Dje             : constant Unicode_Char := 16#0402#;
@@ -88,18 +91,14 @@ package Unicode.Names.Cyrillic is
    Cyrillic_Small_Letter_Dje               : constant Unicode_Char := 16#0452#;
    Cyrillic_Small_Letter_Gje               : constant Unicode_Char := 16#0453#;
    Cyrillic_Small_Letter_Ukrainian_Ie      : constant Unicode_Char := 16#0454#;
-   Old_Cyrillic_Yest                       : constant Unicode_Char := 16#0454#;
    Cyrillic_Small_Letter_Dze               : constant Unicode_Char := 16#0455#;
-   Old_Cyrillic_Zelo                       : constant Unicode_Char := 16#0455#;
    Cyrillic_Small_Letter_Byelorussian_Ukrainian_I :
       constant Unicode_Char := 16#0456#;
-   Old_Cyrillic_I                          : constant Unicode_Char := 16#0456#;
    Cyrillic_Small_Letter_Yi                : constant Unicode_Char := 16#0457#;
    Cyrillic_Small_Letter_Je                : constant Unicode_Char := 16#0458#;
    Cyrillic_Small_Letter_Lje               : constant Unicode_Char := 16#0459#;
    Cyrillic_Small_Letter_Nje               : constant Unicode_Char := 16#045A#;
    Cyrillic_Small_Letter_Tshe              : constant Unicode_Char := 16#045B#;
-   Old_Cyrillic_Derv                       : constant Unicode_Char := 16#045B#;
    Cyrillic_Small_Letter_Kje               : constant Unicode_Char := 16#045C#;
    Cyrillic_Small_Letter_I_With_Grave      : constant Unicode_Char := 16#045D#;
    Cyrillic_Small_Letter_Short_U           : constant Unicode_Char := 16#045E#;
@@ -149,9 +148,13 @@ package Unicode.Names.Cyrillic is
    Combining_Cyrillic_Palatalization       : constant Unicode_Char := 16#0484#;
    Combining_Cyrillic_Dasia_Pneumata       : constant Unicode_Char := 16#0485#;
    Combining_Cyrillic_Psili_Pneumata       : constant Unicode_Char := 16#0486#;
+   Combining_Cyrillic_Pokrytie             : constant Unicode_Char := 16#0487#;
    Combining_Cyrillic_Hundred_Thousands_Sign :
       constant Unicode_Char := 16#0488#;
    Combining_Cyrillic_Millions_Sign        : constant Unicode_Char := 16#0489#;
+   Cyrillic_Capital_Letter_Short_I_With_Tail :
+      constant Unicode_Char := 16#048A#;
+   Cyrillic_Small_Letter_Short_I_With_Tail : constant Unicode_Char := 16#048B#;
    Cyrillic_Capital_Letter_Semisoft_Sign   : constant Unicode_Char := 16#048C#;
    Cyrillic_Small_Letter_Semisoft_Sign     : constant Unicode_Char := 16#048D#;
    Cyrillic_Capital_Letter_Er_With_Tick    : constant Unicode_Char := 16#048E#;
@@ -231,10 +234,17 @@ package Unicode.Names.Cyrillic is
    Cyrillic_Small_Letter_Zhe_With_Breve    : constant Unicode_Char := 16#04C2#;
    Cyrillic_Capital_Letter_Ka_With_Hook    : constant Unicode_Char := 16#04C3#;
    Cyrillic_Small_Letter_Ka_With_Hook      : constant Unicode_Char := 16#04C4#;
+   Cyrillic_Capital_Letter_El_With_Tail    : constant Unicode_Char := 16#04C5#;
+   Cyrillic_Small_Letter_El_With_Tail      : constant Unicode_Char := 16#04C6#;
    Cyrillic_Capital_Letter_En_With_Hook    : constant Unicode_Char := 16#04C7#;
    Cyrillic_Small_Letter_En_With_Hook      : constant Unicode_Char := 16#04C8#;
+   Cyrillic_Capital_Letter_En_With_Tail    : constant Unicode_Char := 16#04C9#;
+   Cyrillic_Small_Letter_En_With_Tail      : constant Unicode_Char := 16#04CA#;
    Cyrillic_Capital_Letter_Khakassian_Che  : constant Unicode_Char := 16#04CB#;
    Cyrillic_Small_Letter_Khakassian_Che    : constant Unicode_Char := 16#04CC#;
+   Cyrillic_Capital_Letter_Em_With_Tail    : constant Unicode_Char := 16#04CD#;
+   Cyrillic_Small_Letter_Em_With_Tail      : constant Unicode_Char := 16#04CE#;
+   Cyrillic_Small_Letter_Palochka          : constant Unicode_Char := 16#04CF#;
    Cyrillic_Capital_Letter_A_With_Breve    : constant Unicode_Char := 16#04D0#;
    Cyrillic_Small_Letter_A_With_Breve      : constant Unicode_Char := 16#04D1#;
    Cyrillic_Capital_Letter_A_With_Diaeresis :
@@ -289,8 +299,20 @@ package Unicode.Names.Cyrillic is
       constant Unicode_Char := 16#04F4#;
    Cyrillic_Small_Letter_Che_With_Diaeresis :
       constant Unicode_Char := 16#04F5#;
+   Cyrillic_Capital_Letter_Ghe_With_Descender :
+      constant Unicode_Char := 16#04F6#;
+   Cyrillic_Small_Letter_Ghe_With_Descender :
+      constant Unicode_Char := 16#04F7#;
    Cyrillic_Capital_Letter_Yeru_With_Diaeresis :
       constant Unicode_Char := 16#04F8#;
    Cyrillic_Small_Letter_Yeru_With_Diaeresis :
       constant Unicode_Char := 16#04F9#;
+   Cyrillic_Capital_Letter_Ghe_With_Stroke_And_Hook :
+      constant Unicode_Char := 16#04FA#;
+   Cyrillic_Small_Letter_Ghe_With_Stroke_And_Hook :
+      constant Unicode_Char := 16#04FB#;
+   Cyrillic_Capital_Letter_Ha_With_Hook    : constant Unicode_Char := 16#04FC#;
+   Cyrillic_Small_Letter_Ha_With_Hook      : constant Unicode_Char := 16#04FD#;
+   Cyrillic_Capital_Letter_Ha_With_Stroke  : constant Unicode_Char := 16#04FE#;
+   Cyrillic_Small_Letter_Ha_With_Stroke    : constant Unicode_Char := 16#04FF#;
 end Unicode.Names.Cyrillic;

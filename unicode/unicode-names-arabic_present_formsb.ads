@@ -1,10 +1,14 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Arabic_Present_FormsB is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Arabic_Fathatan_Isolated_Form           : constant Unicode_Char := 16#FE70#;
    Arabic_Tatweel_With_Fathatan_Above      : constant Unicode_Char := 16#FE71#;
    Arabic_Dammatan_Isolated_Form           : constant Unicode_Char := 16#FE72#;
+   Arabic_Tail_Fragment                    : constant Unicode_Char := 16#FE73#;
    Arabic_Kasratan_Isolated_Form           : constant Unicode_Char := 16#FE74#;
    Arabic_Fatha_Isolated_Form              : constant Unicode_Char := 16#FE76#;
    Arabic_Fatha_Medial_Form                : constant Unicode_Char := 16#FE77#;
@@ -162,4 +166,11 @@ package Unicode.Names.Arabic_Present_FormsB is
       constant Unicode_Char := 16#FEFB#;
    Arabic_Ligature_Lam_With_Alef_Final_Form :
       constant Unicode_Char := 16#FEFC#;
+   Zero_Width_No_Break_Space               : constant Unicode_Char := 16#FEFF#;
+   Byte_Order_Mark                         :
+      Unicode_Char renames Zero_Width_No_Break_Space;
+   Bom                                     :
+      Unicode_Char renames Zero_Width_No_Break_Space;
+   Zwnbsp                                  :
+      Unicode_Char renames Zero_Width_No_Break_Space;
 end Unicode.Names.Arabic_Present_FormsB;

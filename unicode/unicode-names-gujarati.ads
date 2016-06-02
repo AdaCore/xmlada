@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Gujarati is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Gujarati_Sign_Candrabindu               : constant Unicode_Char := 16#0A81#;
    Gujarati_Sign_Anusvara                  : constant Unicode_Char := 16#0A82#;
    Gujarati_Sign_Visarga                   : constant Unicode_Char := 16#0A83#;
@@ -12,6 +15,7 @@ package Unicode.Names.Gujarati is
    Gujarati_Letter_U                       : constant Unicode_Char := 16#0A89#;
    Gujarati_Letter_Uu                      : constant Unicode_Char := 16#0A8A#;
    Gujarati_Letter_Vocalic_R               : constant Unicode_Char := 16#0A8B#;
+   Gujarati_Letter_Vocalic_L               : constant Unicode_Char := 16#0A8C#;
    Gujarati_Vowel_Candra_E                 : constant Unicode_Char := 16#0A8D#;
    Gujarati_Letter_E                       : constant Unicode_Char := 16#0A8F#;
    Gujarati_Letter_Ai                      : constant Unicode_Char := 16#0A90#;
@@ -70,6 +74,9 @@ package Unicode.Names.Gujarati is
    Gujarati_Sign_Virama                    : constant Unicode_Char := 16#0ACD#;
    Gujarati_Om                             : constant Unicode_Char := 16#0AD0#;
    Gujarati_Letter_Vocalic_Rr              : constant Unicode_Char := 16#0AE0#;
+   Gujarati_Letter_Vocalic_Ll              : constant Unicode_Char := 16#0AE1#;
+   Gujarati_Vowel_Sign_Vocalic_L           : constant Unicode_Char := 16#0AE2#;
+   Gujarati_Vowel_Sign_Vocalic_Ll          : constant Unicode_Char := 16#0AE3#;
    Gujarati_Digit_Zero                     : constant Unicode_Char := 16#0AE6#;
    Gujarati_Digit_One                      : constant Unicode_Char := 16#0AE7#;
    Gujarati_Digit_Two                      : constant Unicode_Char := 16#0AE8#;
@@ -80,4 +87,7 @@ package Unicode.Names.Gujarati is
    Gujarati_Digit_Seven                    : constant Unicode_Char := 16#0AED#;
    Gujarati_Digit_Eight                    : constant Unicode_Char := 16#0AEE#;
    Gujarati_Digit_Nine                     : constant Unicode_Char := 16#0AEF#;
+   Gujarati_Abbreviation_Sign              : constant Unicode_Char := 16#0AF0#;
+   Gujarati_Rupee_Sign                     : constant Unicode_Char := 16#0AF1#;
+   Gujarati_Letter_Zha                     : constant Unicode_Char := 16#0AF9#;
 end Unicode.Names.Gujarati;

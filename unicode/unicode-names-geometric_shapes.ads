@@ -1,10 +1,12 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Geometric_Shapes is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Black_Square                            : constant Unicode_Char := 16#25A0#;
    White_Square                            : constant Unicode_Char := 16#25A1#;
-   Quadrature                              : constant Unicode_Char := 16#25A1#;
    White_Square_With_Rounded_Corners       : constant Unicode_Char := 16#25A2#;
    White_Square_Containing_Black_Small_Square :
       constant Unicode_Char := 16#25A3#;
@@ -21,41 +23,34 @@ package Unicode.Names.Geometric_Shapes is
    Black_Rectangle                         : constant Unicode_Char := 16#25AC#;
    White_Rectangle                         : constant Unicode_Char := 16#25AD#;
    Black_Vertical_Rectangle                : constant Unicode_Char := 16#25AE#;
-   Histogram_Marker                        : constant Unicode_Char := 16#25AE#;
    White_Vertical_Rectangle                : constant Unicode_Char := 16#25AF#;
    Black_Parallelogram                     : constant Unicode_Char := 16#25B0#;
    White_Parallelogram                     : constant Unicode_Char := 16#25B1#;
    Black_Up_Pointing_Triangle              : constant Unicode_Char := 16#25B2#;
    White_Up_Pointing_Triangle              : constant Unicode_Char := 16#25B3#;
-   Trine                                   : constant Unicode_Char := 16#25B3#;
    Black_Up_Pointing_Small_Triangle        : constant Unicode_Char := 16#25B4#;
    White_Up_Pointing_Small_Triangle        : constant Unicode_Char := 16#25B5#;
    Black_Right_Pointing_Triangle           : constant Unicode_Char := 16#25B6#;
    White_Right_Pointing_Triangle           : constant Unicode_Char := 16#25B7#;
-   Z_Notation_Range_Restriction            : constant Unicode_Char := 16#25B7#;
    Black_Right_Pointing_Small_Triangle     : constant Unicode_Char := 16#25B8#;
    White_Right_Pointing_Small_Triangle     : constant Unicode_Char := 16#25B9#;
    Black_Right_Pointing_Pointer            : constant Unicode_Char := 16#25BA#;
    White_Right_Pointing_Pointer            : constant Unicode_Char := 16#25BB#;
-   Forward_Arrow_Indicator                 : constant Unicode_Char := 16#25BB#;
    Black_Down_Pointing_Triangle            : constant Unicode_Char := 16#25BC#;
    White_Down_Pointing_Triangle            : constant Unicode_Char := 16#25BD#;
    Black_Down_Pointing_Small_Triangle      : constant Unicode_Char := 16#25BE#;
    White_Down_Pointing_Small_Triangle      : constant Unicode_Char := 16#25BF#;
    Black_Left_Pointing_Triangle            : constant Unicode_Char := 16#25C0#;
    White_Left_Pointing_Triangle            : constant Unicode_Char := 16#25C1#;
-   Z_Notation_Domain_Restriction           : constant Unicode_Char := 16#25C1#;
    Black_Left_Pointing_Small_Triangle      : constant Unicode_Char := 16#25C2#;
    White_Left_Pointing_Small_Triangle      : constant Unicode_Char := 16#25C3#;
    Black_Left_Pointing_Pointer             : constant Unicode_Char := 16#25C4#;
    White_Left_Pointing_Pointer             : constant Unicode_Char := 16#25C5#;
-   Backward_Arrow_Indicator                : constant Unicode_Char := 16#25C5#;
    Black_Diamond                           : constant Unicode_Char := 16#25C6#;
    White_Diamond                           : constant Unicode_Char := 16#25C7#;
    White_Diamond_Containing_Black_Small_Diamond :
       constant Unicode_Char := 16#25C8#;
    Fisheye                                 : constant Unicode_Char := 16#25C9#;
-   Tainome                                 : constant Unicode_Char := 16#25C9#;
    Lozenge                                 : constant Unicode_Char := 16#25CA#;
    White_Circle                            : constant Unicode_Char := 16#25CB#;
    Dotted_Circle                           : constant Unicode_Char := 16#25CC#;
@@ -108,4 +103,12 @@ package Unicode.Names.Geometric_Shapes is
    White_Circle_With_Lower_Left_Quadrant   : constant Unicode_Char := 16#25F5#;
    White_Circle_With_Lower_Right_Quadrant  : constant Unicode_Char := 16#25F6#;
    White_Circle_With_Upper_Right_Quadrant  : constant Unicode_Char := 16#25F7#;
+   Upper_Left_Triangle                     : constant Unicode_Char := 16#25F8#;
+   Upper_Right_Triangle                    : constant Unicode_Char := 16#25F9#;
+   Lower_Left_Triangle                     : constant Unicode_Char := 16#25FA#;
+   White_Medium_Square                     : constant Unicode_Char := 16#25FB#;
+   Black_Medium_Square                     : constant Unicode_Char := 16#25FC#;
+   White_Medium_Small_Square               : constant Unicode_Char := 16#25FD#;
+   Black_Medium_Small_Square               : constant Unicode_Char := 16#25FE#;
+   Lower_Right_Triangle                    : constant Unicode_Char := 16#25FF#;
 end Unicode.Names.Geometric_Shapes;

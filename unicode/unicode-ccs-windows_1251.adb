@@ -42,7 +42,7 @@ package body Unicode.CCS.Windows_1251 is
        16#0004# => End_Of_Transmission,
        16#0005# => Enquiry,
        16#0006# => Acknowledge,
-       16#0007# => Bell,
+       16#0007# => Alert,
        16#0008# => Backspace,
        16#0009# => Horizontal_Tabulation,
        16#000A# => Line_Feed,
@@ -327,7 +327,7 @@ package body Unicode.CCS.Windows_1251 is
             when End_Of_Transmission                        => return 16#0004#;
             when Enquiry                                    => return 16#0005#;
             when Acknowledge                                => return 16#0006#;
-            when Bell                                       => return 16#0007#;
+            when Alert                                      => return 16#0007#;
             when Backspace                                  => return 16#0008#;
             when Horizontal_Tabulation                      => return 16#0009#;
             when Line_Feed                                  => return 16#000A#;

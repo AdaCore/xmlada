@@ -1,7 +1,11 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Bengali is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Bengali_Anji                            : constant Unicode_Char := 16#0980#;
    Bengali_Sign_Candrabindu                : constant Unicode_Char := 16#0981#;
    Bengali_Sign_Anusvara                   : constant Unicode_Char := 16#0982#;
    Bengali_Sign_Visarga                    : constant Unicode_Char := 16#0983#;
@@ -40,8 +44,6 @@ package Unicode.Names.Bengali is
    Bengali_Letter_Pa                       : constant Unicode_Char := 16#09AA#;
    Bengali_Letter_Pha                      : constant Unicode_Char := 16#09AB#;
    Bengali_Letter_Ba                       : constant Unicode_Char := 16#09AC#;
-   Bengali_Va                              : constant Unicode_Char := 16#09AC#;
-   Wa                                      : constant Unicode_Char := 16#09AC#;
    Bengali_Letter_Bha                      : constant Unicode_Char := 16#09AD#;
    Bengali_Letter_Ma                       : constant Unicode_Char := 16#09AE#;
    Bengali_Letter_Ya                       : constant Unicode_Char := 16#09AF#;
@@ -52,6 +54,7 @@ package Unicode.Names.Bengali is
    Bengali_Letter_Sa                       : constant Unicode_Char := 16#09B8#;
    Bengali_Letter_Ha                       : constant Unicode_Char := 16#09B9#;
    Bengali_Sign_Nukta                      : constant Unicode_Char := 16#09BC#;
+   Bengali_Sign_Avagraha                   : constant Unicode_Char := 16#09BD#;
    Bengali_Vowel_Sign_Aa                   : constant Unicode_Char := 16#09BE#;
    Bengali_Vowel_Sign_I                    : constant Unicode_Char := 16#09BF#;
    Bengali_Vowel_Sign_Ii                   : constant Unicode_Char := 16#09C0#;
@@ -64,7 +67,7 @@ package Unicode.Names.Bengali is
    Bengali_Vowel_Sign_O                    : constant Unicode_Char := 16#09CB#;
    Bengali_Vowel_Sign_Au                   : constant Unicode_Char := 16#09CC#;
    Bengali_Sign_Virama                     : constant Unicode_Char := 16#09CD#;
-   Halant                                  : constant Unicode_Char := 16#09CD#;
+   Bengali_Letter_Khanda_Ta                : constant Unicode_Char := 16#09CE#;
    Bengali_Au_Length_Mark                  : constant Unicode_Char := 16#09D7#;
    Bengali_Letter_Rra                      : constant Unicode_Char := 16#09DC#;
    Bengali_Letter_Rha                      : constant Unicode_Char := 16#09DD#;
@@ -85,7 +88,6 @@ package Unicode.Names.Bengali is
    Bengali_Digit_Nine                      : constant Unicode_Char := 16#09EF#;
    Bengali_Letter_Ra_With_Middle_Diagonal  : constant Unicode_Char := 16#09F0#;
    Bengali_Letter_Ra_With_Lower_Diagonal   : constant Unicode_Char := 16#09F1#;
-   Bengali_Letter_Va_With_Lower_Diagonal   : constant Unicode_Char := 16#09F1#;
    Bengali_Rupee_Mark                      : constant Unicode_Char := 16#09F2#;
    Bengali_Rupee_Sign                      : constant Unicode_Char := 16#09F3#;
    Bengali_Currency_Numerator_One          : constant Unicode_Char := 16#09F4#;
@@ -96,4 +98,5 @@ package Unicode.Names.Bengali is
       constant Unicode_Char := 16#09F8#;
    Bengali_Currency_Denominator_Sixteen    : constant Unicode_Char := 16#09F9#;
    Bengali_Isshar                          : constant Unicode_Char := 16#09FA#;
+   Bengali_Ganda_Mark                      : constant Unicode_Char := 16#09FB#;
 end Unicode.Names.Bengali;

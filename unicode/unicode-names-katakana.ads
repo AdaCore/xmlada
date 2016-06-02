@@ -1,7 +1,11 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Katakana is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Katakana_Hiragana_Double_Hyphen         : constant Unicode_Char := 16#30A0#;
    Katakana_Letter_Small_A                 : constant Unicode_Char := 16#30A1#;
    Katakana_Letter_A                       : constant Unicode_Char := 16#30A2#;
    Katakana_Letter_Small_I                 : constant Unicode_Char := 16#30A3#;
@@ -25,9 +29,7 @@ package Unicode.Names.Katakana is
    Katakana_Letter_Sa                      : constant Unicode_Char := 16#30B5#;
    Katakana_Letter_Za                      : constant Unicode_Char := 16#30B6#;
    Katakana_Letter_Si                      : constant Unicode_Char := 16#30B7#;
-   Shi                                     : constant Unicode_Char := 16#30B7#;
    Katakana_Letter_Zi                      : constant Unicode_Char := 16#30B8#;
-   Ji                                      : constant Unicode_Char := 16#30B8#;
    Katakana_Letter_Su                      : constant Unicode_Char := 16#30B9#;
    Katakana_Letter_Zu                      : constant Unicode_Char := 16#30BA#;
    Katakana_Letter_Se                      : constant Unicode_Char := 16#30BB#;
@@ -37,15 +39,10 @@ package Unicode.Names.Katakana is
    Katakana_Letter_Ta                      : constant Unicode_Char := 16#30BF#;
    Katakana_Letter_Da                      : constant Unicode_Char := 16#30C0#;
    Katakana_Letter_Ti                      : constant Unicode_Char := 16#30C1#;
-   Chi                                     : constant Unicode_Char := 16#30C1#;
    Katakana_Letter_Di                      : constant Unicode_Char := 16#30C2#;
-   --  Duplicate entry for Ji
    Katakana_Letter_Small_Tu                : constant Unicode_Char := 16#30C3#;
-   Small_Tsu                               : constant Unicode_Char := 16#30C3#;
    Katakana_Letter_Tu                      : constant Unicode_Char := 16#30C4#;
-   Tsu                                     : constant Unicode_Char := 16#30C4#;
    Katakana_Letter_Du                      : constant Unicode_Char := 16#30C5#;
-   Zu                                      : constant Unicode_Char := 16#30C5#;
    Katakana_Letter_Te                      : constant Unicode_Char := 16#30C6#;
    Katakana_Letter_De                      : constant Unicode_Char := 16#30C7#;
    Katakana_Letter_To                      : constant Unicode_Char := 16#30C8#;
@@ -62,7 +59,6 @@ package Unicode.Names.Katakana is
    Katakana_Letter_Bi                      : constant Unicode_Char := 16#30D3#;
    Katakana_Letter_Pi                      : constant Unicode_Char := 16#30D4#;
    Katakana_Letter_Hu                      : constant Unicode_Char := 16#30D5#;
-   Fu                                      : constant Unicode_Char := 16#30D5#;
    Katakana_Letter_Bu                      : constant Unicode_Char := 16#30D6#;
    Katakana_Letter_Pu                      : constant Unicode_Char := 16#30D7#;
    Katakana_Letter_He                      : constant Unicode_Char := 16#30D8#;
@@ -104,4 +100,5 @@ package Unicode.Names.Katakana is
    Katakana_Hiragana_Prolonged_Sound_Mark  : constant Unicode_Char := 16#30FC#;
    Katakana_Iteration_Mark                 : constant Unicode_Char := 16#30FD#;
    Katakana_Voiced_Iteration_Mark          : constant Unicode_Char := 16#30FE#;
+   Katakana_Digraph_Koto                   : constant Unicode_Char := 16#30FF#;
 end Unicode.Names.Katakana;

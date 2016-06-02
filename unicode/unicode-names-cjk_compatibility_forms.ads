@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Cjk_Compatibility_Forms is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Presentation_Form_For_Vertical_Two_Dot_Leader :
       constant Unicode_Char := 16#FE30#;
    Presentation_Form_For_Vertical_Em_Dash  : constant Unicode_Char := 16#FE31#;
@@ -41,10 +44,17 @@ package Unicode.Names.Cjk_Compatibility_Forms is
       constant Unicode_Char := 16#FE43#;
    Presentation_Form_For_Vertical_Right_White_Corner_Bracket :
       constant Unicode_Char := 16#FE44#;
+   Sesame_Dot                              : constant Unicode_Char := 16#FE45#;
+   White_Sesame_Dot                        : constant Unicode_Char := 16#FE46#;
+   Presentation_Form_For_Vertical_Left_Square_Bracket :
+      constant Unicode_Char := 16#FE47#;
+   Presentation_Form_For_Vertical_Right_Square_Bracket :
+      constant Unicode_Char := 16#FE48#;
    Dashed_Overline                         : constant Unicode_Char := 16#FE49#;
    Centreline_Overline                     : constant Unicode_Char := 16#FE4A#;
    Wavy_Overline                           : constant Unicode_Char := 16#FE4B#;
    Double_Wavy_Overline                    : constant Unicode_Char := 16#FE4C#;
    Dashed_Low_Line                         : constant Unicode_Char := 16#FE4D#;
    Centreline_Low_Line                     : constant Unicode_Char := 16#FE4E#;
+   Wavy_Low_Line                           : constant Unicode_Char := 16#FE4F#;
 end Unicode.Names.Cjk_Compatibility_Forms;

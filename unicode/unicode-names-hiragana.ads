@@ -1,8 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Hiragana is
-   Ideographic_Half_Fill_Space             : constant Unicode_Char := 16#303F#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Hiragana_Letter_Small_A                 : constant Unicode_Char := 16#3041#;
    Hiragana_Letter_A                       : constant Unicode_Char := 16#3042#;
    Hiragana_Letter_Small_I                 : constant Unicode_Char := 16#3043#;
@@ -26,9 +28,7 @@ package Unicode.Names.Hiragana is
    Hiragana_Letter_Sa                      : constant Unicode_Char := 16#3055#;
    Hiragana_Letter_Za                      : constant Unicode_Char := 16#3056#;
    Hiragana_Letter_Si                      : constant Unicode_Char := 16#3057#;
-   Shi                                     : constant Unicode_Char := 16#3057#;
    Hiragana_Letter_Zi                      : constant Unicode_Char := 16#3058#;
-   Ji                                      : constant Unicode_Char := 16#3058#;
    Hiragana_Letter_Su                      : constant Unicode_Char := 16#3059#;
    Hiragana_Letter_Zu                      : constant Unicode_Char := 16#305A#;
    Hiragana_Letter_Se                      : constant Unicode_Char := 16#305B#;
@@ -38,15 +38,10 @@ package Unicode.Names.Hiragana is
    Hiragana_Letter_Ta                      : constant Unicode_Char := 16#305F#;
    Hiragana_Letter_Da                      : constant Unicode_Char := 16#3060#;
    Hiragana_Letter_Ti                      : constant Unicode_Char := 16#3061#;
-   Chi                                     : constant Unicode_Char := 16#3061#;
    Hiragana_Letter_Di                      : constant Unicode_Char := 16#3062#;
-   --  Duplicate entry for Ji
    Hiragana_Letter_Small_Tu                : constant Unicode_Char := 16#3063#;
-   Small_Tsu                               : constant Unicode_Char := 16#3063#;
    Hiragana_Letter_Tu                      : constant Unicode_Char := 16#3064#;
-   Tsu                                     : constant Unicode_Char := 16#3064#;
    Hiragana_Letter_Du                      : constant Unicode_Char := 16#3065#;
-   Zu                                      : constant Unicode_Char := 16#3065#;
    Hiragana_Letter_Te                      : constant Unicode_Char := 16#3066#;
    Hiragana_Letter_De                      : constant Unicode_Char := 16#3067#;
    Hiragana_Letter_To                      : constant Unicode_Char := 16#3068#;
@@ -63,7 +58,6 @@ package Unicode.Names.Hiragana is
    Hiragana_Letter_Bi                      : constant Unicode_Char := 16#3073#;
    Hiragana_Letter_Pi                      : constant Unicode_Char := 16#3074#;
    Hiragana_Letter_Hu                      : constant Unicode_Char := 16#3075#;
-   Fu                                      : constant Unicode_Char := 16#3075#;
    Hiragana_Letter_Bu                      : constant Unicode_Char := 16#3076#;
    Hiragana_Letter_Pu                      : constant Unicode_Char := 16#3077#;
    Hiragana_Letter_He                      : constant Unicode_Char := 16#3078#;
@@ -95,6 +89,8 @@ package Unicode.Names.Hiragana is
    Hiragana_Letter_Wo                      : constant Unicode_Char := 16#3092#;
    Hiragana_Letter_N                       : constant Unicode_Char := 16#3093#;
    Hiragana_Letter_Vu                      : constant Unicode_Char := 16#3094#;
+   Hiragana_Letter_Small_Ka                : constant Unicode_Char := 16#3095#;
+   Hiragana_Letter_Small_Ke                : constant Unicode_Char := 16#3096#;
    Combining_Katakana_Hiragana_Voiced_Sound_Mark :
       constant Unicode_Char := 16#3099#;
    Combining_Katakana_Hiragana_Semi_Voiced_Sound_Mark :
@@ -104,4 +100,5 @@ package Unicode.Names.Hiragana is
       constant Unicode_Char := 16#309C#;
    Hiragana_Iteration_Mark                 : constant Unicode_Char := 16#309D#;
    Hiragana_Voiced_Iteration_Mark          : constant Unicode_Char := 16#309E#;
+   Hiragana_Digraph_Yori                   : constant Unicode_Char := 16#309F#;
 end Unicode.Names.Hiragana;

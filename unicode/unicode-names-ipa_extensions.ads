@@ -1,28 +1,26 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Ipa_Extensions is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Latin_Small_Letter_Turned_A             : constant Unicode_Char := 16#0250#;
    Latin_Small_Letter_Alpha                : constant Unicode_Char := 16#0251#;
-   Latin_Small_Letter_Script_A             : constant Unicode_Char := 16#0251#;
    Latin_Small_Letter_Turned_Alpha         : constant Unicode_Char := 16#0252#;
    Latin_Small_Letter_B_With_Hook          : constant Unicode_Char := 16#0253#;
    Latin_Small_Letter_Open_O               : constant Unicode_Char := 16#0254#;
    Latin_Small_Letter_C_With_Curl          : constant Unicode_Char := 16#0255#;
    Latin_Small_Letter_D_With_Tail          : constant Unicode_Char := 16#0256#;
-   Latin_Small_Letter_D_Retroflex_Hook     : constant Unicode_Char := 16#0256#;
    Latin_Small_Letter_D_With_Hook          : constant Unicode_Char := 16#0257#;
    Latin_Small_Letter_Reversed_E           : constant Unicode_Char := 16#0258#;
    Latin_Small_Letter_Schwa                : constant Unicode_Char := 16#0259#;
    Latin_Small_Letter_Schwa_With_Hook      : constant Unicode_Char := 16#025A#;
    Latin_Small_Letter_Open_E               : constant Unicode_Char := 16#025B#;
-   Latin_Small_Letter_Epsilon              : constant Unicode_Char := 16#025B#;
    Latin_Small_Letter_Reversed_Open_E      : constant Unicode_Char := 16#025C#;
    Latin_Small_Letter_Reversed_Open_E_With_Hook :
       constant Unicode_Char := 16#025D#;
    Latin_Small_Letter_Closed_Reversed_Open_E :
-      constant Unicode_Char := 16#025E#;
-   Latin_Small_Letter_Closed_Reversed_Epsilon :
       constant Unicode_Char := 16#025E#;
    Latin_Small_Letter_Dotless_J_With_Stroke :
       constant Unicode_Char := 16#025F#;
@@ -31,13 +29,10 @@ package Unicode.Names.Ipa_Extensions is
    Latin_Letter_Small_Capital_G            : constant Unicode_Char := 16#0262#;
    Latin_Small_Letter_Gamma                : constant Unicode_Char := 16#0263#;
    Latin_Small_Letter_Rams_Horn            : constant Unicode_Char := 16#0264#;
-   Latin_Small_Letter_Baby_Gamma           : constant Unicode_Char := 16#0264#;
    Latin_Small_Letter_Turned_H             : constant Unicode_Char := 16#0265#;
    Latin_Small_Letter_H_With_Hook          : constant Unicode_Char := 16#0266#;
    Latin_Small_Letter_Heng_With_Hook       : constant Unicode_Char := 16#0267#;
    Latin_Small_Letter_I_With_Stroke        : constant Unicode_Char := 16#0268#;
-   Barred_I                                : constant Unicode_Char := 16#0268#;
-   I_Bar                                   : constant Unicode_Char := 16#0268#;
    Latin_Small_Letter_Iota                 : constant Unicode_Char := 16#0269#;
    Latin_Letter_Small_Capital_I            : constant Unicode_Char := 16#026A#;
    Latin_Small_Letter_L_With_Middle_Tilde  : constant Unicode_Char := 16#026B#;
@@ -54,7 +49,6 @@ package Unicode.Names.Ipa_Extensions is
       constant Unicode_Char := 16#0273#;
    Latin_Letter_Small_Capital_N            : constant Unicode_Char := 16#0274#;
    Latin_Small_Letter_Barred_O             : constant Unicode_Char := 16#0275#;
-   O_Bar                                   : constant Unicode_Char := 16#0275#;
    Latin_Letter_Small_Capital_Oe           : constant Unicode_Char := 16#0276#;
    Latin_Small_Letter_Closed_Omega         : constant Unicode_Char := 16#0277#;
    Latin_Small_Letter_Phi                  : constant Unicode_Char := 16#0278#;
@@ -81,10 +75,7 @@ package Unicode.Names.Ipa_Extensions is
    Latin_Small_Letter_U_Bar                : constant Unicode_Char := 16#0289#;
    Latin_Small_Letter_Upsilon              : constant Unicode_Char := 16#028A#;
    Latin_Small_Letter_V_With_Hook          : constant Unicode_Char := 16#028B#;
-   Latin_Small_Letter_Script_V             : constant Unicode_Char := 16#028B#;
    Latin_Small_Letter_Turned_V             : constant Unicode_Char := 16#028C#;
-   Caret                                   : constant Unicode_Char := 16#028C#;
-   Wedge                                   : constant Unicode_Char := 16#028C#;
    Latin_Small_Letter_Turned_W             : constant Unicode_Char := 16#028D#;
    Latin_Small_Letter_Turned_Y             : constant Unicode_Char := 16#028E#;
    Latin_Letter_Small_Capital_Y            : constant Unicode_Char := 16#028F#;
@@ -92,20 +83,15 @@ package Unicode.Names.Ipa_Extensions is
       constant Unicode_Char := 16#0290#;
    Latin_Small_Letter_Z_With_Curl          : constant Unicode_Char := 16#0291#;
    Latin_Small_Letter_Ezh                  : constant Unicode_Char := 16#0292#;
-   Latin_Small_Letter_Yogh                 : constant Unicode_Char := 16#0292#;
-   Dram                                    : constant Unicode_Char := 16#0292#;
    Latin_Small_Letter_Ezh_With_Curl        : constant Unicode_Char := 16#0293#;
    Latin_Letter_Glottal_Stop               : constant Unicode_Char := 16#0294#;
    Latin_Letter_Pharyngeal_Voiced_Fricative :
       constant Unicode_Char := 16#0295#;
-   Latin_Letter_Reversed_Glottal_Stop      : constant Unicode_Char := 16#0295#;
    Latin_Letter_Inverted_Glottal_Stop      : constant Unicode_Char := 16#0296#;
    Latin_Letter_Stretched_C                : constant Unicode_Char := 16#0297#;
    Latin_Letter_Bilabial_Click             : constant Unicode_Char := 16#0298#;
-   Latin_Letter_Bullseye                   : constant Unicode_Char := 16#0298#;
    Latin_Letter_Small_Capital_B            : constant Unicode_Char := 16#0299#;
    Latin_Small_Letter_Closed_Open_E        : constant Unicode_Char := 16#029A#;
-   Latin_Small_Letter_Closed_Epsilon       : constant Unicode_Char := 16#029A#;
    Latin_Letter_Small_Capital_G_With_Hook  : constant Unicode_Char := 16#029B#;
    Latin_Letter_Small_Capital_H            : constant Unicode_Char := 16#029C#;
    Latin_Small_Letter_J_With_Crossed_Tail  : constant Unicode_Char := 16#029D#;
@@ -126,4 +112,8 @@ package Unicode.Names.Ipa_Extensions is
    Latin_Small_Letter_Lz_Digraph           : constant Unicode_Char := 16#02AB#;
    Latin_Letter_Bilabial_Percussive        : constant Unicode_Char := 16#02AC#;
    Latin_Letter_Bidental_Percussive        : constant Unicode_Char := 16#02AD#;
+   Latin_Small_Letter_Turned_H_With_Fishhook :
+      constant Unicode_Char := 16#02AE#;
+   Latin_Small_Letter_Turned_H_With_Fishhook_And_Tail :
+      constant Unicode_Char := 16#02AF#;
 end Unicode.Names.Ipa_Extensions;

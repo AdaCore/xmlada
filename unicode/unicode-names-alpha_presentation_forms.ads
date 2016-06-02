@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Alpha_Presentation_Forms is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Latin_Small_Ligature_Ff                 : constant Unicode_Char := 16#FB00#;
    Latin_Small_Ligature_Fi                 : constant Unicode_Char := 16#FB01#;
    Latin_Small_Ligature_Fl                 : constant Unicode_Char := 16#FB02#;
@@ -61,4 +64,5 @@ package Unicode.Names.Alpha_Presentation_Forms is
    Hebrew_Letter_Bet_With_Rafe             : constant Unicode_Char := 16#FB4C#;
    Hebrew_Letter_Kaf_With_Rafe             : constant Unicode_Char := 16#FB4D#;
    Hebrew_Letter_Pe_With_Rafe              : constant Unicode_Char := 16#FB4E#;
+   Hebrew_Ligature_Alef_Lamed              : constant Unicode_Char := 16#FB4F#;
 end Unicode.Names.Alpha_Presentation_Forms;

@@ -1,8 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Latin_Extended_B is
-   Latin_Small_Letter_Long_S               : constant Unicode_Char := 16#017F#;
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Latin_Small_Letter_B_With_Stroke        : constant Unicode_Char := 16#0180#;
    Latin_Capital_Letter_B_With_Hook        : constant Unicode_Char := 16#0181#;
    Latin_Capital_Letter_B_With_Topbar      : constant Unicode_Char := 16#0182#;
@@ -18,43 +20,33 @@ package Unicode.Names.Latin_Extended_B is
    Latin_Small_Letter_D_With_Topbar        : constant Unicode_Char := 16#018C#;
    Latin_Small_Letter_Turned_Delta         : constant Unicode_Char := 16#018D#;
    Latin_Capital_Letter_Reversed_E         : constant Unicode_Char := 16#018E#;
-   Latin_Capital_Letter_Turned_E           : constant Unicode_Char := 16#018E#;
    Latin_Capital_Letter_Schwa              : constant Unicode_Char := 16#018F#;
    Latin_Capital_Letter_Open_E             : constant Unicode_Char := 16#0190#;
-   Latin_Capital_Letter_Epsilon            : constant Unicode_Char := 16#0190#;
    Latin_Capital_Letter_F_With_Hook        : constant Unicode_Char := 16#0191#;
    Latin_Small_Letter_F_With_Hook          : constant Unicode_Char := 16#0192#;
-   Latin_Small_Letter_Script_F             : constant Unicode_Char := 16#0192#;
-   Florin_Currency_Symbol                  : constant Unicode_Char := 16#0192#;
-   Function_Symbol                         : constant Unicode_Char := 16#0192#;
-   Abbreviation_Convention_For_Folder      : constant Unicode_Char := 16#0192#;
    Latin_Capital_Letter_G_With_Hook        : constant Unicode_Char := 16#0193#;
    Latin_Capital_Letter_Gamma              : constant Unicode_Char := 16#0194#;
    Latin_Small_Letter_Hv                   : constant Unicode_Char := 16#0195#;
    Latin_Capital_Letter_Iota               : constant Unicode_Char := 16#0196#;
    Latin_Capital_Letter_I_With_Stroke      : constant Unicode_Char := 16#0197#;
-   Barred_I                                : constant Unicode_Char := 16#0197#;
-   I_Bar                                   : constant Unicode_Char := 16#0197#;
    Latin_Capital_Letter_K_With_Hook        : constant Unicode_Char := 16#0198#;
    Latin_Small_Letter_K_With_Hook          : constant Unicode_Char := 16#0199#;
    Latin_Small_Letter_L_With_Bar           : constant Unicode_Char := 16#019A#;
-   Barred_L                                : constant Unicode_Char := 16#019A#;
    Latin_Small_Letter_Lambda_With_Stroke   : constant Unicode_Char := 16#019B#;
-   Barred_Lambda                           : constant Unicode_Char := 16#019B#;
-   Lambda_Bar                              : constant Unicode_Char := 16#019B#;
    Latin_Capital_Letter_Turned_M           : constant Unicode_Char := 16#019C#;
    Latin_Capital_Letter_N_With_Left_Hook   : constant Unicode_Char := 16#019D#;
    Latin_Small_Letter_N_With_Long_Right_Leg :
       constant Unicode_Char := 16#019E#;
    Latin_Capital_Letter_O_With_Middle_Tilde :
       constant Unicode_Char := 16#019F#;
-   Barred_O                                : constant Unicode_Char := 16#019F#;
-   O_Bar                                   : constant Unicode_Char := 16#019F#;
    Latin_Capital_Letter_O_With_Horn        : constant Unicode_Char := 16#01A0#;
    Latin_Small_Letter_O_With_Horn          : constant Unicode_Char := 16#01A1#;
    Latin_Capital_Letter_Oi                 : constant Unicode_Char := 16#01A2#;
+   Latin_Capital_Letter_Gha                :
+      Unicode_Char renames Latin_Capital_Letter_Oi;
    Latin_Small_Letter_Oi                   : constant Unicode_Char := 16#01A3#;
-   Gha                                     : constant Unicode_Char := 16#01A3#;
+   Latin_Small_Letter_Gha                  :
+      Unicode_Char renames Latin_Small_Letter_Oi;
    Latin_Capital_Letter_P_With_Hook        : constant Unicode_Char := 16#01A4#;
    Latin_Small_Letter_P_With_Hook          : constant Unicode_Char := 16#01A5#;
    Latin_Letter_Yr                         : constant Unicode_Char := 16#01A6#;
@@ -71,13 +63,10 @@ package Unicode.Names.Latin_Extended_B is
    Latin_Small_Letter_U_With_Horn          : constant Unicode_Char := 16#01B0#;
    Latin_Capital_Letter_Upsilon            : constant Unicode_Char := 16#01B1#;
    Latin_Capital_Letter_V_With_Hook        : constant Unicode_Char := 16#01B2#;
-   Latin_Capital_Letter_Script_V           : constant Unicode_Char := 16#01B2#;
    Latin_Capital_Letter_Y_With_Hook        : constant Unicode_Char := 16#01B3#;
    Latin_Small_Letter_Y_With_Hook          : constant Unicode_Char := 16#01B4#;
    Latin_Capital_Letter_Z_With_Stroke      : constant Unicode_Char := 16#01B5#;
    Latin_Small_Letter_Z_With_Stroke        : constant Unicode_Char := 16#01B6#;
-   Barred_Z                                : constant Unicode_Char := 16#01B6#;
-   Z_Bar                                   : constant Unicode_Char := 16#01B6#;
    Latin_Capital_Letter_Ezh                : constant Unicode_Char := 16#01B7#;
    Latin_Capital_Letter_Ezh_Reversed       : constant Unicode_Char := 16#01B8#;
    Latin_Small_Letter_Ezh_Reversed         : constant Unicode_Char := 16#01B9#;
@@ -88,15 +77,10 @@ package Unicode.Names.Latin_Extended_B is
    Latin_Letter_Inverted_Glottal_Stop_With_Stroke :
       constant Unicode_Char := 16#01BE#;
    Latin_Letter_Wynn                       : constant Unicode_Char := 16#01BF#;
-   Wen                                     : constant Unicode_Char := 16#01BF#;
    Latin_Letter_Dental_Click               : constant Unicode_Char := 16#01C0#;
-   Pipe                                    : constant Unicode_Char := 16#01C0#;
    Latin_Letter_Lateral_Click              : constant Unicode_Char := 16#01C1#;
-   Double_Pipe                             : constant Unicode_Char := 16#01C1#;
    Latin_Letter_Alveolar_Click             : constant Unicode_Char := 16#01C2#;
-   Double_Barred_Pipe                      : constant Unicode_Char := 16#01C2#;
    Latin_Letter_Retroflex_Click            : constant Unicode_Char := 16#01C3#;
-   Latin_Letter_Exclamation_Mark           : constant Unicode_Char := 16#01C3#;
    Latin_Capital_Letter_Dz_With_Caron      : constant Unicode_Char := 16#01C4#;
    Latin_Capital_Letter_D_With_Small_Letter_Z_With_Caron :
       constant Unicode_Char := 16#01C5#;
@@ -167,7 +151,6 @@ package Unicode.Names.Latin_Extended_B is
    Latin_Small_Letter_G_With_Acute         : constant Unicode_Char := 16#01F5#;
    Latin_Capital_Letter_Hwair              : constant Unicode_Char := 16#01F6#;
    Latin_Capital_Letter_Wynn               : constant Unicode_Char := 16#01F7#;
-   --  Duplicate entry for Wen
    Latin_Capital_Letter_N_With_Grave       : constant Unicode_Char := 16#01F8#;
    Latin_Small_Letter_N_With_Grave         : constant Unicode_Char := 16#01F9#;
    Latin_Capital_Letter_A_With_Ring_Above_And_Acute :
@@ -230,6 +213,9 @@ package Unicode.Names.Latin_Extended_B is
    Latin_Small_Letter_Yogh                 : constant Unicode_Char := 16#021D#;
    Latin_Capital_Letter_H_With_Caron       : constant Unicode_Char := 16#021E#;
    Latin_Small_Letter_H_With_Caron         : constant Unicode_Char := 16#021F#;
+   Latin_Capital_Letter_N_With_Long_Right_Leg :
+      constant Unicode_Char := 16#0220#;
+   Latin_Small_Letter_D_With_Curl          : constant Unicode_Char := 16#0221#;
    Latin_Capital_Letter_Ou                 : constant Unicode_Char := 16#0222#;
    Latin_Small_Letter_Ou                   : constant Unicode_Char := 16#0223#;
    Latin_Capital_Letter_Z_With_Hook        : constant Unicode_Char := 16#0224#;
@@ -254,4 +240,34 @@ package Unicode.Names.Latin_Extended_B is
       constant Unicode_Char := 16#0231#;
    Latin_Capital_Letter_Y_With_Macron      : constant Unicode_Char := 16#0232#;
    Latin_Small_Letter_Y_With_Macron        : constant Unicode_Char := 16#0233#;
+   Latin_Small_Letter_L_With_Curl          : constant Unicode_Char := 16#0234#;
+   Latin_Small_Letter_N_With_Curl          : constant Unicode_Char := 16#0235#;
+   Latin_Small_Letter_T_With_Curl          : constant Unicode_Char := 16#0236#;
+   Latin_Small_Letter_Dotless_J            : constant Unicode_Char := 16#0237#;
+   Latin_Small_Letter_Db_Digraph           : constant Unicode_Char := 16#0238#;
+   Latin_Small_Letter_Qp_Digraph           : constant Unicode_Char := 16#0239#;
+   Latin_Capital_Letter_A_With_Stroke      : constant Unicode_Char := 16#023A#;
+   Latin_Capital_Letter_C_With_Stroke      : constant Unicode_Char := 16#023B#;
+   Latin_Small_Letter_C_With_Stroke        : constant Unicode_Char := 16#023C#;
+   Latin_Capital_Letter_L_With_Bar         : constant Unicode_Char := 16#023D#;
+   Latin_Capital_Letter_T_With_Diagonal_Stroke :
+      constant Unicode_Char := 16#023E#;
+   Latin_Small_Letter_S_With_Swash_Tail    : constant Unicode_Char := 16#023F#;
+   Latin_Small_Letter_Z_With_Swash_Tail    : constant Unicode_Char := 16#0240#;
+   Latin_Capital_Letter_Glottal_Stop       : constant Unicode_Char := 16#0241#;
+   Latin_Small_Letter_Glottal_Stop         : constant Unicode_Char := 16#0242#;
+   Latin_Capital_Letter_B_With_Stroke      : constant Unicode_Char := 16#0243#;
+   Latin_Capital_Letter_U_Bar              : constant Unicode_Char := 16#0244#;
+   Latin_Capital_Letter_Turned_V           : constant Unicode_Char := 16#0245#;
+   Latin_Capital_Letter_E_With_Stroke      : constant Unicode_Char := 16#0246#;
+   Latin_Small_Letter_E_With_Stroke        : constant Unicode_Char := 16#0247#;
+   Latin_Capital_Letter_J_With_Stroke      : constant Unicode_Char := 16#0248#;
+   Latin_Small_Letter_J_With_Stroke        : constant Unicode_Char := 16#0249#;
+   Latin_Capital_Letter_Small_Q_With_Hook_Tail :
+      constant Unicode_Char := 16#024A#;
+   Latin_Small_Letter_Q_With_Hook_Tail     : constant Unicode_Char := 16#024B#;
+   Latin_Capital_Letter_R_With_Stroke      : constant Unicode_Char := 16#024C#;
+   Latin_Small_Letter_R_With_Stroke        : constant Unicode_Char := 16#024D#;
+   Latin_Capital_Letter_Y_With_Stroke      : constant Unicode_Char := 16#024E#;
+   Latin_Small_Letter_Y_With_Stroke        : constant Unicode_Char := 16#024F#;
 end Unicode.Names.Latin_Extended_B;

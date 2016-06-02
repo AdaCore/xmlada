@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Thaana is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Thaana_Letter_Haa                       : constant Unicode_Char := 16#0780#;
    Thaana_Letter_Shaviyani                 : constant Unicode_Char := 16#0781#;
    Thaana_Letter_Noonu                     : constant Unicode_Char := 16#0782#;
@@ -51,4 +54,5 @@ package Unicode.Names.Thaana is
    Thaana_Obofili                          : constant Unicode_Char := 16#07AE#;
    Thaana_Oaboafili                        : constant Unicode_Char := 16#07AF#;
    Thaana_Sukun                            : constant Unicode_Char := 16#07B0#;
+   Thaana_Letter_Naa                       : constant Unicode_Char := 16#07B1#;
 end Unicode.Names.Thaana;

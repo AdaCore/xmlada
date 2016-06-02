@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Syriac is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Syriac_End_Of_Paragraph                 : constant Unicode_Char := 16#0700#;
    Syriac_Supralinear_Full_Stop            : constant Unicode_Char := 16#0701#;
    Syriac_Sublinear_Full_Stop              : constant Unicode_Char := 16#0702#;
@@ -12,6 +15,8 @@ package Unicode.Names.Syriac is
    Syriac_Colon_Skewed_Right               : constant Unicode_Char := 16#0707#;
    Syriac_Supralinear_Colon_Skewed_Left    : constant Unicode_Char := 16#0708#;
    Syriac_Sublinear_Colon_Skewed_Right     : constant Unicode_Char := 16#0709#;
+   Syriac_Sublinear_Colon_Skewed_Left      :
+      Unicode_Char renames Syriac_Sublinear_Colon_Skewed_Right;
    Syriac_Contraction                      : constant Unicode_Char := 16#070A#;
    Syriac_Harklean_Obelus                  : constant Unicode_Char := 16#070B#;
    Syriac_Harklean_Metobelus               : constant Unicode_Char := 16#070C#;
@@ -46,6 +51,9 @@ package Unicode.Names.Syriac is
    Syriac_Letter_Rish                      : constant Unicode_Char := 16#072A#;
    Syriac_Letter_Shin                      : constant Unicode_Char := 16#072B#;
    Syriac_Letter_Taw                       : constant Unicode_Char := 16#072C#;
+   Syriac_Letter_Persian_Bheth             : constant Unicode_Char := 16#072D#;
+   Syriac_Letter_Persian_Ghamal            : constant Unicode_Char := 16#072E#;
+   Syriac_Letter_Persian_Dhalath           : constant Unicode_Char := 16#072F#;
    Syriac_Pthaha_Above                     : constant Unicode_Char := 16#0730#;
    Syriac_Pthaha_Below                     : constant Unicode_Char := 16#0731#;
    Syriac_Pthaha_Dotted                    : constant Unicode_Char := 16#0732#;
@@ -73,4 +81,7 @@ package Unicode.Names.Syriac is
    Syriac_Oblique_Line_Below               : constant Unicode_Char := 16#0748#;
    Syriac_Music                            : constant Unicode_Char := 16#0749#;
    Syriac_Barrekh                          : constant Unicode_Char := 16#074A#;
+   Syriac_Letter_Sogdian_Zhain             : constant Unicode_Char := 16#074D#;
+   Syriac_Letter_Sogdian_Khaph             : constant Unicode_Char := 16#074E#;
+   Syriac_Letter_Sogdian_Fe                : constant Unicode_Char := 16#074F#;
 end Unicode.Names.Syriac;

@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Braille_Patterns is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Braille_Pattern_Blank                   : constant Unicode_Char := 16#2800#;
    Braille_Pattern_Dots_1                  : constant Unicode_Char := 16#2801#;
    Braille_Pattern_Dots_2                  : constant Unicode_Char := 16#2802#;
@@ -257,4 +260,5 @@ package Unicode.Names.Braille_Patterns is
    Braille_Pattern_Dots_345678             : constant Unicode_Char := 16#28FC#;
    Braille_Pattern_Dots_1345678            : constant Unicode_Char := 16#28FD#;
    Braille_Pattern_Dots_2345678            : constant Unicode_Char := 16#28FE#;
+   Braille_Pattern_Dots_12345678           : constant Unicode_Char := 16#28FF#;
 end Unicode.Names.Braille_Patterns;

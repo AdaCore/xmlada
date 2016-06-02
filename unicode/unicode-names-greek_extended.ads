@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Greek_Extended is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Greek_Small_Letter_Alpha_With_Psili     : constant Unicode_Char := 16#1F00#;
    Greek_Small_Letter_Alpha_With_Dasia     : constant Unicode_Char := 16#1F01#;
    Greek_Small_Letter_Alpha_With_Psili_And_Varia :

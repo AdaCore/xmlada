@@ -1,10 +1,46 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Arabic is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Arabic_Number_Sign                      : constant Unicode_Char := 16#0600#;
+   Arabic_Sign_Sanah                       : constant Unicode_Char := 16#0601#;
+   Arabic_Footnote_Marker                  : constant Unicode_Char := 16#0602#;
+   Arabic_Sign_Safha                       : constant Unicode_Char := 16#0603#;
+   Arabic_Sign_Samvat                      : constant Unicode_Char := 16#0604#;
+   Arabic_Number_Mark_Above                : constant Unicode_Char := 16#0605#;
+   Arabic_Indic_Cube_Root                  : constant Unicode_Char := 16#0606#;
+   Arabic_Indic_Fourth_Root                : constant Unicode_Char := 16#0607#;
+   Arabic_Ray                              : constant Unicode_Char := 16#0608#;
+   Arabic_Indic_Per_Mille_Sign             : constant Unicode_Char := 16#0609#;
+   Arabic_Indic_Per_Ten_Thousand_Sign      : constant Unicode_Char := 16#060A#;
+   Afghani_Sign                            : constant Unicode_Char := 16#060B#;
    Arabic_Comma                            : constant Unicode_Char := 16#060C#;
+   Arabic_Date_Separator                   : constant Unicode_Char := 16#060D#;
+   Arabic_Poetic_Verse_Sign                : constant Unicode_Char := 16#060E#;
+   Arabic_Sign_Misra                       : constant Unicode_Char := 16#060F#;
+   Arabic_Sign_Sallallahou_Alayhe_Wassallam :
+      constant Unicode_Char := 16#0610#;
+   Arabic_Sign_Alayhe_Assallam             : constant Unicode_Char := 16#0611#;
+   Arabic_Sign_Rahmatullah_Alayhe          : constant Unicode_Char := 16#0612#;
+   Arabic_Sign_Radi_Allahou_Anhu           : constant Unicode_Char := 16#0613#;
+   Arabic_Sign_Takhallus                   : constant Unicode_Char := 16#0614#;
+   Arabic_Small_High_Tah                   : constant Unicode_Char := 16#0615#;
+   Arabic_Small_High_Ligature_Alef_With_Lam_With_Yeh :
+      constant Unicode_Char := 16#0616#;
+   Arabic_Small_High_Zain                  : constant Unicode_Char := 16#0617#;
+   Arabic_Small_Fatha                      : constant Unicode_Char := 16#0618#;
+   Arabic_Small_Damma                      : constant Unicode_Char := 16#0619#;
+   Arabic_Small_Kasra                      : constant Unicode_Char := 16#061A#;
    Arabic_Semicolon                        : constant Unicode_Char := 16#061B#;
+   Arabic_Letter_Mark                      : constant Unicode_Char := 16#061C#;
+   Alm                                     :
+      Unicode_Char renames Arabic_Letter_Mark;
+   Arabic_Triple_Dot_Punctuation_Mark      : constant Unicode_Char := 16#061E#;
    Arabic_Question_Mark                    : constant Unicode_Char := 16#061F#;
+   Arabic_Letter_Kashmiri_Yeh              : constant Unicode_Char := 16#0620#;
    Arabic_Letter_Hamza                     : constant Unicode_Char := 16#0621#;
    Arabic_Letter_Alef_With_Madda_Above     : constant Unicode_Char := 16#0622#;
    Arabic_Letter_Alef_With_Hamza_Above     : constant Unicode_Char := 16#0623#;
@@ -31,8 +67,15 @@ package Unicode.Names.Arabic is
    Arabic_Letter_Zah                       : constant Unicode_Char := 16#0638#;
    Arabic_Letter_Ain                       : constant Unicode_Char := 16#0639#;
    Arabic_Letter_Ghain                     : constant Unicode_Char := 16#063A#;
+   Arabic_Letter_Keheh_With_Two_Dots_Above : constant Unicode_Char := 16#063B#;
+   Arabic_Letter_Keheh_With_Three_Dots_Below :
+      constant Unicode_Char := 16#063C#;
+   Arabic_Letter_Farsi_Yeh_With_Inverted_V : constant Unicode_Char := 16#063D#;
+   Arabic_Letter_Farsi_Yeh_With_Two_Dots_Above :
+      constant Unicode_Char := 16#063E#;
+   Arabic_Letter_Farsi_Yeh_With_Three_Dots_Above :
+      constant Unicode_Char := 16#063F#;
    Arabic_Tatweel                          : constant Unicode_Char := 16#0640#;
-   Kashida                                 : constant Unicode_Char := 16#0640#;
    Arabic_Letter_Feh                       : constant Unicode_Char := 16#0641#;
    Arabic_Letter_Qaf                       : constant Unicode_Char := 16#0642#;
    Arabic_Letter_Kaf                       : constant Unicode_Char := 16#0643#;
@@ -54,6 +97,17 @@ package Unicode.Names.Arabic is
    Arabic_Maddah_Above                     : constant Unicode_Char := 16#0653#;
    Arabic_Hamza_Above                      : constant Unicode_Char := 16#0654#;
    Arabic_Hamza_Below                      : constant Unicode_Char := 16#0655#;
+   Arabic_Subscript_Alef                   : constant Unicode_Char := 16#0656#;
+   Arabic_Inverted_Damma                   : constant Unicode_Char := 16#0657#;
+   Arabic_Mark_Noon_Ghunna                 : constant Unicode_Char := 16#0658#;
+   Arabic_Zwarakay                         : constant Unicode_Char := 16#0659#;
+   Arabic_Vowel_Sign_Small_V_Above         : constant Unicode_Char := 16#065A#;
+   Arabic_Vowel_Sign_Inverted_Small_V_Above :
+      constant Unicode_Char := 16#065B#;
+   Arabic_Vowel_Sign_Dot_Below             : constant Unicode_Char := 16#065C#;
+   Arabic_Reversed_Damma                   : constant Unicode_Char := 16#065D#;
+   Arabic_Fatha_With_Two_Dots              : constant Unicode_Char := 16#065E#;
+   Arabic_Wavy_Hamza_Below                 : constant Unicode_Char := 16#065F#;
    Arabic_Indic_Digit_Zero                 : constant Unicode_Char := 16#0660#;
    Arabic_Indic_Digit_One                  : constant Unicode_Char := 16#0661#;
    Arabic_Indic_Digit_Two                  : constant Unicode_Char := 16#0662#;
@@ -68,6 +122,8 @@ package Unicode.Names.Arabic is
    Arabic_Decimal_Separator                : constant Unicode_Char := 16#066B#;
    Arabic_Thousands_Separator              : constant Unicode_Char := 16#066C#;
    Arabic_Five_Pointed_Star                : constant Unicode_Char := 16#066D#;
+   Arabic_Letter_Dotless_Beh               : constant Unicode_Char := 16#066E#;
+   Arabic_Letter_Dotless_Qaf               : constant Unicode_Char := 16#066F#;
    Arabic_Letter_Superscript_Alef          : constant Unicode_Char := 16#0670#;
    Arabic_Letter_Alef_Wasla                : constant Unicode_Char := 16#0671#;
    Arabic_Letter_Alef_With_Wavy_Hamza_Above :
@@ -160,8 +216,6 @@ package Unicode.Names.Arabic is
    Arabic_Letter_Heh_Doachashmee           : constant Unicode_Char := 16#06BE#;
    Arabic_Letter_Tcheh_With_Dot_Above      : constant Unicode_Char := 16#06BF#;
    Arabic_Letter_Heh_With_Yeh_Above        : constant Unicode_Char := 16#06C0#;
-   Arabic_Letter_Hamzah_On_Ha              : constant Unicode_Char := 16#06C0#;
-   Izafet                                  : constant Unicode_Char := 16#06C0#;
    Arabic_Letter_Heh_Goal                  : constant Unicode_Char := 16#06C1#;
    Arabic_Letter_Heh_Goal_With_Hamza_Above : constant Unicode_Char := 16#06C2#;
    Arabic_Letter_Teh_Marbuta_Goal          : constant Unicode_Char := 16#06C3#;
@@ -212,6 +266,8 @@ package Unicode.Names.Arabic is
    Arabic_Rounded_High_Stop_With_Filled_Centre :
       constant Unicode_Char := 16#06EC#;
    Arabic_Small_Low_Meem                   : constant Unicode_Char := 16#06ED#;
+   Arabic_Letter_Dal_With_Inverted_V       : constant Unicode_Char := 16#06EE#;
+   Arabic_Letter_Reh_With_Inverted_V       : constant Unicode_Char := 16#06EF#;
    Extended_Arabic_Indic_Digit_Zero        : constant Unicode_Char := 16#06F0#;
    Extended_Arabic_Indic_Digit_One         : constant Unicode_Char := 16#06F1#;
    Extended_Arabic_Indic_Digit_Two         : constant Unicode_Char := 16#06F2#;
@@ -227,4 +283,5 @@ package Unicode.Names.Arabic is
    Arabic_Letter_Ghain_With_Dot_Below      : constant Unicode_Char := 16#06FC#;
    Arabic_Sign_Sindhi_Ampersand            : constant Unicode_Char := 16#06FD#;
    Arabic_Sign_Sindhi_Postposition_Men     : constant Unicode_Char := 16#06FE#;
+   Arabic_Letter_Heh_With_Inverted_V       : constant Unicode_Char := 16#06FF#;
 end Unicode.Names.Arabic;

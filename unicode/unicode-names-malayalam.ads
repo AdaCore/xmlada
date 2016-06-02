@@ -1,7 +1,11 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Malayalam is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Malayalam_Sign_Candrabindu              : constant Unicode_Char := 16#0D01#;
    Malayalam_Sign_Anusvara                 : constant Unicode_Char := 16#0D02#;
    Malayalam_Sign_Visarga                  : constant Unicode_Char := 16#0D03#;
    Malayalam_Letter_A                      : constant Unicode_Char := 16#0D05#;
@@ -38,6 +42,7 @@ package Unicode.Names.Malayalam is
    Malayalam_Letter_Da                     : constant Unicode_Char := 16#0D26#;
    Malayalam_Letter_Dha                    : constant Unicode_Char := 16#0D27#;
    Malayalam_Letter_Na                     : constant Unicode_Char := 16#0D28#;
+   Malayalam_Letter_Nnna                   : constant Unicode_Char := 16#0D29#;
    Malayalam_Letter_Pa                     : constant Unicode_Char := 16#0D2A#;
    Malayalam_Letter_Pha                    : constant Unicode_Char := 16#0D2B#;
    Malayalam_Letter_Ba                     : constant Unicode_Char := 16#0D2C#;
@@ -54,12 +59,15 @@ package Unicode.Names.Malayalam is
    Malayalam_Letter_Ssa                    : constant Unicode_Char := 16#0D37#;
    Malayalam_Letter_Sa                     : constant Unicode_Char := 16#0D38#;
    Malayalam_Letter_Ha                     : constant Unicode_Char := 16#0D39#;
+   Malayalam_Letter_Ttta                   : constant Unicode_Char := 16#0D3A#;
+   Malayalam_Sign_Avagraha                 : constant Unicode_Char := 16#0D3D#;
    Malayalam_Vowel_Sign_Aa                 : constant Unicode_Char := 16#0D3E#;
    Malayalam_Vowel_Sign_I                  : constant Unicode_Char := 16#0D3F#;
    Malayalam_Vowel_Sign_Ii                 : constant Unicode_Char := 16#0D40#;
    Malayalam_Vowel_Sign_U                  : constant Unicode_Char := 16#0D41#;
    Malayalam_Vowel_Sign_Uu                 : constant Unicode_Char := 16#0D42#;
    Malayalam_Vowel_Sign_Vocalic_R          : constant Unicode_Char := 16#0D43#;
+   Malayalam_Vowel_Sign_Vocalic_Rr         : constant Unicode_Char := 16#0D44#;
    Malayalam_Vowel_Sign_E                  : constant Unicode_Char := 16#0D46#;
    Malayalam_Vowel_Sign_Ee                 : constant Unicode_Char := 16#0D47#;
    Malayalam_Vowel_Sign_Ai                 : constant Unicode_Char := 16#0D48#;
@@ -67,10 +75,13 @@ package Unicode.Names.Malayalam is
    Malayalam_Vowel_Sign_Oo                 : constant Unicode_Char := 16#0D4B#;
    Malayalam_Vowel_Sign_Au                 : constant Unicode_Char := 16#0D4C#;
    Malayalam_Sign_Virama                   : constant Unicode_Char := 16#0D4D#;
-   Vowel_Half_U                            : constant Unicode_Char := 16#0D4D#;
+   Malayalam_Letter_Dot_Reph               : constant Unicode_Char := 16#0D4E#;
    Malayalam_Au_Length_Mark                : constant Unicode_Char := 16#0D57#;
+   Malayalam_Letter_Archaic_Ii             : constant Unicode_Char := 16#0D5F#;
    Malayalam_Letter_Vocalic_Rr             : constant Unicode_Char := 16#0D60#;
    Malayalam_Letter_Vocalic_Ll             : constant Unicode_Char := 16#0D61#;
+   Malayalam_Vowel_Sign_Vocalic_L          : constant Unicode_Char := 16#0D62#;
+   Malayalam_Vowel_Sign_Vocalic_Ll         : constant Unicode_Char := 16#0D63#;
    Malayalam_Digit_Zero                    : constant Unicode_Char := 16#0D66#;
    Malayalam_Digit_One                     : constant Unicode_Char := 16#0D67#;
    Malayalam_Digit_Two                     : constant Unicode_Char := 16#0D68#;
@@ -81,4 +92,17 @@ package Unicode.Names.Malayalam is
    Malayalam_Digit_Seven                   : constant Unicode_Char := 16#0D6D#;
    Malayalam_Digit_Eight                   : constant Unicode_Char := 16#0D6E#;
    Malayalam_Digit_Nine                    : constant Unicode_Char := 16#0D6F#;
+   Malayalam_Number_Ten                    : constant Unicode_Char := 16#0D70#;
+   Malayalam_Number_One_Hundred            : constant Unicode_Char := 16#0D71#;
+   Malayalam_Number_One_Thousand           : constant Unicode_Char := 16#0D72#;
+   Malayalam_Fraction_One_Quarter          : constant Unicode_Char := 16#0D73#;
+   Malayalam_Fraction_One_Half             : constant Unicode_Char := 16#0D74#;
+   Malayalam_Fraction_Three_Quarters       : constant Unicode_Char := 16#0D75#;
+   Malayalam_Date_Mark                     : constant Unicode_Char := 16#0D79#;
+   Malayalam_Letter_Chillu_Nn              : constant Unicode_Char := 16#0D7A#;
+   Malayalam_Letter_Chillu_N               : constant Unicode_Char := 16#0D7B#;
+   Malayalam_Letter_Chillu_Rr              : constant Unicode_Char := 16#0D7C#;
+   Malayalam_Letter_Chillu_L               : constant Unicode_Char := 16#0D7D#;
+   Malayalam_Letter_Chillu_Ll              : constant Unicode_Char := 16#0D7E#;
+   Malayalam_Letter_Chillu_K               : constant Unicode_Char := 16#0D7F#;
 end Unicode.Names.Malayalam;

@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Thai is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Thai_Character_Ko_Kai                   : constant Unicode_Char := 16#0E01#;
    Thai_Character_Kho_Khai                 : constant Unicode_Char := 16#0E02#;
    Thai_Character_Kho_Khuat                : constant Unicode_Char := 16#0E03#;
@@ -57,7 +60,6 @@ package Unicode.Names.Thai is
    Thai_Character_Sara_Ii                  : constant Unicode_Char := 16#0E35#;
    Thai_Character_Sara_Ue                  : constant Unicode_Char := 16#0E36#;
    Thai_Character_Sara_Uee                 : constant Unicode_Char := 16#0E37#;
-   Sara_Uue                                : constant Unicode_Char := 16#0E37#;
    Thai_Character_Sara_U                   : constant Unicode_Char := 16#0E38#;
    Thai_Character_Sara_Uu                  : constant Unicode_Char := 16#0E39#;
    Thai_Character_Phinthu                  : constant Unicode_Char := 16#0E3A#;
@@ -76,7 +78,6 @@ package Unicode.Names.Thai is
    Thai_Character_Mai_Chattawa             : constant Unicode_Char := 16#0E4B#;
    Thai_Character_Thanthakhat              : constant Unicode_Char := 16#0E4C#;
    Thai_Character_Nikhahit                 : constant Unicode_Char := 16#0E4D#;
-   Nikkhahit                               : constant Unicode_Char := 16#0E4D#;
    Thai_Character_Yamakkan                 : constant Unicode_Char := 16#0E4E#;
    Thai_Character_Fongman                  : constant Unicode_Char := 16#0E4F#;
    Thai_Digit_Zero                         : constant Unicode_Char := 16#0E50#;

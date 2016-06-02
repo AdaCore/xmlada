@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Ogham is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Ogham_Space_Mark                        : constant Unicode_Char := 16#1680#;
    Ogham_Letter_Beith                      : constant Unicode_Char := 16#1681#;
    Ogham_Letter_Luis                       : constant Unicode_Char := 16#1682#;

@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Mongolian is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Mongolian_Birga                         : constant Unicode_Char := 16#1800#;
    Mongolian_Ellipsis                      : constant Unicode_Char := 16#1801#;
    Mongolian_Comma                         : constant Unicode_Char := 16#1802#;
@@ -14,9 +17,17 @@ package Unicode.Names.Mongolian is
    Mongolian_Manchu_Full_Stop              : constant Unicode_Char := 16#1809#;
    Mongolian_Nirugu                        : constant Unicode_Char := 16#180A#;
    Mongolian_Free_Variation_Selector_One   : constant Unicode_Char := 16#180B#;
+   Fvs1                                    :
+      Unicode_Char renames Mongolian_Free_Variation_Selector_One;
    Mongolian_Free_Variation_Selector_Two   : constant Unicode_Char := 16#180C#;
+   Fvs2                                    :
+      Unicode_Char renames Mongolian_Free_Variation_Selector_Two;
    Mongolian_Free_Variation_Selector_Three : constant Unicode_Char := 16#180D#;
+   Fvs3                                    :
+      Unicode_Char renames Mongolian_Free_Variation_Selector_Three;
    Mongolian_Vowel_Separator               : constant Unicode_Char := 16#180E#;
+   Mvs                                     :
+      Unicode_Char renames Mongolian_Vowel_Separator;
    Mongolian_Digit_Zero                    : constant Unicode_Char := 16#1810#;
    Mongolian_Digit_One                     : constant Unicode_Char := 16#1811#;
    Mongolian_Digit_Two                     : constant Unicode_Char := 16#1812#;
@@ -158,4 +169,5 @@ package Unicode.Names.Mongolian is
    Mongolian_Letter_Ali_Gali_Half_Ya       : constant Unicode_Char := 16#18A7#;
    Mongolian_Letter_Manchu_Ali_Gali_Bha    : constant Unicode_Char := 16#18A8#;
    Mongolian_Letter_Ali_Gali_Dagalga       : constant Unicode_Char := 16#18A9#;
+   Mongolian_Letter_Manchu_Ali_Gali_Lha    : constant Unicode_Char := 16#18AA#;
 end Unicode.Names.Mongolian;

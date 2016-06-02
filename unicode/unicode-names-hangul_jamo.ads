@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Hangul_Jamo is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Hangul_Choseong_Kiyeok                  : constant Unicode_Char := 16#1100#;
    Hangul_Choseong_Ssangkiyeok             : constant Unicode_Char := 16#1101#;
    Hangul_Choseong_Nieun                   : constant Unicode_Char := 16#1102#;
@@ -92,6 +95,11 @@ package Unicode.Names.Hangul_Jamo is
    Hangul_Choseong_Kapyeounphieuph         : constant Unicode_Char := 16#1157#;
    Hangul_Choseong_Ssanghieuh              : constant Unicode_Char := 16#1158#;
    Hangul_Choseong_Yeorinhieuh             : constant Unicode_Char := 16#1159#;
+   Hangul_Choseong_Kiyeok_Tikeut           : constant Unicode_Char := 16#115A#;
+   Hangul_Choseong_Nieun_Sios              : constant Unicode_Char := 16#115B#;
+   Hangul_Choseong_Nieun_Cieuc             : constant Unicode_Char := 16#115C#;
+   Hangul_Choseong_Nieun_Hieuh             : constant Unicode_Char := 16#115D#;
+   Hangul_Choseong_Tikeut_Rieul            : constant Unicode_Char := 16#115E#;
    Hangul_Choseong_Filler                  : constant Unicode_Char := 16#115F#;
    Hangul_Jungseong_Filler                 : constant Unicode_Char := 16#1160#;
    Hangul_Jungseong_A                      : constant Unicode_Char := 16#1161#;
@@ -160,6 +168,11 @@ package Unicode.Names.Hangul_Jamo is
    Hangul_Jungseong_Araea_U                : constant Unicode_Char := 16#11A0#;
    Hangul_Jungseong_Araea_I                : constant Unicode_Char := 16#11A1#;
    Hangul_Jungseong_Ssangaraea             : constant Unicode_Char := 16#11A2#;
+   Hangul_Jungseong_A_Eu                   : constant Unicode_Char := 16#11A3#;
+   Hangul_Jungseong_Ya_U                   : constant Unicode_Char := 16#11A4#;
+   Hangul_Jungseong_Yeo_Ya                 : constant Unicode_Char := 16#11A5#;
+   Hangul_Jungseong_O_Ya                   : constant Unicode_Char := 16#11A6#;
+   Hangul_Jungseong_O_Yae                  : constant Unicode_Char := 16#11A7#;
    Hangul_Jongseong_Kiyeok                 : constant Unicode_Char := 16#11A8#;
    Hangul_Jongseong_Ssangkiyeok            : constant Unicode_Char := 16#11A9#;
    Hangul_Jongseong_Kiyeok_Sios            : constant Unicode_Char := 16#11AA#;
@@ -242,4 +255,10 @@ package Unicode.Names.Hangul_Jamo is
    Hangul_Jongseong_Hieuh_Mieum            : constant Unicode_Char := 16#11F7#;
    Hangul_Jongseong_Hieuh_Pieup            : constant Unicode_Char := 16#11F8#;
    Hangul_Jongseong_Yeorinhieuh            : constant Unicode_Char := 16#11F9#;
+   Hangul_Jongseong_Kiyeok_Nieun           : constant Unicode_Char := 16#11FA#;
+   Hangul_Jongseong_Kiyeok_Pieup           : constant Unicode_Char := 16#11FB#;
+   Hangul_Jongseong_Kiyeok_Chieuch         : constant Unicode_Char := 16#11FC#;
+   Hangul_Jongseong_Kiyeok_Khieukh         : constant Unicode_Char := 16#11FD#;
+   Hangul_Jongseong_Kiyeok_Hieuh           : constant Unicode_Char := 16#11FE#;
+   Hangul_Jongseong_Ssangnieun             : constant Unicode_Char := 16#11FF#;
 end Unicode.Names.Hangul_Jamo;

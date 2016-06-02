@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Tibetan is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Tibetan_Syllable_Om                     : constant Unicode_Char := 16#0F00#;
    Tibetan_Mark_Gter_Yig_Mgo_Truncated_A   : constant Unicode_Char := 16#0F01#;
    Tibetan_Mark_Gter_Yig_Mgo_Um_Rnam_Bcad_Ma :
@@ -102,20 +105,21 @@ package Unicode.Names.Tibetan is
    Tibetan_Letter_Wa                       : constant Unicode_Char := 16#0F5D#;
    Tibetan_Letter_Zha                      : constant Unicode_Char := 16#0F5E#;
    Tibetan_Letter_Za                       : constant Unicode_Char := 16#0F5F#;
-   Tibetan_Letter_A                        : constant Unicode_Char := 16#0F60#;
+   --  Real Unicode name is TIBETAN LETTER -A
+   Tibetan_Letter_Dash_A                   : constant Unicode_Char := 16#0F60#;
    Tibetan_Letter_Ya                       : constant Unicode_Char := 16#0F61#;
    Tibetan_Letter_Ra                       : constant Unicode_Char := 16#0F62#;
    Tibetan_Letter_La                       : constant Unicode_Char := 16#0F63#;
    Tibetan_Letter_Sha                      : constant Unicode_Char := 16#0F64#;
    Tibetan_Letter_Ssa                      : constant Unicode_Char := 16#0F65#;
-   Reversed_Sha                            : constant Unicode_Char := 16#0F65#;
    Tibetan_Letter_Sa                       : constant Unicode_Char := 16#0F66#;
    Tibetan_Letter_Ha                       : constant Unicode_Char := 16#0F67#;
-   --  Duplicate entry for Tibetan_Letter_A
+   Tibetan_Letter_A                        : constant Unicode_Char := 16#0F68#;
    Tibetan_Letter_Kssa                     : constant Unicode_Char := 16#0F69#;
    Tibetan_Letter_Fixed_Form_Ra            : constant Unicode_Char := 16#0F6A#;
+   Tibetan_Letter_Kka                      : constant Unicode_Char := 16#0F6B#;
+   Tibetan_Letter_Rra                      : constant Unicode_Char := 16#0F6C#;
    Tibetan_Vowel_Sign_Aa                   : constant Unicode_Char := 16#0F71#;
-   A_Chung                                 : constant Unicode_Char := 16#0F71#;
    Tibetan_Vowel_Sign_I                    : constant Unicode_Char := 16#0F72#;
    Tibetan_Vowel_Sign_Ii                   : constant Unicode_Char := 16#0F73#;
    Tibetan_Vowel_Sign_U                    : constant Unicode_Char := 16#0F74#;
@@ -129,15 +133,12 @@ package Unicode.Names.Tibetan is
    Tibetan_Vowel_Sign_O                    : constant Unicode_Char := 16#0F7C#;
    Tibetan_Vowel_Sign_Oo                   : constant Unicode_Char := 16#0F7D#;
    Tibetan_Sign_Rjes_Su_Nga_Ro             : constant Unicode_Char := 16#0F7E#;
-   Anusvara                                : constant Unicode_Char := 16#0F7E#;
    Tibetan_Sign_Rnam_Bcad                  : constant Unicode_Char := 16#0F7F#;
-   Visarga                                 : constant Unicode_Char := 16#0F7F#;
    Tibetan_Vowel_Sign_Reversed_I           : constant Unicode_Char := 16#0F80#;
    Tibetan_Vowel_Sign_Reversed_Ii          : constant Unicode_Char := 16#0F81#;
    Tibetan_Sign_Nyi_Zla_Naa_Da             : constant Unicode_Char := 16#0F82#;
    Tibetan_Sign_Sna_Ldan                   : constant Unicode_Char := 16#0F83#;
    Tibetan_Mark_Halanta                    : constant Unicode_Char := 16#0F84#;
-   Srog_Med                                : constant Unicode_Char := 16#0F84#;
    Tibetan_Mark_Paluta                     : constant Unicode_Char := 16#0F85#;
    Tibetan_Sign_Lci_Rtags                  : constant Unicode_Char := 16#0F86#;
    Tibetan_Sign_Yang_Rtags                 : constant Unicode_Char := 16#0F87#;
@@ -145,6 +146,11 @@ package Unicode.Names.Tibetan is
    Tibetan_Sign_Mchu_Can                   : constant Unicode_Char := 16#0F89#;
    Tibetan_Sign_Gru_Can_Rgyings            : constant Unicode_Char := 16#0F8A#;
    Tibetan_Sign_Gru_Med_Rgyings            : constant Unicode_Char := 16#0F8B#;
+   Tibetan_Sign_Inverted_Mchu_Can          : constant Unicode_Char := 16#0F8C#;
+   Tibetan_Subjoined_Sign_Lce_Tsa_Can      : constant Unicode_Char := 16#0F8D#;
+   Tibetan_Subjoined_Sign_Mchu_Can         : constant Unicode_Char := 16#0F8E#;
+   Tibetan_Subjoined_Sign_Inverted_Mchu_Can :
+      constant Unicode_Char := 16#0F8F#;
    Tibetan_Subjoined_Letter_Ka             : constant Unicode_Char := 16#0F90#;
    Tibetan_Subjoined_Letter_Kha            : constant Unicode_Char := 16#0F91#;
    Tibetan_Subjoined_Letter_Ga             : constant Unicode_Char := 16#0F92#;
@@ -174,23 +180,18 @@ package Unicode.Names.Tibetan is
    Tibetan_Subjoined_Letter_Dza            : constant Unicode_Char := 16#0FAB#;
    Tibetan_Subjoined_Letter_Dzha           : constant Unicode_Char := 16#0FAC#;
    Tibetan_Subjoined_Letter_Wa             : constant Unicode_Char := 16#0FAD#;
-   Wa_Zur                                  : constant Unicode_Char := 16#0FAD#;
-   Wa_Btags                                : constant Unicode_Char := 16#0FAD#;
    Tibetan_Subjoined_Letter_Zha            : constant Unicode_Char := 16#0FAE#;
    Tibetan_Subjoined_Letter_Za             : constant Unicode_Char := 16#0FAF#;
-   Tibetan_Subjoined_Letter_A              : constant Unicode_Char := 16#0FB0#;
-   --  Duplicate entry for A_Chung
+   --  Real Unicode name is TIBETAN SUBJOINED LETTER -A
+   Tibetan_Subjoined_Letter_Dash_A         : constant Unicode_Char := 16#0FB0#;
    Tibetan_Subjoined_Letter_Ya             : constant Unicode_Char := 16#0FB1#;
-   Ya_Btags                                : constant Unicode_Char := 16#0FB1#;
    Tibetan_Subjoined_Letter_Ra             : constant Unicode_Char := 16#0FB2#;
-   Ra_Btags                                : constant Unicode_Char := 16#0FB2#;
    Tibetan_Subjoined_Letter_La             : constant Unicode_Char := 16#0FB3#;
    Tibetan_Subjoined_Letter_Sha            : constant Unicode_Char := 16#0FB4#;
    Tibetan_Subjoined_Letter_Ssa            : constant Unicode_Char := 16#0FB5#;
-   Reversed_Subjoined_Sha                  : constant Unicode_Char := 16#0FB5#;
    Tibetan_Subjoined_Letter_Sa             : constant Unicode_Char := 16#0FB6#;
    Tibetan_Subjoined_Letter_Ha             : constant Unicode_Char := 16#0FB7#;
-   --  Duplicate entry for Tibetan_Subjoined_Letter_A
+   Tibetan_Subjoined_Letter_A              : constant Unicode_Char := 16#0FB8#;
    Tibetan_Subjoined_Letter_Kssa           : constant Unicode_Char := 16#0FB9#;
    Tibetan_Subjoined_Letter_Fixed_Form_Wa  : constant Unicode_Char := 16#0FBA#;
    Tibetan_Subjoined_Letter_Fixed_Form_Ya  : constant Unicode_Char := 16#0FBB#;
@@ -210,5 +211,21 @@ package Unicode.Names.Tibetan is
    Tibetan_Symbol_Nor_Bu_Nyis_Khyil        : constant Unicode_Char := 16#0FCA#;
    Tibetan_Symbol_Nor_Bu_Gsum_Khyil        : constant Unicode_Char := 16#0FCB#;
    Tibetan_Symbol_Nor_Bu_Bzhi_Khyil        : constant Unicode_Char := 16#0FCC#;
+   Tibetan_Sign_Rdel_Nag_Rdel_Dkar         : constant Unicode_Char := 16#0FCE#;
    Tibetan_Sign_Rdel_Nag_Gsum              : constant Unicode_Char := 16#0FCF#;
+   Tibetan_Mark_Bska_Shog_Gi_Mgo_Rgyan     : constant Unicode_Char := 16#0FD0#;
+   Tibetan_Mark_Bka_Shog_Gi_Mgo_Rgyan      :
+      Unicode_Char renames Tibetan_Mark_Bska_Shog_Gi_Mgo_Rgyan;
+   Tibetan_Mark_Mnyam_Yig_Gi_Mgo_Rgyan     : constant Unicode_Char := 16#0FD1#;
+   Tibetan_Mark_Nyis_Tsheg                 : constant Unicode_Char := 16#0FD2#;
+   Tibetan_Mark_Initial_Brda_Rnying_Yig_Mgo_Mdun_Ma :
+      constant Unicode_Char := 16#0FD3#;
+   Tibetan_Mark_Closing_Brda_Rnying_Yig_Mgo_Sgab_Ma :
+      constant Unicode_Char := 16#0FD4#;
+   Right_Facing_Svasti_Sign                : constant Unicode_Char := 16#0FD5#;
+   Left_Facing_Svasti_Sign                 : constant Unicode_Char := 16#0FD6#;
+   Right_Facing_Svasti_Sign_With_Dots      : constant Unicode_Char := 16#0FD7#;
+   Left_Facing_Svasti_Sign_With_Dots       : constant Unicode_Char := 16#0FD8#;
+   Tibetan_Mark_Leading_Mchan_Rtags        : constant Unicode_Char := 16#0FD9#;
+   Tibetan_Mark_Trailing_Mchan_Rtags       : constant Unicode_Char := 16#0FDA#;
 end Unicode.Names.Tibetan;

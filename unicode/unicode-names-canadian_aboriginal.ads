@@ -1,7 +1,11 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Canadian_Aboriginal is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
+   Canadian_Syllabics_Hyphen               : constant Unicode_Char := 16#1400#;
    Canadian_Syllabics_E                    : constant Unicode_Char := 16#1401#;
    Canadian_Syllabics_Aai                  : constant Unicode_Char := 16#1402#;
    Canadian_Syllabics_I                    : constant Unicode_Char := 16#1403#;
@@ -636,4 +640,13 @@ package Unicode.Names.Canadian_Aboriginal is
    Canadian_Syllabics_Nngoo                : constant Unicode_Char := 16#1674#;
    Canadian_Syllabics_Nnga                 : constant Unicode_Char := 16#1675#;
    Canadian_Syllabics_Nngaa                : constant Unicode_Char := 16#1676#;
+   Canadian_Syllabics_Woods_Cree_Thwee     : constant Unicode_Char := 16#1677#;
+   Canadian_Syllabics_Woods_Cree_Thwi      : constant Unicode_Char := 16#1678#;
+   Canadian_Syllabics_Woods_Cree_Thwii     : constant Unicode_Char := 16#1679#;
+   Canadian_Syllabics_Woods_Cree_Thwo      : constant Unicode_Char := 16#167A#;
+   Canadian_Syllabics_Woods_Cree_Thwoo     : constant Unicode_Char := 16#167B#;
+   Canadian_Syllabics_Woods_Cree_Thwa      : constant Unicode_Char := 16#167C#;
+   Canadian_Syllabics_Woods_Cree_Thwaa     : constant Unicode_Char := 16#167D#;
+   Canadian_Syllabics_Woods_Cree_Final_Th  : constant Unicode_Char := 16#167E#;
+   Canadian_Syllabics_Blackfoot_W          : constant Unicode_Char := 16#167F#;
 end Unicode.Names.Canadian_Aboriginal;

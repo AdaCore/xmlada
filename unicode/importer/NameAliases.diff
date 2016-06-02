@@ -1,0 +1,21 @@
+Description: fix order in point list
+Author: Nicolas Boulenguez <nicolas@debian.org>
+
+--- NameAliases.txt
++++ NameAliases.txt
+@@ -287,7 +287,6 @@
+ 2B7A;LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
+ 2B7C;RIGHTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
+ A015;YI SYLLABLE ITERATION MARK;correction
+-FE18;PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET;correction
+ FE00;VS1;abbreviation
+ FE01;VS2;abbreviation
+ FE02;VS3;abbreviation
+@@ -304,6 +303,7 @@
+ FE0D;VS14;abbreviation
+ FE0E;VS15;abbreviation
+ FE0F;VS16;abbreviation
++FE18;PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET;correction
+ FEFF;BYTE ORDER MARK;alternate
+ FEFF;BOM;abbreviation
+ FEFF;ZWNBSP;abbreviation

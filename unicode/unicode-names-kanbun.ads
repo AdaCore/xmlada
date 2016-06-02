@@ -1,11 +1,12 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Kanbun is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Ideographic_Annotation_Linking_Mark     : constant Unicode_Char := 16#3190#;
-   Kanbun_Tateten                          : constant Unicode_Char := 16#3190#;
    Ideographic_Annotation_Reverse_Mark     : constant Unicode_Char := 16#3191#;
-   Kaeriten_Re                             : constant Unicode_Char := 16#3191#;
    Ideographic_Annotation_One_Mark         : constant Unicode_Char := 16#3192#;
    Ideographic_Annotation_Two_Mark         : constant Unicode_Char := 16#3193#;
    Ideographic_Annotation_Three_Mark       : constant Unicode_Char := 16#3194#;
@@ -19,4 +20,5 @@ package Unicode.Names.Kanbun is
    Ideographic_Annotation_Fourth_Mark      : constant Unicode_Char := 16#319C#;
    Ideographic_Annotation_Heaven_Mark      : constant Unicode_Char := 16#319D#;
    Ideographic_Annotation_Earth_Mark       : constant Unicode_Char := 16#319E#;
+   Ideographic_Annotation_Man_Mark         : constant Unicode_Char := 16#319F#;
 end Unicode.Names.Kanbun;

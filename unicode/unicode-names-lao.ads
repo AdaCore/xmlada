@@ -1,7 +1,10 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Lao is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Lao_Letter_Ko                           : constant Unicode_Char := 16#0E81#;
    Lao_Letter_Kho_Sung                     : constant Unicode_Char := 16#0E82#;
    Lao_Letter_Kho_Tam                      : constant Unicode_Char := 16#0E84#;
@@ -18,12 +21,20 @@ package Unicode.Names.Lao is
    Lao_Letter_Po                           : constant Unicode_Char := 16#0E9B#;
    Lao_Letter_Pho_Sung                     : constant Unicode_Char := 16#0E9C#;
    Lao_Letter_Fo_Tam                       : constant Unicode_Char := 16#0E9D#;
+   Lao_Letter_Fo_Fon                       :
+      Unicode_Char renames Lao_Letter_Fo_Tam;
    Lao_Letter_Pho_Tam                      : constant Unicode_Char := 16#0E9E#;
    Lao_Letter_Fo_Sung                      : constant Unicode_Char := 16#0E9F#;
+   Lao_Letter_Fo_Fay                       :
+      Unicode_Char renames Lao_Letter_Fo_Sung;
    Lao_Letter_Mo                           : constant Unicode_Char := 16#0EA1#;
    Lao_Letter_Yo                           : constant Unicode_Char := 16#0EA2#;
    Lao_Letter_Lo_Ling                      : constant Unicode_Char := 16#0EA3#;
+   Lao_Letter_Ro                           :
+      Unicode_Char renames Lao_Letter_Lo_Ling;
    Lao_Letter_Lo_Loot                      : constant Unicode_Char := 16#0EA5#;
+   Lao_Letter_Lo                           :
+      Unicode_Char renames Lao_Letter_Lo_Loot;
    Lao_Letter_Wo                           : constant Unicode_Char := 16#0EA7#;
    Lao_Letter_So_Sung                      : constant Unicode_Char := 16#0EAA#;
    Lao_Letter_Ho_Sung                      : constant Unicode_Char := 16#0EAB#;
@@ -67,4 +78,6 @@ package Unicode.Names.Lao is
    Lao_Digit_Nine                          : constant Unicode_Char := 16#0ED9#;
    Lao_Ho_No                               : constant Unicode_Char := 16#0EDC#;
    Lao_Ho_Mo                               : constant Unicode_Char := 16#0EDD#;
+   Lao_Letter_Khmu_Go                      : constant Unicode_Char := 16#0EDE#;
+   Lao_Letter_Khmu_Nyo                     : constant Unicode_Char := 16#0EDF#;
 end Unicode.Names.Lao;

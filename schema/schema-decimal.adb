@@ -143,7 +143,7 @@ package body Schema.Decimal is
       --  Check we only have digits from now on
 
       loop
-         if C = Period then
+         if C = Full_Stop then
             if Saw_Point then
                Error := Find
                  (Symbols, "Only one decimal separator allowed in " & Ch);

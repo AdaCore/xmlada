@@ -869,7 +869,7 @@ package body Sax.Readers is
 
       --  ??? Only resolve paths for now
       Encoding.Read (URI_Str.all, URI_Index, C);
-      if C = Slash then
+      if C = Solidus then
          return URI;
       else
          declare
@@ -879,7 +879,7 @@ package body Sax.Readers is
          begin
             while Index <= System_Str'Last loop
                Encoding.Read (System_Str.all, Index, C);
-               if C = Slash or else C = Backslash then
+               if C = Solidus or else C = Reverse_Solidus then
                   Basename_Start := Index;
                end if;
             end loop;
@@ -1319,22 +1319,22 @@ package body Sax.Readers is
         or else C in Digit_Zero .. Digit_Nine
         or else C = Hyphen_Minus
         or else C = Apostrophe
-        or else C = Opening_Parenthesis
-        or else C = Closing_Parenthesis
+        or else C = Left_Parenthesis
+        or else C = Right_Parenthesis
         or else C = Plus_Sign
         or else C = Comma
-        or else C = Dot
-        or else C = Slash
+        or else C = Full_Stop
+        or else C = Solidus
         or else C = Unicode.Names.Basic_Latin.Colon
         or else C = Equals_Sign
         or else C = Question_Mark
         or else C = Semicolon
         or else C = Exclamation_Mark
-        or else C = Star
+        or else C = Asterisk
         or else C = Number_Sign
         or else C = Commercial_At
         or else C = Dollar_Sign
-        or else C = Spacing_Underscore
+        or else C = Low_Line
         or else C = Percent_Sign;
    end Is_Pubid_Char;
 
@@ -1797,7 +1797,7 @@ package body Sax.Readers is
          Id.Typ := Start_Of_Tag;
          Next_Char (Input, Parser);
          case Parser.Last_Read is
-            when Slash =>
+            when Solidus =>
                Id.Typ := Start_Of_End_Tag;
                Next_Char (Input, Parser);
 
@@ -1810,7 +1810,7 @@ package body Sax.Readers is
                   Reset_Buffer (Parser, Id);
                   Id.Typ := Doctype_Start;
 
-               elsif Parser.Last_Read = Opening_Square_Bracket then
+               elsif Parser.Last_Read = Left_Square_Bracket then
                   Next_Char (Input, Parser);
 
                   if Parser.Last_Read = Latin_Capital_Letter_C then
@@ -1819,7 +1819,7 @@ package body Sax.Readers is
                         Fatal_Error (Parser, Error_Invalid_Declaration, Id);
                      end if;
 
-                     if Parser.Last_Read /= Opening_Square_Bracket then
+                     if Parser.Last_Read /= Left_Square_Bracket then
                         Fatal_Error (Parser, Error_Cdata_Unterminated, Id);
                      end if;
 
@@ -1837,14 +1837,14 @@ package body Sax.Readers is
                         elsif Parser.Last_Read_Is_Valid then
                            Put_In_Buffer (Parser, Parser.Last_Read);
 
-                           if Parser.Last_Read = Closing_Square_Bracket then
+                           if Parser.Last_Read = Right_Square_Bracket then
                               Num_Closing_Bracket := Num_Closing_Bracket + 1;
 
                            elsif Parser.Last_Read = Greater_Than_Sign
                              and then Num_Closing_Bracket >= 2
                            then
                               Parser.Buffer_Length := Parser.Buffer_Length
-                                - 2 * Encoding.Width (Closing_Square_Bracket)
+                                - 2 * Encoding.Width (Right_Square_Bracket)
                                 - Encoding.Width (Greater_Than_Sign);
                               exit;
 
@@ -2197,7 +2197,7 @@ package body Sax.Readers is
                   Next_Char (Input, Parser);
                end if;
 
-            when Opening_Square_Bracket =>
+            when Left_Square_Bracket =>
                if Parser.State.In_DTD then
                   Id.Typ := Internal_DTD_Start;
                else
@@ -2206,7 +2206,7 @@ package body Sax.Readers is
                end if;
                Next_Char (Input, Parser);
 
-            when Closing_Square_Bracket =>
+            when Right_Square_Bracket =>
                if Parser.State.In_DTD
                  and then not Parser.In_External_Entity
                then
@@ -2239,7 +2239,7 @@ package body Sax.Readers is
                         Put_In_Buffer (Parser, Parser.Last_Read);
                         Next_Char (Input, Parser);
 
-                        if Parser.Last_Read = Closing_Square_Bracket then
+                        if Parser.Last_Read = Right_Square_Bracket then
                            Num_Bracket := Num_Bracket + 1;
 
                         elsif Num_Bracket >= 2
@@ -2265,7 +2265,7 @@ package body Sax.Readers is
                   end;
                end if;
 
-            when Slash =>
+            when Solidus =>
                Id.Typ := Text;
                Next_Char (Input, Parser);
                if Parser.State.Greater_Special
@@ -2274,7 +2274,7 @@ package body Sax.Readers is
                   Id.Typ := End_Of_Start_Tag;
                   Next_Char (Input, Parser);
                else
-                  Put_In_Buffer (Parser, Slash);
+                  Put_In_Buffer (Parser, Solidus);
                end if;
 
             when others =>
@@ -2323,7 +2323,7 @@ package body Sax.Readers is
                end if;
 
                if Parser.State.Report_Parenthesis
-                 and then Parser.Last_Read = Opening_Parenthesis
+                 and then Parser.Last_Read = Left_Parenthesis
                then
                   Reset_Buffer (Parser, Id);
                   Id.Typ := Open_Paren;
@@ -2402,7 +2402,7 @@ package body Sax.Readers is
          --  text event
          if Id.Typ = End_Of_Input then
             if Is_Valid_Name_Startchar (Parser.Last_Read, Parser.XML_Version)
-              or else Parser.Last_Read = Spacing_Underscore
+              or else Parser.Last_Read = Low_Line
             then
                Id.Typ := Name;
                Put_In_Buffer (Parser, Parser.Last_Read);
@@ -2442,13 +2442,13 @@ package body Sax.Readers is
 
                      when Less_Than_Sign             --  Start of new tag
                         | Ampersand                  --  for Entities
-                        | Closing_Square_Bracket     --  for CData   ]]>
+                        | Right_Square_Bracket       --  for CData   ]]>
                         | Quotation_Mark             --  for attributes a="..."
                         | Apostrophe                 --  for attributes a='...'
                         | Equals_Sign =>             --  for attributes
                         exit;
 
-                     when Slash =>                   --  For <NODE/>
+                     when Solidus =>                   --  For <NODE/>
                         declare
                            C : Unicode_Char;
                         begin
@@ -2493,9 +2493,9 @@ package body Sax.Readers is
                         or else Parser.Last_Read /= Percent_Sign)
               and then Parser.Last_Read /= Equals_Sign
               and then Parser.Last_Read /= Quotation_Mark
-              and then Parser.Last_Read /= Closing_Square_Bracket
+              and then Parser.Last_Read /= Right_Square_Bracket
               and then Parser.Last_Read /= Apostrophe
-              and then Parser.Last_Read /= Slash
+              and then Parser.Last_Read /= Solidus
               and then (Parser.Last_Read /= Question_Mark
                         or else not Parser.State.Detect_End_Of_PI)
             loop
@@ -2508,7 +2508,7 @@ package body Sax.Readers is
             --  call to Next_Token. However, we shouldn't report the spaces as
             --  Ignorable_Whitespace in this case.
 
-            if Parser.Last_Read = Closing_Square_Bracket
+            if Parser.Last_Read = Right_Square_Bracket
               or else Parser.Buffer_Length /= Save_Length
             then
                Id.Typ := Text;
@@ -2977,14 +2977,14 @@ package body Sax.Readers is
 
             --  Process the operator
             case Parser.Last_Read is
-               when Opening_Parenthesis =>
+               when Left_Parenthesis =>
                   Operator_Stack (Operator_Index) := Parser.Last_Read;
                   Operator_Index := Operator_Index + 1;
                   Expect_Operator := False;
                   Next_Char (Input, Parser);
                   Num_Parenthesis := Num_Parenthesis + 1;
 
-               when Closing_Parenthesis =>
+               when Right_Parenthesis =>
                   Num_Parenthesis := Num_Parenthesis - 1;
                   Num_Items := 1;
                   Current_Item := Operator_Index - 1;
@@ -3003,7 +3003,7 @@ package body Sax.Readers is
 
                   while Current_Item >= Operator_Stack'First
                     and then
-                      Operator_Stack (Current_Item) /= Opening_Parenthesis
+                      Operator_Stack (Current_Item) /= Left_Parenthesis
                   loop
                      if Operator_Stack (Current_Item) /= Comma
                        and then Operator_Stack (Current_Item) /= Vertical_Line
@@ -3077,7 +3077,7 @@ package body Sax.Readers is
                     and then Current_Operand >= Operand_Stack'First
                     and then Is_Mixed (Operand_Stack (Current_Operand))
                     and then Operand_Stack (Current_Operand).List'Length >= 2
-                    and then Parser.Last_Read /= Star
+                    and then Parser.Last_Read /= Asterisk
                   then
                      Fatal_Error
                        (Parser, Error_Content_Model_Closing_Paren);
@@ -3096,7 +3096,7 @@ package body Sax.Readers is
 
                   if Parser.Last_Read = Comma
                     and then Operator_Stack (Operator_Index - 1)
-                    = Opening_Parenthesis
+                    = Left_Parenthesis
                     and then Operand_Stack (Operand_Index - 1).Content
                     = Character_Data
                   then
@@ -3108,7 +3108,7 @@ package body Sax.Readers is
                     (Operator_Stack (Operator_Index - 1) /= Parser.Last_Read
                      and then
                      Operator_Stack (Operator_Index - 1) /=
-                       Opening_Parenthesis)
+                       Left_Parenthesis)
                   then
                      Fatal_Error (Parser, Error_Content_Model_Mixing);
                   end if;
@@ -3117,7 +3117,7 @@ package body Sax.Readers is
                   Expect_Operator := False;
                   Next_Char (Input, Parser);
 
-               when Star | Question_Mark | Plus_Sign =>
+               when Asterisk | Question_Mark | Plus_Sign =>
                   Fatal_Error
                     (Parser, Error_Content_Model_Invalid_Multiplier,
                      Start_Token);
@@ -3166,7 +3166,7 @@ package body Sax.Readers is
                   end if;
 
                   if Operator_Stack (Operator_Index - 1)
-                    /= Opening_Parenthesis
+                    /= Left_Parenthesis
                   then
                      Fatal_Error (Parser, Error_Content_Model_Pcdata_First);
                   end if;
@@ -3243,7 +3243,7 @@ package body Sax.Readers is
 
             if Test_Multiplier then
                case Parser.Last_Read is
-                  when Star =>
+                  when Asterisk =>
                      if Operand_Index = Operand_Stack'First then
                         Fatal_Error
                           (Parser, Error_Content_Model_Invalid_Multiplier);
@@ -3323,7 +3323,7 @@ package body Sax.Readers is
    begin
       if Open_Was_Read then
          --  Insert the opening parenthesis into the operators stack
-         Operator_Stack (Operator_Stack'First) := Opening_Parenthesis;
+         Operator_Stack (Operator_Stack'First) := Left_Parenthesis;
          Operator_Index := Operator_Index + 1;
       end if;
 
@@ -5378,7 +5378,7 @@ package body Sax.Readers is
                  not (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
               and then not (C in Digit_Zero .. Digit_Nine)
               and then C /= Low_Line
-              and then C /= Period
+              and then C /= Full_Stop
               and then C /= Unicode.Names.Basic_Latin.Colon
               and then C /= Hyphen_Minus
             then
@@ -5497,7 +5497,7 @@ package body Sax.Readers is
                  and then not
                    (C in Latin_Capital_Letter_A .. Latin_Capital_Letter_Z)
                  and then not (C in Digit_Zero .. Digit_Nine)
-                 and then C /= Period
+                 and then C /= Full_Stop
                  and then C /= Low_Line
                  and then C /= Hyphen_Minus
                then

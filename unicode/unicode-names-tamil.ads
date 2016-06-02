@@ -1,10 +1,12 @@
 --  This file is built automatically from data found on the
 --  unicode web site (http://www.unicode.org)
-
+--  in version 8.0.0.
 package Unicode.Names.Tamil is
+   pragma Preelaborate;
+   pragma Style_Checks (Off);
+
    Tamil_Sign_Anusvara                     : constant Unicode_Char := 16#0B82#;
    Tamil_Sign_Visarga                      : constant Unicode_Char := 16#0B83#;
-   Aytham                                  : constant Unicode_Char := 16#0B83#;
    Tamil_Letter_A                          : constant Unicode_Char := 16#0B85#;
    Tamil_Letter_Aa                         : constant Unicode_Char := 16#0B86#;
    Tamil_Letter_I                          : constant Unicode_Char := 16#0B87#;
@@ -36,6 +38,7 @@ package Unicode.Names.Tamil is
    Tamil_Letter_Lla                        : constant Unicode_Char := 16#0BB3#;
    Tamil_Letter_Llla                       : constant Unicode_Char := 16#0BB4#;
    Tamil_Letter_Va                         : constant Unicode_Char := 16#0BB5#;
+   Tamil_Letter_Sha                        : constant Unicode_Char := 16#0BB6#;
    Tamil_Letter_Ssa                        : constant Unicode_Char := 16#0BB7#;
    Tamil_Letter_Sa                         : constant Unicode_Char := 16#0BB8#;
    Tamil_Letter_Ha                         : constant Unicode_Char := 16#0BB9#;
@@ -51,7 +54,9 @@ package Unicode.Names.Tamil is
    Tamil_Vowel_Sign_Oo                     : constant Unicode_Char := 16#0BCB#;
    Tamil_Vowel_Sign_Au                     : constant Unicode_Char := 16#0BCC#;
    Tamil_Sign_Virama                       : constant Unicode_Char := 16#0BCD#;
+   Tamil_Om                                : constant Unicode_Char := 16#0BD0#;
    Tamil_Au_Length_Mark                    : constant Unicode_Char := 16#0BD7#;
+   Tamil_Digit_Zero                        : constant Unicode_Char := 16#0BE6#;
    Tamil_Digit_One                         : constant Unicode_Char := 16#0BE7#;
    Tamil_Digit_Two                         : constant Unicode_Char := 16#0BE8#;
    Tamil_Digit_Three                       : constant Unicode_Char := 16#0BE9#;
@@ -64,4 +69,12 @@ package Unicode.Names.Tamil is
    Tamil_Number_Ten                        : constant Unicode_Char := 16#0BF0#;
    Tamil_Number_One_Hundred                : constant Unicode_Char := 16#0BF1#;
    Tamil_Number_One_Thousand               : constant Unicode_Char := 16#0BF2#;
+   Tamil_Day_Sign                          : constant Unicode_Char := 16#0BF3#;
+   Tamil_Month_Sign                        : constant Unicode_Char := 16#0BF4#;
+   Tamil_Year_Sign                         : constant Unicode_Char := 16#0BF5#;
+   Tamil_Debit_Sign                        : constant Unicode_Char := 16#0BF6#;
+   Tamil_Credit_Sign                       : constant Unicode_Char := 16#0BF7#;
+   Tamil_As_Above_Sign                     : constant Unicode_Char := 16#0BF8#;
+   Tamil_Rupee_Sign                        : constant Unicode_Char := 16#0BF9#;
+   Tamil_Number_Sign                       : constant Unicode_Char := 16#0BFA#;
 end Unicode.Names.Tamil;
