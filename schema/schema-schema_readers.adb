@@ -506,6 +506,11 @@ package body Schema.Schema_Readers is
          NFA.Add_Transition (From, S1, Trans);
 
          S2 := NFA.Add_State;
+         if Debug then
+            Debug_Output ("Create_Element_State S2 for element "
+                          & To_QName (Info.Name) & To_QName (Info.Ref)
+                          & S2'Img);
+         end if;
 
          if NFA.Get_Nested (S1) /= No_Nested then
             NFA.On_Empty_Nested_Exit (S1, S2);  --  a complexType
@@ -746,9 +751,28 @@ package body Schema.Schema_Readers is
                T := Details.First_In_Seq;
                while T /= null loop
                   Process_Details (In_Type, T, Start, S, Nested_End, Mask);
-                  S := Nested_End;
+                  S1 := Nested_End;
+
+                  --  We can have one element start exactly where the other
+                  --  finishes. Otherwise we have issues with the following
+                  --  sequence:
+                  --  <sequence>
+                  --    <element name="a" minOccurs="0" maxOccurs="unbounded"/>
+                  --    <element name="b" minOccurs="0" maxOccurs="unbounded"/>
+                  --  </sequence>
+                  --  which would allow any number of a, any number of b, and
+                  --  again any number of a (because of empty transition from
+                  --  end of "b*" that goes back to the beginning of "b*",
+                  --  which would be the same as end of "a*", which has empty
+                  --  transition to "a*". The following empty transition
+                  --  ensures that end of "a*" is not same as beginning of
+                  --  "b*".
+                  S := NFA.Add_State;
+                  NFA.Add_Empty_Transition (S1, S);
+
                   T := T.Next;
                end loop;
+               Nested_End := S;
 
             when Type_Choice =>
                Check_Unique_Particle_Attribution (Details);
