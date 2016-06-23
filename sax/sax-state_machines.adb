@@ -1333,37 +1333,28 @@ package body Sax.State_Machines is
             Put_Line ("Mark_Active " & From'Img);
          end if;
 
+         Append
+           (Self.Active,
+            Matcher_State'
+              (S                  => From,
+               Data_Is_Overridden => False,
+               Overridden_Data    => <>,
+               Active_Data        => Active_Data,
+               Next               => List_Start,
+               Nested             => First_Nested));
+         From_Index := Last (Self.Active);
+
          --  Always leave the Final_State first in the list
 
          if List_Start /= No_Matcher_State
            and then Self.Active.Table (List_Start).S = Final_State
          then
-            Self.Active.Table (List_Start).S      := From;
-            Self.Active.Table (List_Start).Nested := First_Nested;
-            From_Index := List_Start;
-            Append
-              (Self.Active,
-               Matcher_State'
-                 (S                  => Final_State,
-                  Data_Is_Overridden => False,
-                  Overridden_Data    => <>,
-                  Active_Data        => Active_Data,
-                  Next               => List_Start,
-                  Nested             => No_Matcher_State));
+            Self.Active.Table (From_Index).Next :=
+               Self.Active.Table (List_Start).Next;
+            Self.Active.Table (List_Start).Next := From_Index;
          else
-            Append
-              (Self.Active,
-               Matcher_State'
-                 (S                  => From,
-                  Data_Is_Overridden => False,
-                  Overridden_Data    => <>,
-                  Active_Data        => Active_Data,
-                  Next               => List_Start,
-                  Nested             => First_Nested));
-            From_Index := Last (Self.Active);
+            List_Start := From_Index;
          end if;
-
-         List_Start := Last (Self.Active);
 
          --  Mark (recursively) all states reachable from an empty transition
          --  as active too.
@@ -1660,12 +1651,18 @@ package body Sax.State_Machines is
                   List_Start => Self.First_Active,
                   From       => S);
             else
+               --  The call to Mark_Active_No_Check might reallocate
+               --  Self.Active, so we cannot pass an "in out" variable
+               --  directly for this array. We'll update the new list
+               --  afterwards.
                M :=  Self.Active.Table
                  (Iter.States (Iter.Current_Level - 1)).Nested;
                Mark_Active_No_Check
                  (Self,
                   List_Start => M,
                   From       => S);
+               Self.Active.Table (Iter.States (Iter.Current_Level - 1)).Nested
+                  := M;
             end if;
          end if;
       end Replace_State;

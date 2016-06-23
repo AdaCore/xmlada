@@ -11,6 +11,20 @@ wavefront issued subsequent to the date specified (in ISO format YYYY-MM-DD) in
 the status line. This can be used to determine if a given wavefront has the fix
 identified in the entry.
 
+KP-461-P621-020 Schema: choices with unbounded elements
+
+  Problem:    When a <choice> contains two or more elements with an unbounded
+              number of occurrences, as in:
+                 <choice>
+                    <element name="a" minOccurs="0" maxOccurs="unbounded"/>
+                    <element name="b" minOccurs="0" maxOccurs="unbounded"/>
+                 </choice>
+              then XML?Ada would allow a mix of a abd b.
+
+  Status:     This was fixed in 17.0 on 2016-06-23
+
+  Workaround: None.
+
 KP-461-P616-033 Schema: sequences with unbounded elements
 
   Problem:    When a sequence contains two or more elements with an unbounded

@@ -780,8 +780,12 @@ package body Schema.Schema_Readers is
                T := Details.First_In_Choice;
                Nested_End := NFA.Add_State;
                while T /= null loop
-                  Process_Details (In_Type, T, Start, From, S, Mask);
+                  S1 := NFA.Add_State;
+                  NFA.Add_Empty_Transition (From, S1);
+
+                  Process_Details (In_Type, T, Start, S1, S, Mask);
                   NFA.Add_Empty_Transition (S, Nested_End);
+
                   T := T.Next;
                end loop;
 

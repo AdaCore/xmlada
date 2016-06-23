@@ -573,7 +573,8 @@ package body Schema.Readers is
                     (NFA.Get_Nested (Current (H.Matcher, Parent (Iter)))) = S
                   then
                      if Debug then
-                        Debug_Output ("Replacing nested NFA");
+                        Debug_Output ("Replacing nested NFA for" & S'Img
+                           & " with" & Internal_New_Nested'Img);
                      end if;
                      Replace_State (H.Matcher, Iter, Internal_New_Nested);
                   end if;
