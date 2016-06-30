@@ -9,9 +9,12 @@ VERSION=@PACKAGE_VERSION@
 BUILDS_SHARED=@GNAT_BUILDS_SHARED@
 prefix=@prefix@
 
+# Add support for passing extra switches
+GPRBUILD_OPTIONS=
+
 # Set a default value (ignored if set in the environment)
 PROCESSORS?=0
-GPRBUILD=@gprbuild@ -j${PROCESSORS} -m
+GPRBUILD=@gprbuild@ -j${PROCESSORS} -m ${GPRBUILD_OPTIONS}
 GPRINSTALL=@gprinstall@
 TARGET=@target@
 HOST=@host@
