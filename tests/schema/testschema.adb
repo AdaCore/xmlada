@@ -40,14 +40,30 @@ with DOM.Core.Documents;    use DOM.Core.Documents;
 with Input_Sources.File;    use Input_Sources.File;
 with Ada.Exceptions;        use Ada.Exceptions;
 with GNAT.IO;               use GNAT.IO;
+with Sax.Exceptions;        use Sax.Exceptions;
 with Sax.Readers;           use Sax.Readers;
 with Sax.Utils;             use Sax.Utils;
 with GNAT.Command_Line;     use GNAT.Command_Line;
 
 procedure TestSchema is
+
+   type Test_Reader is new Schema_Reader with null record;
+   overriding procedure Warning
+      (Self   : in out Test_Reader;
+       Except : Sax.Exceptions.Sax_Parse_Exception'Class);
+
+   overriding procedure Warning
+      (Self   : in out Test_Reader;
+       Except : Sax.Exceptions.Sax_Parse_Exception'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Put_Line ("Warning: " & Get_Message (Except));
+   end Warning;
+
    Read         : File_Input;
    My_Reader    : Validating_Reader_Access;
-   Schema       : Schema_Reader;
+   Schema       : Test_Reader;
    Grammar      : XML_Grammar := No_Grammar;
    Explicit_XSD : Boolean := False;
    Switches     : constant String := "xsd: debug base dom h";
@@ -193,6 +209,16 @@ exception
          Put_Line (Get_Error_Message (My_Reader.all));
       else
          Put_Line (Get_Error_Message (Schema));
+      end if;
+
+      Close (Read);
+      Free (My_Reader);
+
+   when Standard.Schema.XML_Limitation =>
+      if My_Reader = null then
+         Put_Line ("LIMITATION: " & Get_Error_Message (Schema));
+      else
+         Put_Line ("LIMITATION: " & Get_Error_Message (My_Reader.all));
       end if;
 
       Close (Read);

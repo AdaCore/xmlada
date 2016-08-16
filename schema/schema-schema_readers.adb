@@ -47,10 +47,15 @@ package body Schema.Schema_Readers is
    --  Default number of nested levels in a schema.
    --  If the actual schema uses more, we will simply reallocate some memory.
 
-   Max_Max_Occurs : constant := 300;
+   Max_Max_Occurs : constant := 9_999;
    --  Maximum value for maxOccurs.
    --  Higher values result in an explosion in the number of states in the NFA,
    --  so should not be used for now.
+
+   Max_Occurs_Warn : constant := 300;
+   --  Warn when maxOccurs is greater than this value, since this might
+   --  potentially result in a very large state machine. This is not a fatal
+   --  error though.
 
    procedure Push_Context
      (Handler : access Schema_Reader'Class; Ctx : Context);
@@ -2048,13 +2053,22 @@ package body Schema.Schema_Readers is
          Max_Occurs := Occurs_From_Value (Max_Occurs_Index);
       end if;
 
-      if not Max_Occurs.Unbounded
-        and then Max_Occurs.Value > Max_Max_Occurs
-      then
-         Validation_Error
-           (Handler,
-            "maxOccurs is too big, consider using ""unbounded""",
-            Except => XML_Not_Implemented'Identity);
+      if not Max_Occurs.Unbounded then
+         if Max_Occurs.Value > Max_Max_Occurs then
+            Validation_Error
+              (Handler,
+               "maxOccurs is too big (XML/Ada supports up to"
+                  & Max_Max_Occurs'Img & "), consider using ""unbounded""",
+               Except => XML_Limitation'Identity);
+
+         elsif Max_Occurs.Value > Max_Occurs_Warn then
+            Handler.Warning
+              (Create
+                 (Message =>
+                    "maxOccurs is big and could result in a very large state"
+                    & " machine. Consider using ""unbounded"" instead",
+                  Loc     => Handler.Current_Location));
+         end if;
       end if;
    end Get_Occurs;
 

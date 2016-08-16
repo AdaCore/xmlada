@@ -32,6 +32,10 @@ package Schema is
    XML_Not_Implemented : exception;
    --  Raised when a schema uses features that are not supported by XML/Ada yet
 
+   XML_Limitation : exception;
+   --  Raised for internal XML/Ada limitations. The XSD file is most likely
+   --  valid, but not supported by XML/Ada.
+
    Dump_Internal_XSD : Boolean := False;
    --  If set to True, dump on stdout the structure that was created when
    --  parsing the .xsd files. In particular, this is used to create

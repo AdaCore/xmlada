@@ -437,7 +437,8 @@ procedure Schematest is
             end if;
 
          exception
-            when Standard.Schema.XML_Not_Implemented =>
+            when Standard.Schema.XML_Not_Implemented
+               | Standard.Schema.XML_Limitation =>
                Close (Input);
                Result.Result := Not_Implemented;
                Result.Msg  := To_Unbounded_String
@@ -572,7 +573,8 @@ procedure Schematest is
                end if;
 
             exception
-               when Standard.Schema.XML_Not_Implemented =>
+               when Standard.Schema.XML_Not_Implemented
+                  | Standard.Schema.XML_Limitation =>
                   Close (Input);
                   Result.Result := Not_Implemented;
                   Result.Msg  := To_Unbounded_String

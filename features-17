@@ -15,6 +15,14 @@ of the feature.
 New features in version 17.0
 ----------------------------
 
+NF-17-P812-015 schema: large values of maxOccurs (2016-08-16)
+
+  Values of maxOccurs larger than 300 previously resulted in an XML validation
+  error. This is instead a limitation of XML/Ada, so this has now been changed
+  to a warning (we still recommend using "unbounded" to limit the size of the
+  state machine, but XML/Ada will now try to build that machine and use the XSD
+  nonetheless).
+
 NF-17-P406-028 unicode names from the Unicode 8 standard (2016-06-02)
 
    The unicode-names-* packages were updated to match the Unicode 8 standard.
