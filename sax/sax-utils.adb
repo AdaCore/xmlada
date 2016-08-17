@@ -1209,4 +1209,14 @@ package body Sax.Utils is
       end loop;
    end For_Each_Item;
 
+   -----------------
+   -- Starts_With --
+   -----------------
+
+   function Starts_With (S1, S2 : Unicode.CES.Byte_Sequence) return Boolean is
+   begin
+      return S1'Length >= S2'Length
+         and then S1 (S1'First .. S1'First + S2'Length - 1) = S2;
+   end Starts_With;
+
 end Sax.Utils;

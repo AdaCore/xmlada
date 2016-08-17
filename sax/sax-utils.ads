@@ -143,6 +143,9 @@ package Sax.Utils is
    function Equal (S1, S2 : Unicode.CES.Byte_Sequence_Access) return Boolean;
    --  Compare the byte_Sequence
 
+   function Starts_With (S1, S2 : Unicode.CES.Byte_Sequence) return Boolean;
+   --  Whether S1 starts with the substring S2 (or is equal to S2)
+
    function Split_Qname (Qname : Unicode.CES.Byte_Sequence) return Integer;
    --  Return an index so that:
    --     Qname (Qname'First .. Result - 1) = <prefix>

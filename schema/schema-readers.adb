@@ -35,6 +35,7 @@ with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 package body Schema.Readers is
    use Schema_State_Machines, Schema_State_Machines_PP;
@@ -158,21 +159,23 @@ package body Schema.Readers is
 
    function To_Absolute_URI
      (Handler : Validating_Reader;
-      URI     : Symbol) return Symbol
-   is
-      U : constant Cst_Byte_Sequence_Access := Get (URI);
+      URI     : Symbol) return Symbol is
    begin
-      if URI = Empty_String then
-         return URI;
-      elsif U (U'First) /= '/'
-        and then U (U'First) /= '\'
+      if URI = Empty_String
+         or else Starts_With (Get (URI).all, "http:/")
       then
+         return URI;
+      else
+         --  Need to resolve symbolic links and relative dirs, since parsing
+         --  the same XSD several times will result in errors (duplicate ID for
+         --  instance)
          return Find_Symbol
            (Handler,
-            Dir_Name
-              (Get (Handler.Current_Location.System_Id).all) & U.all);
-      else
-         return URI;
+            Normalize_Pathname
+               (Name      => Get (URI).all,
+                Directory =>
+                   Dir_Name (Get (Handler.Current_Location.System_Id).all),
+                Resolve_Links => True));
       end if;
    end To_Absolute_URI;
 
