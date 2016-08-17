@@ -16,7 +16,7 @@ NameAliases.txt:
 	wget ftp://ftp.unicode.org/Public/8.0.0/ucd/$@
 	patch -p0 < NameAliases.diff
 
-clean::
+clean:
 	rm -f $(UNICODE_FILES)
 	gprclean -Pconvert
-	rm -f unicode-names-*.ads
+	rm -rf generated/
