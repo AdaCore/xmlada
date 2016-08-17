@@ -22,7 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Style_Checks (Off);
 pragma Ada_2012;
 
 with Ada.Command_Line;
@@ -52,10 +51,10 @@ procedure Convert is
 
    type A_Code is range 0 .. 16#10FFFF# + 1;
 
-   function Value (Hexadecimal_Digits : in String) return A_Code;
+   function Value (Hexadecimal_Digits : String) return A_Code;
    --  The given string must only contain hexadecimal_digits.
 
-   function Image (Code : in A_Code) return String;
+   function Image (Code : A_Code) return String;
    --  16#4_hexadecimal_digits# if Code <= 16#FFFF#,
    --  else add the required digits count.
 
@@ -72,18 +71,18 @@ procedure Convert is
 
    package Point_Vectors is new Ada.Containers.Vectors (Positive, A_Point);
 
-   procedure Parse_Block_Line (Line : in String);
-   procedure Process_Block (Start_Code : in A_Code;
-                            End_Code   : in A_Code;
-                            Block_Name : in String)
+   procedure Parse_Block_Line (Line : String);
+   procedure Process_Block (Start_Code : A_Code;
+                            End_Code   : A_Code;
+                            Block_Name : String)
      with Pre => Start_Code <= End_Code;
-   procedure Output_Ada_Package (Block_Name : in String;
-                                 Points     : in Point_Vectors.Vector);
-   procedure Put_Maybe_Split (File             : in File_Type;
-                              Before_Semicolon : in String;
-                              After_Semicolon  : in String);
-   procedure Put_Unused_Exception (Replaced    : in String;
-                                   Replacement : in String);
+   procedure Output_Ada_Package (Block_Name : String;
+                                 Points     : Point_Vectors.Vector);
+   procedure Put_Maybe_Split (File             : File_Type;
+                              Before_Semicolon : String;
+                              After_Semicolon  : String);
+   procedure Put_Unused_Exception (Replaced    : String;
+                                   Replacement : String);
 
    type A_Name_File is record
       File : File_Type;
@@ -95,8 +94,8 @@ procedure Convert is
 
    ----------------------------------------------------------------------
 
-   function Image (Code : in A_Code) return String is
-      Tmp : String (1 .. 3 + 32/4 + 1);
+   function Image (Code : A_Code) return String is
+      Tmp : String (1 .. 3 + 32 / 4 + 1);
       I   : Integer := Tmp'Last - 1;
    begin
       Code_IO.Put (Tmp, Code, Base => 16);
@@ -130,7 +129,7 @@ procedure Convert is
       end loop;
    end Next;
 
-   procedure Parse_Block_Line (Line : in String) is
+   procedure Parse_Block_Line (Line : String) is
       First_Dot : Integer;
       Semicolon : Integer;
       I         : Integer := Line'First;
@@ -156,9 +155,9 @@ procedure Convert is
       end if;
    end Parse_Block_Line;
 
-   procedure Put_Maybe_Split (File             : in File_Type;
-                              Before_Semicolon : in String;
-                              After_Semicolon  : in String) is
+   procedure Put_Maybe_Split (File             : File_Type;
+                              Before_Semicolon : String;
+                              After_Semicolon  : String) is
       S : constant String := "   " & Before_Semicolon
         & (Before_Semicolon'Length + 1 .. 39 => ' ') & " :";
    begin
@@ -170,14 +169,14 @@ procedure Convert is
       end if;
    end Put_Maybe_Split;
 
-   procedure Put_Unused_Exception (Replaced    : in String;
-                                   Replacement : in String) is
+   procedure Put_Unused_Exception (Replaced    : String;
+                                   Replacement : String) is
    begin
       Put_Line
         ("Unused exception: " & Replaced & " -> " & Replacement);
    end Put_Unused_Exception;
 
-   function Value (Hexadecimal_Digits : in String) return A_Code is
+   function Value (Hexadecimal_Digits : String) return A_Code is
    begin
       return A_Code'Value ("16#" & Hexadecimal_Digits & '#');
    end Value;
@@ -192,8 +191,8 @@ procedure Convert is
    Block_Translator : Translators.Block.A_Block_Translator;
    Unicode_Version  : ASB.Bounded_String;
 
-   procedure Output_Ada_Package (Block_Name : in String;
-                                 Points     : in Point_Vectors.Vector) is
+   procedure Output_Ada_Package (Block_Name : String;
+                                 Points     : Point_Vectors.Vector) is
       Pkg  : constant String := Block_Translator.Translated
         (Block_Translator.New_Translation (Block_Name));
       File :  File_Type;
@@ -249,9 +248,9 @@ procedure Convert is
       Close (File);
    end Output_Ada_Package;
 
-   procedure Process_Block (Start_Code : in A_Code;
-                            End_Code   : in A_Code;
-                            Block_Name : in String) is
+   procedure Process_Block (Start_Code : A_Code;
+                            End_Code   : A_Code;
+                            Block_Name : String) is
       Points : Point_Vectors.Vector;
    begin
       while (not End_Of_File (Unicode_Data.File))

@@ -22,7 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Style_Checks (Off);
 pragma Ada_2012;
 
 with Ada.Strings.Maps.Constants;
@@ -30,9 +29,10 @@ with Ada.Text_IO;
 
 package body Translators.Alias is
 
-   function Default_Translation (Translator : in An_Alias_Translator;
-                                 Original   : in String)
-                                return String is
+   function Default_Translation
+      (Translator : An_Alias_Translator; Original   : String)
+      return String
+   is
       pragma Unreferenced (Translator);
       Result      : String (1 .. Original'Length);
       Result_Last : Integer := 0;
@@ -85,8 +85,8 @@ package body Translators.Alias is
    end Default_Translation;
 
    procedure Set_Exceptions (Translator : in out An_Alias_Translator) is
-      procedure Add (Key, Value : in String) with inline;
-      procedure Add (Key, Value : in String) is
+      procedure Add (Key, Value : String) with inline;
+      procedure Add (Key, Value : String) is
       begin
          Translator.Exceptions.Insert (Key, (Value'Length, Value, 0));
       end Add;

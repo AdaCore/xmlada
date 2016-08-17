@@ -3,6 +3,6 @@ project Convert is
    for Object_Dir use "obj";
    for Exec_Dir use ".";
    package Compiler is
-      for Switches ("Ada") use ("-gnata", "-gnatwa", "-gnaty");
+      for Switches ("Ada") use ("-gnata", "-gnatwa", "-gnatyaI");
    end Compiler;
 end Convert;

@@ -23,13 +23,12 @@
 ------------------------------------------------------------------------------
 
 pragma Ada_2012;
-pragma Style_Checks (Off);
 with Ada.Text_IO;
 
 package body Translators.Block is
 
-   function Default_Translation (Translator : in A_Block_Translator;
-                                 Original   : in String)
+   function Default_Translation (Translator : A_Block_Translator;
+                                 Original   : String)
                                 return String is
       pragma Unreferenced (Translator);
       Word_Start : Boolean := True;
@@ -67,8 +66,8 @@ package body Translators.Block is
    end Default_Translation;
 
    procedure Set_Exceptions (Translator : in out A_Block_Translator) is
-      procedure Add (Key, Value : in String) with Inline;
-      procedure Add (Key, Value : in String) is
+      procedure Add (Key, Value : String) with Inline;
+      procedure Add (Key, Value : String) is
       begin
          Translator.Exceptions.Insert (Key, (Value'Length, Value, 0));
       end Add;

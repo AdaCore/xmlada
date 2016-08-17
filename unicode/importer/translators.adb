@@ -23,16 +23,15 @@
 ------------------------------------------------------------------------------
 
 pragma Ada_2012;
-pragma Style_Checks (Off);
 
 package body Translators is
 
    use type Exception_Maps.Cursor;
 
    procedure Iterate_On_Unused_Exceptions
-     (Translator : in A_Translator;
-      Process    : not null access procedure (Replaced    : in String;
-                                              Replacement : in String)) is
+     (Translator : A_Translator;
+      Process    : not null access procedure (Replaced    : String;
+                                              Replacement : String)) is
       use Exception_Maps;
       Position : Cursor := Translator.Exceptions.First;
    begin
@@ -45,16 +44,16 @@ package body Translators is
    end Iterate_On_Unused_Exceptions;
 
    function New_Translation (Translator : in out A_Translator;
-                             Original   : in     String)
+                             Original   :        String)
                             return A_Translation is
       Position : constant Exception_Maps.Cursor
         := Translator.Exceptions.Find (Original);
    begin
       if Position /= Exception_Maps.No_Element then
          declare
-            procedure Process (Key     : in     String;
+            procedure Process (Key     :        String;
                                Element : in out An_Exception);
-            procedure Process (Key     : in     String;
+            procedure Process (Key     :        String;
                                Element : in out An_Exception) is
                pragma Unreferenced (Key);
             begin
@@ -74,18 +73,18 @@ package body Translators is
       end if;
    end New_Translation;
 
-   function Is_Exception (Translation : in A_Translation) return Boolean is
+   function Is_Exception (Translation : A_Translation) return Boolean is
    begin
       return Translation.Position /= Exception_Maps.No_Element;
    end Is_Exception;
 
-   function Original (Translation : in A_Translation) return String is
+   function Original (Translation : A_Translation) return String is
    begin
       return Translation.Name;
    end Original;
 
-   function Translated (Translator  : in A_Translator;
-                        Translation : in A_Translation)
+   function Translated (Translator  : A_Translator;
+                        Translation : A_Translation)
                        return String is
    begin
       if Translation.Position /= Exception_Maps.No_Element then
@@ -95,7 +94,7 @@ package body Translators is
       end if;
    end Translated;
 
-   function Valid_Ada_Identifier (Name : in String) return Boolean is
+   function Valid_Ada_Identifier (Name : String) return Boolean is
       Word_Start : Boolean := True;
    begin
       for C of Name loop

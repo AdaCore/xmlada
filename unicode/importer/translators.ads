@@ -22,7 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Style_Checks (Off);
 pragma Ada_2012;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
@@ -44,33 +43,33 @@ package Translators is
       Position : Exception_Maps.Cursor;
    end record;
 
-   function Valid_Ada_Identifier (Name : in String) return Boolean;
+   function Valid_Ada_Identifier (Name : String) return Boolean;
 
    function New_Translation (Translator : in out A_Translator;
-                             Original   : in     String)
+                             Original   :        String)
                             return A_Translation;
 
-   function Translated (Translator  : in A_Translator;
-                        Translation : in A_Translation)
+   function Translated (Translator  : A_Translator;
+                        Translation : A_Translation)
                        return String
      with Post => Valid_Ada_Identifier (Translated'Result)
      or Translated'Result = "";
 
-   function Is_Exception (Translation : in A_Translation) return Boolean;
+   function Is_Exception (Translation : A_Translation) return Boolean;
 
-   function Original (Translation : in A_Translation) return String
+   function Original (Translation : A_Translation) return String
      with Pre => Is_Exception (Translation);
 
    procedure Iterate_On_Unused_Exceptions
-     (Translator : in A_Translator;
-      Process    : not null access procedure (Replaced    : in String;
-                                              Replacement : in String));
+     (Translator : A_Translator;
+      Process    : not null access procedure (Replaced    : String;
+                                              Replacement : String));
 
    --  This declaration is intended for child units, not for users.
    procedure Set_Exceptions (Translator : in out A_Translator) is abstract;
 
-   function Default_Translation (Translator : in A_Translator;
-                                 Original   : in String)
+   function Default_Translation (Translator : A_Translator;
+                                 Original   : String)
                                 return String is abstract;
 
 private
