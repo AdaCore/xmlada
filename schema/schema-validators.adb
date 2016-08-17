@@ -243,7 +243,11 @@ package body Schema.Validators is
       end if;
 
       while L /= Empty_Named_Attribute_List loop
-         if NFA.Attributes.Table (L).Name = Attribute.Name then
+         if NFA.Attributes.Table (L).Name.Local = Attribute.Name.Local then
+            if Debug then
+               Debug_Output ("Override inherited attribute");
+            end if;
+
             --  Override use_type, form,... from the <restriction>
             Tmp := NFA.Attributes.Table (L).Next;
 
