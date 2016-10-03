@@ -603,8 +603,15 @@ package body Schema.Decimal is
                   return False;
 
                when Standard_Float =>
-                  return F1.Mantiss * 10.0 ** F1.Exp
-                     <=  F2.Mantiss * 10.0 ** F2.Exp;
+                  if F2.Mantiss = 0.0 then
+                     return F1.Mantiss <= 0.0;
+                  elsif F2.Mantiss > 0.0 then
+                     return (F1.Mantiss / F2.Mantiss) <=
+                        10.0 ** (F2.Exp - F1.Exp);
+                  else
+                     return (F1.Mantiss / F2.Mantiss) >=
+                        10.0 ** (F2.Exp - F1.Exp);
+                  end if;
             end case;
       end case;
    end "<=";
@@ -655,8 +662,17 @@ package body Schema.Decimal is
                   return False;
 
                when Standard_Float =>
-                  return F1.Mantiss * 10.0 ** F1.Exp
-                     <  F2.Mantiss * 10.0 ** F2.Exp;
+                  --  This is slow, but the division helps handle larger
+                  --  numbers.
+                  if F2.Mantiss = 0.0 then
+                     return F1.Mantiss < 0.0;
+                  elsif F2.Mantiss > 0.0 then
+                     return (F1.Mantiss / F2.Mantiss) <
+                        10.0 ** (F2.Exp - F1.Exp);
+                  else
+                     return (F1.Mantiss / F2.Mantiss) >
+                        10.0 ** (F2.Exp - F1.Exp);
+                  end if;
             end case;
       end case;
    end "<";
