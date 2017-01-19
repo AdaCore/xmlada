@@ -202,9 +202,9 @@ package body Sax.State_Machines is
       --  from [To]. In the end, the internal nodes are the ones with an
       --  an entry in [Cloned].
 
-      function Complete_All_Clones
-        (Cloned : State_Array; Cloned_Count : Natural; Max : Natural)
-         return State;
+      procedure Complete_All_Clones
+        (Cloned : State_Array; Cloned_Count : Natural; Max : Natural;
+         Start_Of_Last_Clone, End_Of_Last_Clone : out State);
       --  [Clone_And_Count_Nodes] was used to do one clone of the internal
       --  nodes (and count them). This procedure does the remaining number of
       --  clones for [Max_Occurs] repeats.
@@ -299,9 +299,9 @@ package body Sax.State_Machines is
       -- Complete_All_Clones --
       -------------------------
 
-      function Complete_All_Clones
-        (Cloned : State_Array; Cloned_Count : Natural; Max : Natural)
-         return State
+      procedure Complete_All_Clones
+        (Cloned : State_Array; Cloned_Count : Natural; Max : Natural;
+         Start_Of_Last_Clone, End_Of_Last_Clone : out State)
       is
          Tmp    : State;
       begin
@@ -309,10 +309,13 @@ package body Sax.State_Machines is
             if Min_Occurs = Max_Occurs
               or else Max_Occurs = Natural'Last
             then
-               return Cloned (To);
+               Start_Of_Last_Clone := Cloned (From);
+               End_Of_Last_Clone := Cloned (To);
             else
-               return Add_Stateless (Cloned (To));
+               Start_Of_Last_Clone := Cloned (From);
+               End_Of_Last_Clone := Add_Stateless (Cloned (To));
             end if;
+            return;
          end if;
 
          --  Reserve immediately the space for all the other repetitions, to
@@ -354,9 +357,14 @@ package body Sax.State_Machines is
          if Min_Occurs = Max_Occurs
            or else Max_Occurs = Natural'Last
          then
-            return Cloned (To) + State ((Max - 2) * Cloned_Count);
+            Start_Of_Last_Clone :=
+              Cloned (From) + State ((Max - 2) * Cloned_Count);
+            End_Of_Last_Clone :=
+              Cloned (To) + State ((Max - 2) * Cloned_Count);
          else
-            return Add_Stateless
+            Start_Of_Last_Clone :=
+              Cloned (From) + State ((Max - 2) * Cloned_Count);
+            End_Of_Last_Clone := Add_Stateless
               (Cloned (To) + State ((Max - 2) * Cloned_Count));
          end if;
       end Complete_All_Clones;
@@ -548,32 +556,33 @@ package body Sax.State_Machines is
          Cloned_Count : Natural := 0;
          --  Number of nodes in the subautomaton to clone.
 
-         New_To : State;
+         Start_Of_Last_Clone, New_To : State;
 
       begin
          Clone_And_Count_Nodes (Cloned, Cloned_Count);
 
          if Max_Occurs = Natural'Last then
-            New_To := Complete_All_Clones (Cloned, Cloned_Count, Min_Occurs);
+            Complete_All_Clones
+              (Cloned, Cloned_Count, Min_Occurs,
+               Start_Of_Last_Clone => Start_Of_Last_Clone,
+               End_Of_Last_Clone   => New_To);
+
             Clone_Transitions (Cloned, Cloned_Count, New_To, Min_Occurs);
 
-            if Min_Occurs > 2 then
-               N := Cloned (To) + State ((Min_Occurs - 2) * Cloned_Count);
-            elsif Min_Occurs = 2 then
-               N := Cloned (From);
-            else
-               raise Program_Error;  --  cases 0..* and 1..* already handled
-            end if;
-
-            Add_Empty_Transition (Self, New_To, N);
+            Add_Empty_Transition
+              (Self, New_To, Start_Of_Last_Clone);
             if Debug then
-               Put_Line ("Empty trans from" & New_To'Img & " to" & N'Img);
+               Put_Line ("Empty trans from" & New_To'Img
+                         & " to" & Start_Of_Last_Clone'Img);
             end if;
 
             return New_To;
 
          else
-            New_To := Complete_All_Clones (Cloned, Cloned_Count, Max_Occurs);
+            Complete_All_Clones
+              (Cloned, Cloned_Count, Max_Occurs,
+               Start_Of_Last_Clone => Start_Of_Last_Clone,
+               End_Of_Last_Clone   => New_To);
 
             if Min_Occurs = 0 then
                Add_Empty_Transition (Self, From, New_To);
