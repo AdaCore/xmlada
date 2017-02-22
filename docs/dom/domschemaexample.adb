@@ -12,12 +12,11 @@ begin
    Open ("pref_with_xsd.xml", Input);
 
    Set_Feature (Reader, Validation_Feature, False);
-   Set_Feature (Reader, Namespace_Feature, False);
 
    Parse (Reader, Input);
    Close (Input);
 
-   Doc := Get_Tree (Reader); 
+   Doc := Get_Tree (Reader);
 
    Free (Reader);
 end DomSchemaExample;

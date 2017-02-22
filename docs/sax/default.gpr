@@ -1,4 +1,4 @@
-with "../../sax/sax";
+with "../../sax/xmlada_sax";
 project Default is
-   for Main use ("saxexample_main.adb");  
+   for Main use ("saxexample_main.adb");
 end Default;
