@@ -1,0 +1,4 @@
+with "xmlada";
+project Default is
+   for Main use ("saxexample_main.adb");
+end Default;

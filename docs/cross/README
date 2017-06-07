@@ -1,0 +1,4 @@
+This directory contains examples that are suitable for cross-compilation.
+They repeat the functionality of main examples, but have XML and XSD
+sources embebbed into ada code, since external file access may be
+a problem on a number of cross-platforms.

@@ -1,3 +1,7 @@
+--
+--  Copyright (C) 2017, AdaCore
+--
+
 with Input_Sources.File; use Input_Sources.File;
 with Sax.Readers;        use Sax.Readers;
 with DOM.Core;           use DOM.Core;

@@ -1,3 +1,7 @@
+--
+--  Copyright (C) 2017, AdaCore
+--
+
 with DOM.Core;            use DOM.Core;
 with DOM.Core.Attrs;      use DOM.Core.Attrs;
 with DOM.Core.Documents;  use DOM.Core.Documents;

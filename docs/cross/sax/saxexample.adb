@@ -4,7 +4,7 @@
 
 with Unicode.CES;    use Unicode.CES;
 with Sax.Attributes; use Sax.Attributes;
-with Ada.Text_IO;    use Ada.Text_IO;
+with GNAT.IO;        use GNAT.IO;
 
 package body SaxExample is
 

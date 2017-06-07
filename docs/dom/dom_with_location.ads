@@ -1,3 +1,7 @@
+--
+--  Copyright (C) 2017, AdaCore
+--
+
 with DOM.Readers;       use DOM.Readers;
 with Sax.Utils;         use Sax.Utils;
 with Sax.Readers;       use Sax.Readers;

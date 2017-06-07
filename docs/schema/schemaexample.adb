@@ -1,3 +1,7 @@
+--
+--  Copyright (C) 2017, AdaCore
+--
+
 with Ada.Text_IO;        use Ada.Text_IO;
 with Sax.Readers;        use Sax.Readers;
 with Schema.Readers;     use Schema.Readers;

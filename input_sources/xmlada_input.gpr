@@ -42,6 +42,10 @@ project XmlAda_Input is
       for Artifacts ("share/doc/xmlada")
         use ("../docs/_build/html/*", "../docs/_build/latex/XMLAda.pdf");
       for Artifacts ("lib/gnat") use ("../distrib/xmlada.gpr");
+      for Artifacts ("share/examples/xmlada/dom") use ("../docs/dom/*");
+      for Artifacts ("share/examples/xmlada/sax") use ("../docs/sax/*");
+      for Artifacts ("share/examples/xmlada/schema") use ("../docs/schema/*");
+      for Artifacts ("share/examples/xmlada/cross") use ("../docs/cross/*");
    end Install;
 
 end XmlAda_Input;
