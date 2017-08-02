@@ -34,13 +34,19 @@ Once installed, your applications will by default be linked statically with
 XML/Ada. You can change that default by specifying explicitly --enable-shared
 as an extra switch to configure.
 
-Depending on what Ada runtime your application is build with, you might need to
-change the file shared.gpr (at the root of the XML/Ada directory) so that the
-Default_Switches lines in the Compiler package contain something like:
-   for Default_Switches ("Ada") use ("--RTS=sjlj", ...);
-
 To install the library, use the following command line:
    make all install
+
+If your application is built using a runtime which is not the default,
+you need to build XmlAda with the same runtime. This is done by simply
+adding an RTS=NAME argument to the make command above. For instance,
+to build and install the XmlAda library with the "rtp" runtime, adjust
+the make command above as follow:
+
+   make all install RTS=rtp
+
+You can also override the default install location by adding the argument
+IPREFIX=PATH to the make command above.
 
 Compiling with other Ada compilers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

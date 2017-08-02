@@ -44,6 +44,11 @@ GPROPTS+=--target=${TARGET_ALIAS}
 IPREFIX=${prefix}/${TARGET_ALIAS}
 endif
 
+ifdef RTS
+GPROPTS+=--RTS=${RTS}
+IPREFIX:=${IPREFIX}/$(notdir ${RTS})
+endif
+
 ifeq (${BUILDS_SHARED},yes)
 all: static relocatable static-pic
 install: install-clean install-static install-relocatable install-static-pic
