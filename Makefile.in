@@ -17,6 +17,7 @@ PROCESSORS?=0
 GPRBUILD=@gprbuild@ -j${PROCESSORS} -m ${GPRBUILD_OPTIONS}
 GPRINSTALL=@gprinstall@
 TARGET=@target@
+TARGET_ALIAS=@target_alias@
 HOST=@host@
 
 # Compiler mode: one of "distrib", "Debug", "Production", "profile", "coverage"
@@ -39,8 +40,8 @@ PSUB=lib/gnat
 ifeq (${HOST},${TARGET})
 IPREFIX=${prefix}
 else
-GPROPTS+=--target=${TARGET}
-IPREFIX=${prefix}/${TARGET}
+GPROPTS+=--target=${TARGET_ALIAS}
+IPREFIX=${prefix}/${TARGET_ALIAS}
 endif
 
 ifeq (${BUILDS_SHARED},yes)
