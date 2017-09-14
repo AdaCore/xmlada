@@ -40,7 +40,6 @@ with Unicode;                        use Unicode;
 
 package body Schema.Validators is
    use XML_Grammars, Attributes_Tables, Enumeration_Tables;
-   use Schema_State_Machines_Matchers;
 
    function To_Graphic_String (Str : Byte_Sequence) return String;
    --  Convert non-graphic characters in Str to make them visible in a display
@@ -1264,7 +1263,7 @@ package body Schema.Validators is
    procedure Initialize_Grammar
      (Reader : in out Abstract_Validation_Reader'Class)
    is
-      use Reference_HTables, Simple_Type_Tables;
+      use Reference_HTables;
       G : XML_Grammars.Encapsulated_Access;
 
       function Register
@@ -1512,7 +1511,6 @@ package body Schema.Validators is
    -----------
 
    procedure Reset (Grammar : in out XML_Grammar) is
-      use Reference_HTables;
       G   : constant XML_Grammars.Encapsulated_Access := Get (Grammar);
       NFA : Schema_NFA_Access;
 

@@ -23,8 +23,6 @@
 
 with Unicode.Encodings;         use Unicode.Encodings;
 with Unicode.CES;               use Unicode.CES;
-with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
-with Unicode.CCS;               use Unicode.CCS;
 
 package body Input_Sources is
 

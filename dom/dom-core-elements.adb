@@ -26,7 +26,6 @@ with DOM.Core.Documents; use DOM.Core.Documents;
 with Sax.Symbols;        use Sax.Symbols;
 
 package body DOM.Core.Elements is
-   use Nodes_Htable;
 
    -------------------
    -- Get_Attribute --

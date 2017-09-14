@@ -39,7 +39,7 @@ with Ada.IO_Exceptions;
 with Input_Sources.File;  use Input_Sources.File;
 
 package body Schema.Schema_Readers is
-   use Schema_State_Machines, Schema_State_Machines_PP;
+   use Schema_State_Machines;
    use Type_Tables, Element_HTables, Group_HTables;
    use AttrGroup_HTables, Reference_HTables, Attribute_HTables;
 

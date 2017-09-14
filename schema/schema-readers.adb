@@ -38,7 +38,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 package body Schema.Readers is
-   use Schema_State_Machines, Schema_State_Machines_PP;
+   use Schema_State_Machines;
    use Schema_State_Machines_Matchers;
 
    procedure Print is new Schema_State_Machines_Matchers.Debug_Print
