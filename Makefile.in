@@ -105,19 +105,19 @@ endif
 install-static:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD --build-name=static \
+		--build-var=XMLADA_BUILD,LIBRARY_TYPE --build-name=static \
 		--install-name=xmlada xmlada.gpr
 
 install-shared install-relocatable:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=relocatable ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD --build-name=relocatable \
+		--build-var=XMLADA_BUILD,LIBRARY_TYPE --build-name=relocatable \
 		--install-name=xmlada xmlada.gpr
 
 install-static-pic:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static-pic ${GPROPTS} \
 		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD --build-name=static-pic \
+		--build-var=XMLADA_BUILD,LIBRARY_TYPE --build-name=static-pic \
 		--install-name=xmlada xmlada.gpr
 
 
