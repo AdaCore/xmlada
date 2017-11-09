@@ -35,7 +35,6 @@ MODULES=unicode input_sources sax dom schema
 MODULE_INSTALL=${MODULES:%=%_inst}
 
 GPROPTS=-XBUILD=${MODE} -XPROCESSORS=${PROCESSORS}
-PSUB=lib/gnat
 
 ifeq (${HOST},${TARGET})
 IPREFIX=${prefix}
@@ -82,43 +81,31 @@ docs: force
 	-${MAKE} -e -C docs html latexpdf
 
 install-clean-obsolete:
-ifneq (,$(wildcard $(IPREFIX)/$(PSUB)/manifests/xmlada_schema))
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada_schema
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada_dom
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada_sax
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada_input
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada_unicode
+ifneq (,$(wildcard $(IPREFIX)/lib/gnat/manifests/xmlada))
+	-${GPRINSTALL} -f --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
+		--project-subdir=lib/gnat xmlada
 endif
 
 install-clean: install-clean-obsolete
-ifneq (,$(wildcard $(IPREFIX)/$(PSUB)/manifests/xmlada))
-	-${GPRINSTALL} --uninstall ${GPROPTS} --prefix=$(IPREFIX) \
-		--project-subdir=$(PSUB) xmlada
+ifneq (,$(wildcard $(IPREFIX)/share/gpr/manifests/xmlada))
+	-${GPRINSTALL} -f --uninstall ${GPROPTS} --prefix=$(IPREFIX) xmlada
 endif
 
 ## Do the installation for an explicit target
 install-static:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static ${GPROPTS} \
-		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD,LIBRARY_TYPE --build-name=static \
-		--install-name=xmlada xmlada.gpr
+		--prefix=${IPREFIX} --build-var=XMLADA_BUILD,LIBRARY_TYPE \
+		--build-name=static --install-name=xmlada xmlada.gpr
 
 install-shared install-relocatable:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=relocatable ${GPROPTS} \
-		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD,LIBRARY_TYPE --build-name=relocatable \
-		--install-name=xmlada xmlada.gpr
+		--prefix=${IPREFIX} --build-var=XMLADA_BUILD,LIBRARY_TYPE \
+		--build-name=relocatable --install-name=xmlada xmlada.gpr
 
 install-static-pic:
 	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static-pic ${GPROPTS} \
-		--prefix=${IPREFIX} --project-subdir=$(PSUB) \
-		--build-var=XMLADA_BUILD,LIBRARY_TYPE --build-name=static-pic \
-		--install-name=xmlada xmlada.gpr
+		--prefix=${IPREFIX} --build-var=XMLADA_BUILD,LIBRARY_TYPE \
+		--build-name=static-pic --install-name=xmlada xmlada.gpr
 
 
 clean_%: force
