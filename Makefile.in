@@ -92,20 +92,21 @@ ifneq (,$(wildcard $(IPREFIX)/share/gpr/manifests/xmlada))
 endif
 
 ## Do the installation for an explicit target
+
+GPRINST_OPTS=-f -p ${GPROPTS} --prefix=${IPREFIX} --install-name=xmlada \
+	--build-var=LIBRARY_TYPE --build-var=XMLADA_BUILD
+
 install-static:
-	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static ${GPROPTS} \
-		--prefix=${IPREFIX} --build-var=XMLADA_BUILD,LIBRARY_TYPE \
-		--build-name=static --install-name=xmlada xmlada.gpr
+	${GPRINSTALL} -XLIBRARY_TYPE=static ${GPRINST_OPTS} \
+		--build-name=static  xmlada.gpr
 
 install-shared install-relocatable:
-	${GPRINSTALL} -f -p -XLIBRARY_TYPE=relocatable ${GPROPTS} \
-		--prefix=${IPREFIX} --build-var=XMLADA_BUILD,LIBRARY_TYPE \
-		--build-name=relocatable --install-name=xmlada xmlada.gpr
+	${GPRINSTALL} -XLIBRARY_TYPE=relocatable ${GPRINST_OPTS} \
+		--build-name=relocatable xmlada.gpr
 
 install-static-pic:
-	${GPRINSTALL} -f -p -XLIBRARY_TYPE=static-pic ${GPROPTS} \
-		--prefix=${IPREFIX} --build-var=XMLADA_BUILD,LIBRARY_TYPE \
-		--build-name=static-pic --install-name=xmlada xmlada.gpr
+	${GPRINSTALL} -XLIBRARY_TYPE=static-pic ${GPRINST_OPTS} \
+		--build-name=static-pic xmlada.gpr
 
 
 clean_%: force
