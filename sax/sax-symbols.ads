@@ -91,7 +91,7 @@ private
       Hash          => Hash,
       Equal         => Key_Equal);
 
-   Hash_Num : constant := 2**16;
+   Hash_Num : constant := 2**10;
    --  Number of headers in the hash table
 
    type Hash_Type is range 0 .. Hash_Num - 1;
