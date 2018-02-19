@@ -91,7 +91,11 @@ project Lib is
 end Lib;
 EOF
 
-      $gprbuild -c -q -P$tmp/lib 2>/dev/null
+      if test "x$host_alias" != "x$target_alias"; then
+          $gprbuild --target=$target_alias -c -q -P$tmp/lib 2>/dev/null
+      else
+          $gprbuild -c -q -P$tmp/lib 2>/dev/null
+      fi
       if test $? = 0 ; then
          GNAT_BUILDS_SHARED=yes
       else
