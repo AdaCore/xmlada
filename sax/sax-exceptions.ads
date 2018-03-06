@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -84,6 +84,7 @@ private
       Message : Unicode.CES.Byte_Sequence (1 .. Length);
       Except  : Ada.Exceptions.Exception_Id;
    end record;
+   pragma No_Tagged_Streams (Sax_Exception);
 
    type Sax_Parse_Exception is new Sax_Exception with record
       Loc : Sax.Locators.Location;
