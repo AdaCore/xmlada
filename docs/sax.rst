@@ -8,11 +8,11 @@ Description
 ===========
 
 Parsing XML streams can be done with two different methods. They each have
-their pros and cons. Although the simplest, and probably most usual way to
+their pros and cons. Although the simplest and probably most usual way to
 manipulate XML files is to represent them in a tree and manipulate it through
 the DOM interface (see next chapter).
 
-The **Simple API for XML** is an other method that can be used for parsing.  It
+The **Simple API for XML** is another method that can be used for parsing.  It
 is based on a callbacks mechanism, and doesn't store any data in memory (unless
 of course you choose to do so in your callbacks). It can thus be more efficient
 to use SAX than DOM for some specialized algorithms.  In fact, this whole Ada
@@ -36,7 +36,7 @@ should refer to the standard itself, available at `http://sax.sourceforge.net
 
 Some of the more useful callbacks are `Start_Document`, `End_Document`,
 `Start_Element`, `End_Element`, `Get_Entity` and `Characters`. Most of these
-are quite self explanatory. The characters callback is called when characters
+are quite self explanatory. The `Characters` callback is called when characters
 outside a tag are parsed.
 
 .. highlight:: xml
@@ -80,7 +80,7 @@ from the documentation of libxml, a GPL C toolkit for manipulating XML files.
 
 * Using XML files as a database
 
-  One of the common usage for XML files is to use them as a kind of basic
+  One of the common usage for XML files is to use them as a kind of a basic
   database, They obviously provide a strongly structured format, and you could
   for instance store a series of numbers with the following format::
 
@@ -102,7 +102,7 @@ from the documentation of libxml, a GPL C toolkit for manipulating XML files.
   locations.
 
   If the user is looking for a specific entry, there is no point in loading the
-  whole file in memory and then traverse the resulting tree. The memory usage
+  whole file in memory and then traversing the resulting tree. The memory usage
   increases very fast with the size of the file, and this might even be
   unfeasible for a 35 megabytes file.
 
@@ -117,7 +117,7 @@ from the documentation of libxml, a GPL C toolkit for manipulating XML files.
 However, there are also a number of drawbacks to using SAX:
 
 * SAX parsers generally require you to write a little bit more code than the
-  DOM interface
+  DOM interface.
 
 * There is no easy way to write the XML data back to a file, unless you build
   your own internal tree to save the XML.  As a result, SAX is probably not the
@@ -133,8 +133,8 @@ The SAX parser
 The basic type in the SAX module is the **SAX.Readers** package. It defines a
 tagged type, called `Reader`, that represents the SAX parser itself.
 
-Several features are define in the SAX standard for the parsers. They indicate
-which behavior can be expected from the parser. The package `SAX.Readers`
+Several features are defined in the SAX standard for the parsers. They indicate
+what behavior can be expected from the parser. The package `SAX.Readers`
 defines a number of constant strings for each of these features. Some of these
 features are read-only, whereas others can be modified by the user to adapt the
 parser. See the `Set_Feature` and `Get_Feature` subprograms for how to
@@ -185,7 +185,7 @@ need to override in most of your applications.
 *Start_Document*
   This callback, that doesn't receive any parameter, is called once, just
   before parsing the document. It should generally be used to initialize
-  internal data needed later on. It is also garanteed to be called only once
+  internal data needed later on. It is also guaranteed to be called only once
   per input stream.
 
 *End_Document*
@@ -202,13 +202,13 @@ need to override in most of your applications.
 
 *End_Element*
   This is the opposite of the previous callback, and will be called once per
-  element. Calls to `Start_Element` and `End_Element` are garanteed
+  element. Calls to `Start_Element` and `End_Element` are guaranteed
   to be properly nested (ie you can't see the end of an element before seeing
   the end of all its nested children.
 
 *Characters and Ignore_Whitespace*
   This procedure will be called every time some character not part of an
-  element declaration are encounted. The characters themselves are passed as an
+  element declaration is encountered. The characters themselves are passed as an
   argument to the callback. Note that the white spaces (and tabulations) are
   reported separately in the Ignorable_Spaces callback in case the XML
   attribute `xml:space` was set to something else than `preserve` for this
@@ -413,7 +413,7 @@ they might contain one of the following abbreviations:
 
   This abbreviation indicates that the error message is related to an
   unsatisfied validity-constraint, as defined in the XML standard. The XML
-  document is well formed, although it doesn't match the semantic rules
+  document is well-formed, although it doesn't match the semantic rules
   that the grammar defines. For instance, if you are trying to validate an
   XML document against a DTD, the document must contain a DTD that defines the
   name of the root element.
