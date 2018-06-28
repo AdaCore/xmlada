@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2018, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -191,7 +191,7 @@ package body Input_Sources.Http is
 
       Create_Socket (Socket);
       Set_Socket_Option (Socket, Socket_Level, (Reuse_Address, True));
-      Set_Socket_Option (Socket, Option => (Receive_Buffer, 3000));
+      Set_Socket_Option (Socket, Socket_Level, (Receive_Buffer, 3000));
       Connect_Socket (Socket, Addr);
 
       Channel := Stream (Socket);
