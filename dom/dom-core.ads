@@ -147,6 +147,14 @@ package DOM.Core is
    procedure Set_Node_List_Growth_Factor (Factor : Float);
    --  Set the growth factor, see Default_Node_List_Growth_Factor
 
+   function Is_Standalone
+     (Implementation : DOM_Implementation)
+      return Boolean;
+
+   procedure Standalone
+     (Implementation : in out DOM_Implementation;
+      Alone          :            Boolean);
+
    --------------------
    -- Dom exceptions --
    --------------------
@@ -206,7 +214,9 @@ package DOM.Core is
 
 private
 
-   type DOM_Implementation is null record;
+   type DOM_Implementation is record
+      Alone : Boolean;
+   end record;
 
    type Node_Array is array (Natural range <>) of Node;
    type Node_Array_Access is access Node_Array;
