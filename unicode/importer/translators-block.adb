@@ -171,6 +171,8 @@ package body Translators.Block is
            "Egypt_Hieroglyph_Fmt_Ctrl");
       Add ("Symbols and Pictographs Extended-A",
            "Symbols_Pictographs_Ext_A");
+      Add ("Symbols for Legacy Computing",
+           "Symbols_Legacy_Computing");
    end Set_Exceptions;
 
 end Translators.Block;

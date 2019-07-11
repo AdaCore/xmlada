@@ -102,6 +102,7 @@ package body Translators.Alias is
       --  Uniquify names only differing only by a dash.
       Add ("TIBETAN LETTER -A",             "Tibetan_Letter_Dash_A");
       Add ("TIBETAN SUBJOINED LETTER -A",   "Tibetan_Subjoined_Letter_Dash_A");
+      Add ("MARCHEN LETTER -A",             "Marchen_Letter_Dash_A");
    end Set_Exceptions;
 
 end Translators.Alias;
