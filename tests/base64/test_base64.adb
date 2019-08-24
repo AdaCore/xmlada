@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2014, AdaCore                     --
+--                       Copyright (C) 2019, AdaCore                        --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -21,36 +21,29 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with "shared";
+with Ada.Text_IO; use Ada.Text_IO;
+with Sax.Utils;   use Sax.Utils;
 
-aggregate project XmlAda is
+procedure Test_Base64 is
 
-   type Build_Tests is ("Yes", "Only", "No");
+   procedure Check (Value : String) is
+   begin
+      if Is_Valid_Base64Binary (Value) then
+         Put ("RIGHT: ");
+      else
+         Put ("WRONG: ");
+      end if;
 
-   Tests_Status : Build_Tests := external ("TESTS_ACTIVATED", "No");
+      Put_Line ('"' & Value & '"');
+   end Check;
 
-   case Tests_Status is
-      when "Yes" | "No" =>
-         for Project_Files use
-           ("input_sources/xmlada_input.gpr",
-            "unicode/xmlada_unicode.gpr",
-            "sax/xmlada_sax.gpr",
-            "dom/xmlada_dom.gpr",
-            "schema/xmlada_schema.gpr");
-      when "Only" =>
-         null;
-   end case;
-
-   case Tests_Status is
-      when "Yes" | "Only" =>
-         for Project_Files use Project'Project_Files &
-           ("tests/unicode/unicode_test.gpr",
-            "tests/sax/sax_test.gpr",
-            "tests/dom/dom_test.gpr",
-            "tests/schema/schema_test.gpr",
-            "tests/base64/base64_test.gpr");
-      when "No" =>
-         null;
-   end case;
-
-end XmlAda;
+begin
+   Check ("MzMzZGQK");
+   Check ("MQo=");
+   Check ("MTIK");
+   Check ("MTIzCg==");
+   Check ("");
+   Check ("VVVV");
+   Check ("VAV="); -- Wrong, was incorrectly OK before S823-015 fix.
+   Check ("VV=="); -- Wrong
+end Test_Base64;

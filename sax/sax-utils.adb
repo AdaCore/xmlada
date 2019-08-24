@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2005-2017, AdaCore                     --
+--                     Copyright (C) 2005-2019, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -894,8 +894,8 @@ package body Sax.Utils is
 
             elsif Group = 4
               and then Chars (1) <= Char_64
-              and then Chars (2) <= Char_04
-              and then Chars (3) <= Char_Equal
+              and then Chars (2) = Char_04
+              and then Chars (3) = Char_Equal
             then
                Group := 1;
                exit;  --  Must end now

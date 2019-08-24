@@ -9,7 +9,8 @@ TESTS= test_unicode \
 		 test_multiple_xsd \
 		 test_examples_dom \
 		 test_examples_sax \
-		 test_examples_schema
+		 test_examples_schema \
+		 test_base64
 
 
 # Force running all the tests
@@ -23,6 +24,9 @@ EXAMPLE_EXPECTED=$(shell pwd)/examples
 
 test_unicode: EXEC=unicode/test_unicode
 test_unicode: generic_test_unicode
+
+test_base64: EXEC=base64/test_base64
+test_base64: generic_test_base64
 
 test_state: EXEC=sax/teststate
 test_state: generic_test_state
