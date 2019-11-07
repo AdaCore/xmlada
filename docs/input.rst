@@ -16,15 +16,19 @@ possible to go backward. This also means that one doesn't have to provide
 buffers in such cases, and thus that it is possible to provide memory-efficient
 readers.
 
-Two predefined readers are available, namely `String_Input` to read characters
-from a standard Ada string, and `File_Input` to read characters from a standard
-text file.
+Four predefined readers are available, namely `String_Input` to read characters
+from a standard Ada string, `File_Input` to read characters from a standard
+text file, `Http_Input` to read from http location and `Socket_Input` to read
+from a streaming socket.
 
-They all provide the following primite operations:
+All readers share same limitation of total length of input: files bigger
+than 2GB are not supported.
+
+They all provide the following primitive operations:
 
 `Open`
 
-  Although this operation isn't exactly overriden, since its parameters
+  Although this operation isn't exactly overridden, since its parameters
   depend on the type of stream you want to read from, it is nice to
   use a standard name for this constructor.
 
@@ -46,7 +50,7 @@ They all provide the following primite operations:
   last character from the stream. Note that it is not guarantee that a second
   call to Eof will also return True.
 
-It is the responsability of this stream reader to correctly call the decoding
+It is the responsibility of this stream reader to correctly call the decoding
 functions in the unicode module so as to return one single valid unicode
 character. No further processing is done on the result of `Next_Char`. Note
 that the standard `File_Input` and `String_Input` streams can automatically
