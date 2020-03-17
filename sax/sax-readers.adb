@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2020, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -4997,11 +4997,14 @@ package body Sax.Readers is
          Increment_Count (NS);
 
          Parser.Current_Node.Start_Tag_End := Get_Location (Parser.Locator);
+
+         pragma Warnings (Off, "overlaps with actual");
          Start_Element
            (Parser,
             NS         => NS,
             Local_Name => Parser.Current_Node.Name,
             Atts       => Parser.Attributes);
+         pragma Warnings (On, "overlaps with actual");
 
          if Id.Typ = End_Of_Start_Tag then
             End_Element;
@@ -5961,6 +5964,7 @@ package body Sax.Readers is
       Parser.Buffer := new Byte_Sequence (1 .. Initial_Buffer_Length);
       Set_State (Parser, Default_State);
 
+      pragma Warnings (Off, "overlaps with actual");
       Add_Namespace_No_Event
         (Parser,
          Prefix => Parser.Xml_Sequence,
@@ -5981,6 +5985,7 @@ package body Sax.Readers is
       Start_Document (Sax_Reader'Class (Parser));
       Syntactic_Parse (Sax_Reader'Class (Parser), Input);
       Close_Namespaces (Parser, Parser.Default_Namespaces);
+      pragma Warnings (On, "overlaps with actual");
 
       --  All the nodes must have been closed at the end of the document
       if Parser.Current_Node /= null then
