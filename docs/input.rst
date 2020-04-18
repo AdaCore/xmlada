@@ -11,7 +11,7 @@ access files and manipulate standard Ada strings.
 A top-level tagged type is provided that must be extended for the various
 streams. It is assumed that the pointer to the current character in the stream
 can only go forward, and never backward. As a result, it is possible to
-implement this package for sockets or other strings where it isn't even
+implement this package for sockets or other streams where it isn't even
 possible to go backward. This also means that one doesn't have to provide
 buffers in such cases, and thus that it is possible to provide memory-efficient
 readers.
@@ -33,7 +33,7 @@ They all provide the following primitive operations:
   use a standard name for this constructor.
 
 `Close`
-  This terminates the stream reader and free any associated memory. It
+  This terminates the stream reader and frees any associated memory. It
   is no longer possible to read from the stream afterwards.
 
 `Next_Char`

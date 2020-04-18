@@ -74,7 +74,7 @@ Examples
 ========
 
 There are several cases where using a SAX parser rather than a DOM
-parser would make sense. Here are some examples, although obvisouly
+parser would make sense. Here are some examples, although obviously
 this doesn't include all the possible cases. These examples are taken
 from the documentation of libxml, a GPL C toolkit for manipulating XML files.
 
@@ -104,7 +104,7 @@ from the documentation of libxml, a GPL C toolkit for manipulating XML files.
   If the user is looking for a specific entry, there is no point in loading the
   whole file in memory and then traversing the resulting tree. The memory usage
   increases very fast with the size of the file, and this might even be
-  unfeasible for a 35 megabytes file.
+  infeasible for a 35 megabytes file.
 
 * Simple XML files
 

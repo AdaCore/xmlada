@@ -39,9 +39,9 @@ be able to access the contents of the XML file if it isn't well-formed.
 The second phase is provided by the Schema module in XML/Ada. Although such
 constraints can be checked at the application level, with ad hoc code, it is
 generally easier to maintain a separate file that describes the valid semantic
-contents of the file, that maintain specific code when the semantic changes. It
+contents of the file, than maintain specific code when the semantic changes. It
 is also difficult not to forget special cases when doing the validating through
-a set of `if` statements in the Ada core.
+a set of `if` statements in the Ada code.
 
 XML provides two ways to describe additional constraints that a file must
 satisfy in order to be considered as valid.
@@ -53,10 +53,10 @@ satisfy in order to be considered as valid.
   and report events if the user is using SAX. However, not all parsers are able
   to validate the document against a DTD (XML/Ada doesn't).
 
-  Their use tend to greatly diminish. Among their limitation are a limit
-  capability to express constraints on the order of tag children, the fact they
-  the DTD themselves are written in a separate language totally different from
-  XML, and that users must learn as a result.
+  Their use tends to greatly diminish. Among their limitations are a limited
+  capability to express constraints on the order of tag children, the fact that
+  the DTDs themselves are written in a separate language totally different from
+  XML, and that users must learn this language as a result.
 
 * XML Schema
 
@@ -72,12 +72,12 @@ satisfy in order to be considered as valid.
 XML Schema Syntax
 =================
 
-The Schema modules provides subprograms and types to parse an XML schema and
+The Schema module provides subprograms and types to parse an XML schema and
 validate an XML document with this schema.
 
 This document does not provide a full documentation on the format of XML
 Schemas. This is extensive, has several obscure features, which, although
-supported by XML/Ada, are of little use in most pratical uses. We refer the
+supported by XML/Ada, are of little use in most practical usages. We refer the
 reader to the first part of the XML Schema specification, which is designed as
 a tutorial (`http://www.w3.org/TR/xmlschema-0/
 <http://www.w3.org/TR/xmlschema-0/>`_).
@@ -117,7 +117,7 @@ The contents of the element is then defined in one of two ways:
   contents must satisfy additional constraints (be an integer, a date,
   ...).
 
-  Among the predefined simple type (which are all defined in the namespace
+  Among the predefined simple types (which are all defined in the namespace
   `http://www.w3.org/2001/XMLSchema/ <http://www.w3.org/2001/XMLSchema/>`_),
   one can find: `string`, `integer`, `byte`, `date`, `time`, `dateTime`,
   `boolean`,...
@@ -157,7 +157,7 @@ The contents of the element is then defined in one of two ways:
   accept child elements, and possibly text value).
 
   To define a simple type, based on string, but that only allows a limited set
-  of value (similar to an Ada enumeration), one would create a restriction of
+  of values (similar to an Ada enumeration), one would create a restriction of
   the standard string type, as in::
 
      <xsd:element name="tag3">
@@ -187,7 +187,7 @@ The contents of the element is then defined in one of two ways:
   `<xsd:choice>` or a `<xsd:sequence>` node (although it is possible to
   indicate that any child node is authorized, among other things).
 
-  `<xsd:choice>` indicate the children can appear in any order, whereas
+  `<xsd:choice>` indicates the children can appear in any order, whereas
   `<xsd:sequence>` enforces a specific order on children.
 
   In both cases, extra attributes can be specified to indicate the number of
@@ -299,7 +299,7 @@ validating a file.
   you need it in your application. Memory will automatically be reclaimed
   when no longer needed.
 
-  Every time you parse an XML file later on, you must associated the
+  Every time you parse an XML file later on, you must associate the
   Grammar with the parser::
 
      declare
@@ -355,7 +355,7 @@ Most other XML parsers only work on DOM trees.
 
 Basing the validation on SAX is more efficient, since there is no need to read
 the whole XML stream (or even the grammar) in memory before starting the
-validation, and errors can be reported immediatly.
+validation, and errors can be reported immediately.
 
 It also requires less memory to run, and thus can validate large XML
 documents.
@@ -363,7 +363,7 @@ documents.
 It also means that even if you are using SAX, and not DOM, you still have
 access to the validation features.
 
-Validating a XML document while parsing it is basically done the same as when
+Validating an XML document while parsing it is basically done the same as when
 using SAX itself. Instead of inheriting from `Sax.Readers.Reader`, your tagged
 type must inherit from `Schema.Readers.Validating_Reader`.
 
@@ -424,7 +424,7 @@ you parse the file, as in::
 The second use case is a bit more complex: you have several XSD files to
 parse, and the XML files will need either of these. If you are using
 namespaces, there is nothing special to do, and the same code as above
-applies: you can simply parse each of the XSD file into the same
+applies: you can simply parse each of the XSD files into the same
 XML_Grammar, and then use that grammar to parse all the XML files,
 as in::
 
@@ -450,7 +450,7 @@ as in::
       F.Close;
    end;
 
-If however you are not using namespaces, you cannot use this technics, since
+If however you are not using namespaces, you cannot use this technique, since
 the grammar from the various XSD files would end up mixed up, and validation
 will most likely fail. So instead you need to have one `XML_Grammar` per
 XSD file, and then set the grammar on the reader dynamically. A full
