@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2020, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -56,14 +56,14 @@ package DOM.Core.Nodes is
    --  tree itself.
 
    function First_Child (N : Node) return Node;
-   --  Return the first child of N.
+   --  Return the first child of N
 
    function Last_Child (N : Node) return Node;
-   --  Return the last child of N.
+   --  Return the last child of N
 
    function Parent_Node (N : Node) return Node;
    --  Return the parent for this node. Note that for attribute nodes, this
-   --  is always null
+   --  is always null.
 
    function Previous_Sibling (N : Node) return Node;
    --  Return the node preceding N in their common parent.
@@ -80,7 +80,7 @@ package DOM.Core.Nodes is
    --  null is returned, except for Element nodes.
 
    function Owner_Document (N : Node) return Node;
-   --  Return the document to which N belongs.
+   --  Return the document to which N belongs
 
    function Namespace_URI (N : Node) return DOM_String;
    --  Return the URI associated with N.
@@ -181,7 +181,7 @@ package DOM.Core.Nodes is
    --  null is returned.
 
    function Length (List : Node_List) return Natural;
-   --  Return the number of elements in the list.
+   --  Return the number of elements in the list
 
    --------------------
    -- Named_Node_Map --
@@ -219,7 +219,7 @@ package DOM.Core.Nodes is
    --  Return the Index-nth node in the list (starting from 0)
 
    function Length (Map : Named_Node_Map) return Natural;
-   --  Return the number of elements in the map.
+   --  Return the number of elements in the map
 
    function Get_Named_Item_NS
      (Map           : Named_Node_Map;
@@ -236,7 +236,7 @@ package DOM.Core.Nodes is
    procedure Set_Named_Item_NS
      (Map : in out Named_Node_Map; Arg : Node);
    --  Add a node using its namespace and local_name.
-   --  It returns the node that Arg replaces (or null if none)
+   --  It returns the node that Arg replaces (or null if none).
 
    procedure Remove_Named_Item_NS
      (Map           : in out Named_Node_Map;
@@ -247,7 +247,7 @@ package DOM.Core.Nodes is
      (Map           : in out Named_Node_Map;
       Namespace_URI : DOM_String;
       Local_Name    : DOM_String);
-   --  Remove a node specified by its namespace and local_name.
+   --  Remove a node specified by its namespace and local_name
 
    ------------------
    -- Input/Output --
@@ -262,7 +262,7 @@ package DOM.Core.Nodes is
       Pretty_Print          : Boolean := False;
       EOL_Sequence          : String  := "" & ASCII.LF;
       Encoding              : Unicode.Encodings.Unicode_Encoding :=
-        Unicode.Encodings.Get_By_Name ("utf-8");
+                                Unicode.Encodings.Get_By_Name ("utf-8");
       Collapse_Empty_Nodes  : Boolean := True);
    --  Print the contents of Node and its children in XML format.
    --  If Print_Comments is True, then nodes associated with comments are
@@ -292,7 +292,7 @@ package DOM.Core.Nodes is
    --  of whitespaces among other things), which in general has no effect for
    --  automatic tools reading the document. All whitespaces are modified
    --  outside of elements containing nothing but text nodes. For text nodes,
-   --  leading and trailing whitespaces are also deleted
+   --  leading and trailing whitespaces are also deleted.
 
    -----------------------
    -- Extra subprograms --
@@ -303,13 +303,13 @@ package DOM.Core.Nodes is
    --  version of XML/Ada to the next, do not rely on it.
 
    procedure Print
-     (N              : Node;
-      Print_Comments : Boolean := False;
-      Print_XML_PI   : Boolean := False;
-      With_URI       : Boolean := False;
-      EOL_Sequence   : String  := Sax.Encodings.Lf_Sequence;
-      Encoding       : Unicode.Encodings.Unicode_Encoding :=
-        Unicode.Encodings.Get_By_Name ("utf-8");
+     (N                    : Node;
+      Print_Comments       : Boolean := False;
+      Print_XML_PI         : Boolean := False;
+      With_URI             : Boolean := False;
+      EOL_Sequence         : String  := Sax.Encodings.Lf_Sequence;
+      Encoding             : Unicode.Encodings.Unicode_Encoding :=
+                               Unicode.Encodings.Get_By_Name ("utf-8");
       Collapse_Empty_Nodes : Boolean := False);
    --  For debugging purposes only!
    --
@@ -327,6 +327,6 @@ package DOM.Core.Nodes is
    --  This procedure is not part of the DOM standard, but is required to
    --  free the memory used by a node.
    --  Beware that a node is not removed from its parent.
-   --  If Deep is True, then the children are also removed
+   --  If Deep is True, then the children are also removed.
 
 end DOM.Core.Nodes;

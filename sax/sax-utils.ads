@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2005-2017, AdaCore                     --
+--                     Copyright (C) 2005-2020, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -24,10 +24,11 @@
 --  This package contains various subprograms not described in the SAX
 --  standard, but which are used by the various components of XML/Ada
 
-with Unicode.CES;
 with Interfaces;
+
 with Sax.Pointers;
 with Sax.Symbols;
+with Unicode.CES;
 
 package Sax.Utils is
 
@@ -36,13 +37,12 @@ package Sax.Utils is
       XML_1_0_Fourth_Edition,
       XML_1_0_Fifth_Edition,
       XML_1_0,   --  Alias for the latest version
-      XML_1_1
-     );
+      XML_1_1);
 
    function Is_Valid_Language_Name
      (Lang : Unicode.CES.Byte_Sequence) return Boolean;
    --  Whether Lang is a valid language, as per 2.12 in the XML specifications.
-   --  Lang is encoded with Sax.Encodings.Encoding
+   --  Lang is encoded with Sax.Encodings.Encoding.
 
    function Is_Valid_Name_Char
      (Char    : Unicode.Unicode_Char;
@@ -82,9 +82,9 @@ package Sax.Utils is
      (Name    : Unicode.CES.Byte_Sequence;
       Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name is valid NCname as per 2 in the XML namespaces
-   --  specifications
+   --  specifications.
    --  Colon should not be allowed when namespaces are supported, since names
-   --  must then match NCName, as per 6 in XML Namespaces specifications
+   --  must then match NCName, as per 6 in XML Namespaces specifications.
 
    function Is_Valid_NCnames
      (Name    : Unicode.CES.Byte_Sequence;
@@ -103,7 +103,7 @@ package Sax.Utils is
      (Name    : Unicode.CES.Byte_Sequence;
       Version : XML_Versions := XML_1_1) return URI_Type;
    --  Check whether Name is a URI, and its type if it is. This is RFC 3986,
-   --  see http://www.ietf.org/rfc/rfc3986.txt.
+   --  see http://www.ietf.org/rfc/rfc3986.txt
 
    function Is_Valid_URI
      (Name : Unicode.CES.Byte_Sequence) return Boolean;
@@ -119,7 +119,7 @@ package Sax.Utils is
      (Name    : Unicode.CES.Byte_Sequence;
       Version : XML_Versions := XML_1_1) return Boolean;
    --  Whether Name is a valid IRI (Internationalized Resource Identifier), as
-   --  per Namespaces in XML 1.1 definition
+   --  per Namespaces in XML 1.1 definition.
    --  See http://www.w3.org/TR/xml-names11/#dt-IRI
 
    function Contains_URI_Fragment
@@ -153,7 +153,7 @@ package Sax.Utils is
 
    function Collapse_Whitespaces (Str : String) return String;
    --  Collapse whitespaces in Str, according to the attributes normalization
-   --  rule
+   --  rule.
 
    -----------
    -- Lists --
@@ -182,7 +182,7 @@ package Sax.Utils is
    function Find
      (Table : Symbol_Table; Str : Unicode.CES.Byte_Sequence)
       return Sax.Symbols.Symbol;
-   --  Creates a new symbol in the symbol table.
+   --  Creates a new symbol in the symbol table
 
    function Convert
      (Table : Symbol_Table; Sym : Sax.Symbols.Symbol)
@@ -198,7 +198,7 @@ package Sax.Utils is
    type XML_NS is private;
    No_XML_NS : constant XML_NS;
    --  A namespace and its prefix in the XML file (there might be multiple
-   --  prefixes for a given namespace_URI)
+   --  prefixes for a given namespace_URI).
 
    function Get_Prefix (NS : XML_NS) return Sax.Symbols.Symbol;
    function Get_URI (NS : XML_NS)    return Sax.Symbols.Symbol;
@@ -208,7 +208,7 @@ package Sax.Utils is
    procedure Set_System_Id (NS : XML_NS; System_Id : Sax.Symbols.Symbol);
    function Get_System_Id  (NS : XML_NS) return Sax.Symbols.Symbol;
    --  Return the location of the file or stream used associated with that
-   --  namespace
+   --  namespace.
 
    procedure Increment_Count (NS : XML_NS);
    function Element_Count (NS : XML_NS) return Natural;
@@ -224,19 +224,19 @@ package Sax.Utils is
    --  Free NS and its successors in the list
 
    function Find_NS_In_List
-     (List   : XML_NS;
-      Prefix : Sax.Symbols.Symbol;
-      Include_Default_NS : Boolean := True;
+     (List                 : XML_NS;
+      Prefix               : Sax.Symbols.Symbol;
+      Include_Default_NS   : Boolean := True;
       List_Is_From_Element : Boolean) return XML_NS;
    function Find_NS_From_URI_In_List
      (List : XML_NS; URI : Sax.Symbols.Symbol) return XML_NS;
    --  Find in List the first matching the prefix.
-   --  If Include_Default_NS is False, this will not return the "" namespace
+   --  If Include_Default_NS is False, this will not return the "" namespace.
 
    procedure Add_NS_To_List
-     (List               : in out XML_NS;
-      Same_As            : XML_NS := No_XML_NS;
-      Prefix, URI        : Sax.Symbols.Symbol);
+     (List        : in out XML_NS;
+      Same_As     : XML_NS := No_XML_NS;
+      Prefix, URI : Sax.Symbols.Symbol);
    --  Add a new namespace to the list (which might be empty to start with)
 
 private
