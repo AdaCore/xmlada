@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2014, AdaCore                     --
+--                     Copyright (C) 2001-2020, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -32,7 +32,8 @@ abstract project Shared is
 
    type Mode_Type is ("distrib", "Debug", "Production", "profile", "coverage",
                       "nochecks");
-   Mode : Mode_Type := external ("BUILD", "@BUILD_TYPE@");
+   Mode : Mode_Type := external ("XMLADA_BUILD",
+                                 external ("BUILD", "@BUILD_TYPE@"));
 
    Processors := External ("PROCESSORS", "0");
 
