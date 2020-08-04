@@ -32,7 +32,7 @@ abstract project Shared is
 
    type Mode_Type is ("distrib", "Debug", "Production", "profile", "coverage",
                       "nochecks");
-   Mode : Mode_Type := external ("XMLADA_BUILD",
+   Mode : Mode_Type := external ("XMLADA_BUILD_MODE",
                                  external ("BUILD", "@BUILD_TYPE@"));
 
    Processors := External ("PROCESSORS", "0");
