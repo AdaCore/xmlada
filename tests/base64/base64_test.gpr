@@ -1,11 +1,11 @@
-with "../../shared";
+with "../../xmlada_shared";
 with "xmlada_sax";
 
 project Base64_Test is
    for Main use ("test_base64");
    for Object_Dir use "obj";
-   package Builder  renames Shared.Builder;
-   package Compiler renames Shared.Compiler;
-   package Binder   renames Shared.Binder;
-   package Linker   renames Shared.Linker;
+   package Builder  renames XmlAda_Shared.Builder;
+   package Compiler renames XmlAda_Shared.Compiler;
+   package Binder   renames XmlAda_Shared.Binder;
+   package Linker   renames XmlAda_Shared.Linker;
 end Base64_Test;

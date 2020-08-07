@@ -21,7 +21,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-abstract project Shared is
+abstract project XmlAda_Shared is
 
    Version := "@PACKAGE_VERSION@";
 
@@ -109,4 +109,4 @@ abstract project Shared is
    package Ide is
    end Ide;
 
-end Shared;
+end XmlAda_Shared;

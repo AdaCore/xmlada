@@ -21,7 +21,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with "../shared.gpr";
+with "../xmlada_shared.gpr";
 with "../sax/xmlada_sax.gpr";
 with "../unicode/xmlada_unicode.gpr";
 with "../dom/xmlada_dom.gpr";
@@ -29,15 +29,15 @@ with "../dom/xmlada_dom.gpr";
 project XmlAda_Schema is
 
    for Library_Name use "xmlada_schema";
-   for Library_Kind use Shared.Library_Type;
+   for Library_Kind use XmlAda_Shared.Library_Type;
    for Object_Dir  use "obj/" & Project'Library_Kind;
    for Library_Dir use "lib/" & Project'Library_Kind;
    for Library_Version use "lib" & Project'Library_Name
-      & Shared.So_Ext & "." & Shared.Version;
+      & XmlAda_Shared.So_Ext & "." & XmlAda_Shared.Version;
 
-   package Builder  renames Shared.Builder;
-   package Compiler renames Shared.Compiler;
-   package Binder   renames Shared.Binder;
-   package Ide      renames Shared.Ide;
+   package Builder  renames XmlAda_Shared.Builder;
+   package Compiler renames XmlAda_Shared.Compiler;
+   package Binder   renames XmlAda_Shared.Binder;
+   package Ide      renames XmlAda_Shared.Ide;
 
 end XmlAda_Schema;

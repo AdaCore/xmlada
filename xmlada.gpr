@@ -21,7 +21,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with "shared";
+with "xmlada_shared";
 
 aggregate project XmlAda is
 

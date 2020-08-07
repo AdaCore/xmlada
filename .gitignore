@@ -40,7 +40,7 @@ tests/unicode/obj
 tests/results/*out
 tests/results/*diff
 
-shared.gpr
+xmlada_shared.gpr
 auto.cgpr
 tmp.out
 *tmp_out

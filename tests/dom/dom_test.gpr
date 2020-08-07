@@ -1,12 +1,12 @@
-with "../../shared";
+with "../../xmlada_shared";
 with "xmlada_dom";
 with "conformance/conformance";
 
 project Dom_Test is
    for Main use ("testxml.adb", "ea03_006.adb", "tostring.adb");
    for Object_Dir use "obj";
-   package Builder  renames Shared.Builder;
-   package Compiler renames Shared.Compiler;
-   package Binder   renames Shared.Binder;
-   package Linker   renames Shared.Linker;
+   package Builder  renames XmlAda_Shared.Builder;
+   package Compiler renames XmlAda_Shared.Compiler;
+   package Binder   renames XmlAda_Shared.Binder;
+   package Linker   renames XmlAda_Shared.Linker;
 end Dom_Test;
