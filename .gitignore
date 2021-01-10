@@ -46,6 +46,7 @@ tmp.out
 *tmp_out
 *.o
 *.ali
+*.std*
 b~*.ad*
 b__*.ad*
 *.bexch
