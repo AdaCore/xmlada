@@ -11,7 +11,7 @@ Guide for more information on the project files and
 how to create them for your application.
 
 Basically, a project file contains the description of your build
-environment (source directories, object directories, libraries, etc)
+environment (source directories, object directories, libraries, etc).
 
 The very simple case is when you have all your sources in the same
 directory (say :file:`src/`), and the object files are all generated in the
@@ -48,7 +48,7 @@ If the installation prefix is the same as your GNAT installation (which is
 the case of the preinstalled version of the library), then GPRbuild will
 automatically find XML/Ada's project files. If XML/Ada is not installed into
 a predefined location (e.g. because you rebuilt it from sources), you need to
-let GPRbuild know where to find the project files. This is done by setting th
+let GPRbuild know where to find the project files. This is done by setting the
 `GPR_PROJECT_PATH` environment variable, by adding to it the directory that
 contains :file:`xmlada.gpr`.
 
@@ -71,7 +71,7 @@ at least on UNIX systems, the environment variable `LD_LIBRARY_PATH` so that
 it contains the :file:`lib/` directory in the XML/Ada installation, so that the
 dynamic libraries are correctly found.
 
-This is not needed if you build XML/Ada as a static directory.
+This is not needed if you build XML/Ada as a static library.
 
 Running on VxWorks
 ==================

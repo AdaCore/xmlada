@@ -1,5 +1,5 @@
-XML/Ada: A XML parser for Ada95
-===============================
+XML/Ada: An XML parser for Ada95
+================================
 
 INSTALLING THIS LIBRARY ON UNIX
 -------------------------------
@@ -181,7 +181,7 @@ The list of subdirectories (aka modules) is:
 - sax
   Provides a common, standard interface for any XML parser, through
   callback subprograms. You can extend any of the tagged types defined in these
-  package and thus parse XML files without having to store a XML tree in
+  packages and thus parse XML files without having to store an XML tree in
   memory.
   This package is compatible with SAX 2.0, but doesn't implement the functions
   specific to SAX 1.0

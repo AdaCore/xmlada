@@ -8,7 +8,7 @@ DOM is another standard associated with XML, in which the XML stream is
 represented as a tree in memory. This tree can be manipulated at will, to add
 new nodes, remove existing nodes, change attributes,...
 
-Since it contains the whole XML information, it can then in turn be dump to a
+Since it contains the whole XML information, it can then in turn be dumped to a
 stream.
 
 As an example, most modern web browsers provide a DOM interface to the document
@@ -17,8 +17,8 @@ dynamically the document. The calls to do so are similar to the ones provided
 by XML/Ada for manipulating a DOM tree, and all are defined in the DOM
 standard.
 
-The W3C commitee (`http://www.w3c.org <http://www.w3c.org>`_) has defined
-several version of the DOM, each building on the previous one and adding
+The W3C committee (`http://www.w3c.org <http://www.w3c.org>`_) has defined
+several versions of the DOM, each building on the previous one and adding
 several enhancements.
 
 XML/Ada currently supports the second revision of DOM (DOM 2.0), which mostly
@@ -42,10 +42,10 @@ languages to use UTF8. You can freely change this and recompile.
 Using DOM
 =========
 
-In XML/Ada, the DOM tree is build through a special implementation of a
+In XML/Ada, the DOM tree is built through a special implementation of a
 SAX parser, provided in the `DOM.Readers` package.
 
-Using DOM to read an XML document is similar to using SAX: one must setup an
+Using DOM to read an XML document is similar to using SAX: one must set up an
 input stream, then parse the document and get the tree. This is done with a
 code similar to the following:
 
@@ -94,7 +94,7 @@ creating such a parser.
 Editing DOM trees
 =================
 
-Once in memory, DOM trees can be manipulated through subprograms provides by
+Once in memory, DOM trees can be manipulated through subprograms provided by
 the DOM API.
 
 Each of these subprograms is fully documented both in the Ada specs (the
@@ -102,7 +102,7 @@ Each of these subprograms is fully documented both in the Ada specs (the
 fully.
 
 One important note however is related to the use of strings. Various
-subprograms allows you to set the textual content of a node, modify its
+subprograms allow you to set the textual content of a node, modify its
 attributes,.... Such subprograms take a Byte_Sequence as a parameter.
 
 This Byte_Sequence must always be encoded in the encoding defined in the
@@ -134,7 +134,7 @@ in memory.
 
 An example is provided in the XML/Ada distribution, called
 :file:`dom/test/tostring.adb` which shows how you can create a stream to
-convert the tree in memory, without going through a file on the disk
+convert the tree in memory, without going through a file on the disk.
 
 Adding information to the tree
 ==============================
