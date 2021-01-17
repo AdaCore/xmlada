@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2005-2017, AdaCore                     --
+--                     Copyright (C) 2005-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -25,6 +25,7 @@ pragma Warnings (Off, "*is an internal GNAT unit");
 with System.Img_Real;           use System.Img_Real;
 pragma Warnings (On, "*is an internal GNAT unit");
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Sax.Encodings;             use Sax.Encodings;
 with Sax.Symbols;               use Sax.Symbols;
 with Sax.Utils;                 use Sax.Utils;
@@ -694,10 +695,12 @@ package body Schema.Decimal is
          return XML_Float'(Kind => Minus_Infinity);
       else
          --  The issue here is that XML can represent float numbers outside
-         --  the range of Long_Long_Float. So we try a basic normalization of
-         --  floats (mantissa * 10^exp) with 1.0<=mantissa<10.0
+         --  the range of Long_Long_Float. So we do a normalization in base
+         --  10 of the form (Mantissa * 10**Exp) with 1.0 <= Mantissa < 10.0
+         --  although this introduces rounding errors since the radix is 2.
+         --  That's why we use the same precision as 'Image to swallow them.
 
-         E := Index (Str, "E");
+         E := Index (Str, To_Set ("eE"));
          if E < Str'First then
             Exp := 0;
             Mantiss := Long_Long_Float'Value (Str);
@@ -706,17 +709,20 @@ package body Schema.Decimal is
             Mantiss := Long_Long_Float'Value (Str (Str'First .. E - 1));
          end if;
 
+         --  IEEE Binary128 has 33 digits of mantissa and 5 digits of exponent
+         --  so 64 characters are sufficient for the foreseable future.
+
          declare
-            Str2      : String (1 .. 200);
-            P         : Integer := Str2'First - 1;
             Exp_Chars : constant Natural := 5;
+            Str2      : String (1 .. 64);
+            P         : Integer := Str2'First - 1;
          begin
             System.Img_Real.Set_Image_Real
                (Mantiss,
                 S => Str2,
                 P => P,
                 Fore => 1,
-                Aft => 30,
+                Aft => Long_Long_Float'Digits - 1,
                 Exp => Exp_Chars);
             Exp := Exp + Integer'Value (Str2 (P - Exp_Chars + 1 .. P));
             Mantiss := Long_Long_Float'Value
