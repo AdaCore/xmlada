@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2007-2017, AdaCore                     --
+--                     Copyright (C) 2007-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -67,8 +67,11 @@ package body Sax.Pointers is
 
       function Allocate (Data : access Encapsulated'Class) return Pointer is
       begin
-         return
-           (Ada.Finalization.Controlled with Root_Encapsulated_Access (Data));
+         if Data = null then
+            return (Ada.Finalization.Controlled with null);
+         else
+            return (Ada.Finalization.Controlled with Data.all'Access);
+         end if;
       end Allocate;
 
       ---------

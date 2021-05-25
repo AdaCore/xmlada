@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2003-2017, AdaCore                     --
+--                     Copyright (C) 2003-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -439,7 +439,7 @@ package body Schema.Readers is
    is
       pragma Unreferenced (Public_Id, System_Id);
       H : constant Validating_Reader_Access :=
-        Validating_Reader_Access (Handler);
+        Validating_Reader (Handler.all)'Access;
    begin
       Add_Notation (Get_NFA (H.Grammar), Find_Symbol (H.all, Name));
    end Hook_Notation_Decl;
@@ -454,7 +454,7 @@ package body Schema.Readers is
       Atts    : access Sax_Attribute_List)
    is
       H : constant Validating_Reader_Access :=
-        Validating_Reader_Access (Handler);
+        Validating_Reader (Handler.all)'Access;
       No_Index       : constant Integer := Get_Index
         (Atts.all, H.XML_Instance_URI, H.No_Namespace_Schema_Location);
       Location_Index : constant Integer := Get_Index
@@ -971,7 +971,7 @@ package body Schema.Readers is
       Elem    : Element_Access)
    is
       H : constant Validating_Reader_Access :=
-        Validating_Reader_Access (Handler);
+        Validating_Reader (Handler.all)'Access;
       Success : Boolean;
       Through_Any : Boolean;
       Through_Process : Process_Contents_Type;
@@ -1051,7 +1051,7 @@ package body Schema.Readers is
      (Handler : access Sax_Reader'Class;
       Ch      : Unicode.CES.Byte_Sequence) is
    begin
-      Internal_Characters (Validating_Reader_Access (Handler), Ch);
+      Internal_Characters (Validating_Reader (Handler.all)'Access, Ch);
    end Hook_Characters;
 
    -------------------------------
@@ -1063,7 +1063,7 @@ package body Schema.Readers is
       Ch      : Unicode.CES.Byte_Sequence)
    is
       H     : constant Validating_Reader_Access :=
-        Validating_Reader_Access (Handler);
+        Validating_Reader (Handler.all)'Access;
       NFA   : constant Schema_NFA_Access := Get_NFA (H.Grammar);
       S     : State;
       Descr : access Type_Descr;

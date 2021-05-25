@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2010-2017, AdaCore                     --
+--                     Copyright (C) 2010-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -1437,7 +1437,7 @@ package body Sax.State_Machines is
          Start_At : State := Start_State)
       is
       begin
-         Self.NFA          := NFA_Access (On);
+         Self.NFA          := On.all'Access;
          Self.First_Active := No_Matcher_State;
          Init (Self.Active);
          Mark_Active (Self, Self.First_Active, Start_At);
