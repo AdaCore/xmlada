@@ -15,7 +15,7 @@ begin
    Set_Public_Id (Input, "Preferences file");
    Open ("pref_with_xsd.xml", Input);
 
-   Set_Feature (Reader, Validation_Feature, False);
+   Set_Feature (Reader, Validation_Feature, True);
 
    Parse (Reader, Input);
    Close (Input);
