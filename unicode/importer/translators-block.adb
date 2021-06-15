@@ -164,6 +164,18 @@ package body Translators.Block is
            "Phags_Pa");
       Add ("CJK Compatibility Forms",
            "Cjk_Compatibility_Forms");
+
+      --  Unicode 9.
+      Add ("Ideographic Symbols and Punctuation",
+           "Ideograph_Symb_Punct");
+      --  Unicode 12.
+      Add ("Egyptian Hieroglyph Format Controls",
+           "Egypt_Hieroglyph_Fmt_Ctrl");
+      Add ("Symbols and Pictographs Extended-A",
+           "Symbols_Pictographs_Ext_A");
+      --  Unicode 13
+      Add ("Symbols for Legacy Computing",
+           "Symbols_Legacy_Computing");
    end Set_Exceptions;
 
 end Translators.Block;
