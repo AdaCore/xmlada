@@ -260,4 +260,23 @@ package body DOM.Core is
       end if;
    end Document_Remove_Id;
 
+   --------------------------------------
+   -- Get & set the Standalone prolog ---
+   --------------------------------------
+
+   function Is_Standalone
+     (Implementation : DOM_Implementation)
+      return Boolean is
+   begin
+      return Implementation.Alone;
+   end Is_Standalone;
+
+   procedure Standalone
+     (Implementation : in out DOM_Implementation;
+      Alone          :        Boolean) is
+   begin
+      Implementation.Alone := Alone;
+   end Standalone;
+
+
 end DOM.Core;

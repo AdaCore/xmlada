@@ -1437,9 +1437,20 @@ package body DOM.Core.Nodes is
                if Print_XML_Declaration then
                   String'Write
                     (Stream, Write_Bom (Encoding.Encoding_Scheme.BOM));
-                  Put
-                    (Stream, "<?xml version=""1.0"" encoding="""
-                     & Encoding.Name.all & """?>", Encoding);
+                  if N.Implementation.Alone then
+                     Put
+                       (Stream, "<?xml version=""1.0"" encoding="""
+                        & Encoding.Name.all
+                        & """ standalone="""
+                        & "yes"
+                        & """ ?>", Encoding);
+                  else
+                     Put
+                       (Stream, "<?xml version=""1.0"" encoding="""
+                        & Encoding.Name.all
+                        & """ standalone="""
+                        & "no" & """ ?>", Encoding);
+                  end if;
                   Print_String (Stream, "" & ASCII.LF, EOL_Sequence, Encoding);
                end if;
                Recursive_Print (N.Doc_Children);
