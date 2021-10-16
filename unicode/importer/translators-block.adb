@@ -76,11 +76,10 @@ package body Translators.Block is
            "Ancient_Greek_Music");
       Add ("Arabic Mathematical Alphabetic Symbols",
            "Arabic_Math_Alpha_Symb");
-      --  TODO: why not Forms_A instead of FormsA?
       Add ("Arabic Presentation Forms-A",
-           "Arabic_Present_FormsA");
+           "Arabic_Present_Forms_A");
       Add ("Arabic Presentation Forms-B",
-           "Arabic_Present_FormsB");
+           "Arabic_Present_Forms_B");
 
       Add ("CJK Compatibility Ideographs",
            "CJK_Compat_Ideographs");
