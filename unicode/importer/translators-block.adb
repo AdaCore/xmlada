@@ -40,7 +40,6 @@ package body Translators.Block is
       for I in Original'Range loop
          case Original (I) is
             when 'A' .. 'Z' =>
-               pragma Assert (Word_Start);
                Result (I) := Original (I);
                Word_Start := False;
             when 'a' .. 'z' =>
@@ -83,15 +82,14 @@ package body Translators.Block is
       Add ("Arabic Presentation Forms-B",
            "Arabic_Present_FormsB");
 
-      --  TODO: why not CJK instead of Cjk?
       Add ("CJK Compatibility Ideographs",
-           "Cjk_Compat_Ideographs");
+           "CJK_Compat_Ideographs");
       Add ("CJK Compatibility Ideographs Supplement",
-           "Cjk_Compat_Ideo_Sup");
+           "CJK_Compat_Ideo_Sup");
       Add ("CJK Symbols and Punctuation",
-           "Cjk_Symbols_And_Punct");
+           "CJK_Symbols_And_Punct");
       Add ("Enclosed CJK Letters and Months",
-           "Cjk_Letters_Months");
+           "CJK_Letters_Months");
 
       Add ("Combining Diacritical Marks",
            "Combining_Diacritical");
@@ -147,22 +145,8 @@ package body Translators.Block is
            "Transport_And_Map_Symbols");
       Add ("Sutton SignWriting",
            "Sutton_Signwriting");
-
-      --  TODO: those should not be case exceptions, case makes sense.
-      Add ("IPA Extensions",
-           "Ipa_Extensions");
-      Add ("NKo",
-           "Nko");
-      Add ("CJK Radicals Supplement",
-           "Cjk_Radicals_Supplement");
-      Add ("CJK Strokes",
-           "Cjk_Strokes");
-      Add ("CJK Compatibility",
-           "Cjk_Compatibility");
       Add ("Phags-pa",
            "Phags_Pa");
-      Add ("CJK Compatibility Forms",
-           "Cjk_Compatibility_Forms");
 
       Add ("Ideographic Symbols and Punctuation",
            "Ideograph_Symb_Punct");
