@@ -22,8 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 package body Translators is
 
    use type Exception_Maps.Cursor;

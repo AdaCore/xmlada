@@ -22,8 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
-
 with Ada.Command_Line;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;

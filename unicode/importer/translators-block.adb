@@ -22,7 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
 with Ada.Text_IO;
 
 package body Translators.Block is
