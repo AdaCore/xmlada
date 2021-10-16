@@ -173,6 +173,8 @@ package body Translators.Block is
            "Symbols_Pictographs_Ext_A");
       Add ("Symbols for Legacy Computing",
            "Symbols_Legacy_Computing");
+      Add ("Unified Canadian Aboriginal Syllabics Extended-A",
+           "Canadian_Aboriginal_Ext_A");
    end Set_Exceptions;
 
 end Translators.Block;
