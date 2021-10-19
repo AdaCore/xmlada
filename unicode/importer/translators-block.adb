@@ -167,6 +167,10 @@ package body Translators.Block is
 
       Add ("Ideographic Symbols and Punctuation",
            "Ideograph_Symb_Punct");
+      Add ("Egyptian Hieroglyph Format Controls",
+           "Egypt_Hieroglyph_Fmt_Ctrl");
+      Add ("Symbols and Pictographs Extended-A",
+           "Symbols_Pictographs_Ext_A");
    end Set_Exceptions;
 
 end Translators.Block;

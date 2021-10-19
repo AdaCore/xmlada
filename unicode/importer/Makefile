@@ -1,5 +1,5 @@
 MAIN := convert
-UNICODE_VERSION := 11.0.0
+UNICODE_VERSION := 12.0.0
 UNICODE_URL := ftp://ftp.unicode.org/Public/$(UNICODE_VERSION)/ucd
 UNICODE_FILES := Blocks.txt NameAliases.txt UnicodeData.txt
 
