@@ -164,6 +164,9 @@ package body Translators.Block is
            "Phags_Pa");
       Add ("CJK Compatibility Forms",
            "Cjk_Compatibility_Forms");
+
+      Add ("Ideographic Symbols and Punctuation",
+           "Ideograph_Symb_Punct");
    end Set_Exceptions;
 
 end Translators.Block;
