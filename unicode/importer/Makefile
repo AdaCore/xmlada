@@ -1,5 +1,5 @@
 MAIN := convert
-UNICODE_VERSION := 9.0.0
+UNICODE_VERSION := 10.0.0
 UNICODE_URL := ftp://ftp.unicode.org/Public/$(UNICODE_VERSION)/ucd
 UNICODE_FILES := Blocks.txt NameAliases.txt UnicodeData.txt
 
@@ -12,11 +12,8 @@ all: $(MAIN) $(UNICODE_FILES)
 $(MAIN):
 	gprbuild -p -Pconvert
 
-$(filter-out NameAliases.txt,$(UNICODE_FILES)):
+$(UNICODE_FILES):
 	wget $(UNICODE_URL)/$@
-NameAliases.txt:
-	wget $(UNICODE_URL)/$@
-	patch -p0 < NameAliases.diff
 
 clean:
 	rm -f $(UNICODE_FILES)
