@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2017, AdaCore                     --
+--                     Copyright (C) 2004-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -23,7 +23,6 @@
 
 with Sax.Encodings;
 with Sax.Readers;           use Sax.Readers;
-with Schema.Validators;     use Schema.Validators;
 with Schema.Schema_Readers; use Schema.Schema_Readers;
 with Input_Sources.Strings; use Input_Sources.Strings;
 

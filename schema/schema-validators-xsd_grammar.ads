@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2017, AdaCore                     --
+--                     Copyright (C) 2004-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -26,8 +26,6 @@
 --
 --  This is intended both as an example on how to manually write grammars,
 --  and as a way to check schema.xsd.
-
-with Schema.Validators;
 
 private package Schema.Validators.XSD_Grammar is
 

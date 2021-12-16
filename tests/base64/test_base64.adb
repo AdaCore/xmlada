@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                       Copyright (C) 2019, AdaCore                        --
+--                       Copyright (C) 2021, AdaCore                        --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -25,6 +25,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Sax.Utils;   use Sax.Utils;
 
 procedure Test_Base64 is
+
+   procedure Check (Value : String);
 
    procedure Check (Value : String) is
    begin

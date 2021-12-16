@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2017, AdaCore                     --
+--                     Copyright (C) 2004-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -25,8 +25,8 @@ with Unicode;                use Unicode;
 with Unicode.CES;            use Unicode.CES;
 with Unicode.CES.Utf32;      use Unicode.CES.Utf32;
 with Unicode.CES.Utf16;      use Unicode.CES.Utf16;
-with Unicode.CES.Utf8;       use Unicode.CES.Utf8;
-with Unicode.CES.Basic_8bit; use Unicode.CES.Basic_8bit;
+with Unicode.CES.Utf8;
+with Unicode.CES.Basic_8bit;
 with Unicode.CCS;            use Unicode.CCS;
 with Unicode.Encodings;      use Unicode.Encodings;
 with Unicode.CCS.Iso_8859_2; use Unicode.CCS.Iso_8859_2;
