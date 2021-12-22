@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -115,21 +115,25 @@ package body DOM.Core is
    -- Remove --
    ------------
 
-   procedure Remove (List : in out Node_List; N : Node) is
+   procedure Remove
+     (List    : in out Node_List;
+      N       : Node;
+      Success : out Boolean) is
    begin
-      if List.Items = null or else List.Last = 0 then
-         Free (List.Items);
-         List.Last := -1;
-      else
+      if List.Items /= null then
          for J in 0 .. List.Last loop
             if List.Items (J) = N then
                List.Items (J .. List.Last - 1) :=
                  List.Items (J + 1 .. List.Last);
                List.Last := List.Last - 1;
+               Success := True;
+
                return;
             end if;
          end loop;
       end if;
+
+      Success := False;
    end Remove;
 
    ----------

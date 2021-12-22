@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -590,16 +590,28 @@ package body DOM.Core.Nodes is
    ------------------
 
    function Remove_Child (N : Node; Old_Child : Node) return Node is
+      Document : constant Node := Owner_Document (Old_Child);
+      Success  : Boolean := False;
+
    begin
       case N.Node_Type is
-         when Element_Node => Remove (N.Children, Old_Child);
-         when Document_Node => Remove (N.Doc_Children, Old_Child);
+         when Element_Node => Remove (N.Children, Old_Child, Success);
+         when Document_Node => Remove (N.Doc_Children, Old_Child, Success);
          when Document_Type_Node => return null;
          when Document_Fragment_Node =>
-            Remove (N.Doc_Frag_Children, Old_Child);
+            Remove (N.Doc_Frag_Children, Old_Child, Success);
          when others => return null;
       end case;
-      return Old_Child;
+
+      if Success then
+         Old_Child.Parent_Is_Owner := True;
+         Old_Child.Parent          := Document;
+
+         return Old_Child;
+
+      else
+         raise Not_Found_Err;
+      end if;
    end Remove_Child;
 
    ------------------

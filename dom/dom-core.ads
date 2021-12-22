@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -364,7 +364,10 @@ private
    procedure Append (List : in out Node_List; N : Node);
    --  Insert N as the last element in List
 
-   procedure Remove (List : in out Node_List; N : Node);
+   procedure Remove
+     (List    : in out Node_List;
+      N       : Node;
+      Success : out Boolean);
    --  Remove N from the list
    --  N must be an element of List, this is not checked.
 
