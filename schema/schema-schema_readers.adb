@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2017, AdaCore                     --
+--                     Copyright (C) 2004-2021, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -1575,7 +1575,6 @@ package body Schema.Schema_Readers is
 
       Ignored       : Type_Descr_Access;
       Ignored_Index : Type_Index;
-      pragma Unreferenced (Ignored, Ignored_Index);
 
    begin
       if Debug then
