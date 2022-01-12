@@ -48,6 +48,18 @@ GPROPTS+=--RTS=${RTS}
 IPREFIX:=${IPREFIX}/$(notdir ${RTS})
 endif
 
+# For the 64 bits architectures, the large code model has to be used.
+# with rtp-large, gprconfig ensures that -mcmodel=large is used,
+# but it is managed here for the default (kernel).
+GPROPTS_EXTRA=
+ifneq ($(strip $(filter aarch64-wrs-vxworks7r2 powerpc64-wrs-vxworks7r2 x86_64-wrs-vxworks7r2,${TARGET_ALIAS})),)
+ifndef RTS
+# This covers the kernel RTS because for rtp, the RTS variable is defined to rtp.
+# kernel is the default and the RTS variable is not defined in that case.
+GPROPTS_EXTRA+=-cargs -mcmodel=large -largs -mcmodel=large
+endif
+endif
+
 ifeq (${BUILDS_SHARED},yes)
 all: static relocatable static-pic
 install: install-clean install-static install-relocatable install-static-pic
@@ -57,18 +69,18 @@ install: install-clean install-static
 endif
 
 static:
-	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} xmlada.gpr
+	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} xmlada.gpr ${GPROPTS_EXTRA}
 
 shared relocatable:
-	${GPRBUILD} -p -XLIBRARY_TYPE=relocatable ${GPROPTS} xmlada.gpr
+	${GPRBUILD} -p -XLIBRARY_TYPE=relocatable ${GPROPTS} xmlada.gpr ${GPROPTS_EXTRA}
 
 static-pic:
-	${GPRBUILD} -p -XLIBRARY_TYPE=static-pic ${GPROPTS} xmlada.gpr
+	${GPRBUILD} -p -XLIBRARY_TYPE=static-pic ${GPROPTS} xmlada.gpr ${GPROPTS_EXTRA}
 
 # Rebuild the tests (and not the XML/Ada code itself)
 test: force
 	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} \
-		-XTESTS_ACTIVATED=Only xmlada.gpr
+		-XTESTS_ACTIVATED=Only xmlada.gpr ${GPROPTS_EXTRA}
 
 # Run the tests. This requires an install of XML/Ada first
 run_test: force
