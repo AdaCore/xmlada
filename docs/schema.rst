@@ -14,7 +14,7 @@ XML files:
 
   This is a basic step where we ensure that XML tags are correctly nested, that
   closing tags have the same names as the matching opening tags, that attribute
-  values are quoted,.... This corresponds to a syntactic parser in a compiler.
+  values are quoted…  This corresponds to a syntactic parser in a compiler.
 
   This step does not depend on the application domain. One file that is
   well-formed will always be so, no matter in what context you use it.
@@ -27,14 +27,14 @@ XML files:
 
   This is the phase in which the application needs to check whether a given XML
   file has all its required attributes, whether the children of an XML tag are
-  the expected ones, whether the type of the attributes is valid,....
+  the expected ones, whether the type of the attributes is valid…
 
 * Use the XML file in the application.
 
   This is done through the already-described SAX or DOM parsers
 
 The first phase is mandatory, and necessarily enforced by XML/Ada. You will not
-be able to access the contents of the XML file if it isn't well-formed.
+be able to access the contents of the XML file if it isn’t well-formed.
 
 The second phase is provided by the Schema module in XML/Ada. Although such
 constraints can be checked at the application level, with ad hoc code, it is
@@ -51,7 +51,7 @@ satisfy in order to be considered as valid.
   The Document Type Description is the original way to do this. They come
   directly from the ancestor of XML, SGML. All XML parsers must parse the DTD,
   and report events if the user is using SAX. However, not all parsers are able
-  to validate the document against a DTD (XML/Ada doesn't).
+  to validate the document against a DTD (XML/Ada doesn’t).
 
   Their use tends to greatly diminish. Among their limitations are a limited
   capability to express constraints on the order of tag children, the fact that
@@ -63,7 +63,7 @@ satisfy in order to be considered as valid.
   The XML schemas are replacing the DTDs. They are written in XML, and provide
   an extensive capability to describe what the XML document should look like.
   In fact, almost all Ada types can be described in an XML schema, including
-  range constraints, arrays, records, type inheritance, abstract types,....
+  range constraints, arrays, records, type inheritance, abstract types…
 
   It is for instance possible to indicate that the value of a preference, in
   our example, must be a string of length 6. Any other length will result in a
@@ -84,8 +84,8 @@ a tutorial (`http://www.w3.org/TR/xmlschema-0/
 
 The typical extension for a schema file is :file:`.xsd`.
 
-A schema file must be a valid XML file, and thus start with the usual `<?xml
-version="1.0" ?>` line. The root node must be named `schema`, and belong to the
+A schema file must be a valid XML file, and thus start with the usual
+``<?xml version="1.0" ?>`` line. The root node must be named `schema`, and belong to the
 namespace (`http://www.w3.org/2001/XMLSchema/
 <http://www.w3.org/2001/XMLSchema/>`_). The handling of namespaces is fairly
 powerful, but also complex. A given XML document might have nodes belonging to
@@ -114,13 +114,12 @@ The contents of the element is then defined in one of two ways:
 
   Schemas come with a number of predefined simple types. A simple type is
   such that an element of that type accepts no child node, and that its
-  contents must satisfy additional constraints (be an integer, a date,
-  ...).
+  contents must satisfy additional constraints (be an integer, a date…).
 
   Among the predefined simple types (which are all defined in the namespace
   `http://www.w3.org/2001/XMLSchema/ <http://www.w3.org/2001/XMLSchema/>`_),
   one can find: `string`, `integer`, `byte`, `date`, `time`, `dateTime`,
-  `boolean`,...
+  `boolean`…
 
   If no additional constraint should be enforced on this simple type when
   applied to the element, the type of the element is given through a `type`
@@ -337,7 +336,7 @@ validating a file.
 
     This attribute is a list of strings, alternatively the prefix of
     a namespace and the name of an xsd file to use for that
-    namespace. For instance, `"ns1 file1.xsd ns2 file2.xsd"`.
+    namespace. For instance, ``"ns1 file1.xsd ns2 file2.xsd"``.
 
   When it encounters any of these two attributes, XML/Ada will
   automatically parse the corresponding schema files, and use the result
@@ -368,7 +367,7 @@ using SAX itself. Instead of inheriting from `Sax.Readers.Reader`, your tagged
 type must inherit from `Schema.Readers.Validating_Reader`.
 
 As usual, you can still override the predefined primitive operations like
-`Start_Element`, `End_Element`, ...
+`Start_Element`, `End_Element`…
 
 Note the activation of the `Schema_Validation_Feature` feature, without which
 no validation takes place:

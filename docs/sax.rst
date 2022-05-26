@@ -13,7 +13,7 @@ manipulate XML files is to represent them in a tree and manipulate it through
 the DOM interface (see next chapter).
 
 The **Simple API for XML** is another method that can be used for parsing.  It
-is based on a callbacks mechanism, and doesn't store any data in memory (unless
+is based on a callbacks mechanism, and doesn’t store any data in memory (unless
 of course you choose to do so in your callbacks). It can thus be more efficient
 to use SAX than DOM for some specialized algorithms.  In fact, this whole Ada
 XML library is based on such a SAX parser, then creates the DOM tree through
@@ -67,7 +67,7 @@ The following events would then be generated when this file is parsed::
   
 
 As you can see, there is a number of events even for a very small file.
-However, you can easily choose to ignore the events you don't care
+However, you can easily choose to ignore the events you don’t care
 about, for instance the ones related to namespace handling.
 
 Examples
@@ -75,7 +75,7 @@ Examples
 
 There are several cases where using a SAX parser rather than a DOM
 parser would make sense. Here are some examples, although obviously
-this doesn't include all the possible cases. These examples are taken
+this doesn’t include all the possible cases. These examples are taken
 from the documentation of libxml, a GPL C toolkit for manipulating XML files.
 
 * Using XML files as a database
@@ -183,7 +183,7 @@ here is a list of the most frequently used callbacks, that you will probably
 need to override in most of your applications.
 
 *Start_Document*
-  This callback, that doesn't receive any parameter, is called once, just
+  This callback, that doesn’t receive any parameter, is called once, just
   before parsing the document. It should generally be used to initialize
   internal data needed later on. It is also guaranteed to be called only once
   per input stream.
@@ -203,7 +203,7 @@ need to override in most of your applications.
 *End_Element*
   This is the opposite of the previous callback, and will be called once per
   element. Calls to `Start_Element` and `End_Element` are guaranteed
-  to be properly nested (ie you can't see the end of an element before seeing
+  to be properly nested (ie you can’t see the end of an element before seeing
   the end of all its nested children.
 
 *Characters and Ignore_Whitespace*
@@ -235,7 +235,7 @@ The XML file is the following::
   </preferences>
   
 
-This is a very simple example which doesn't use namespaces, and has a very
+This is a very simple example which doesn’t use namespaces, and has a very
 limited nesting of nodes. However, that should help demonstrate the basics of
 using SAX.
 
@@ -284,7 +284,7 @@ There are two steps in setting up an XML parser:
 
   The behavior of an XML parser can be changed in several ways by activating or
   deactivating some features. In the example above, we have specified that the
-  XML document doesn't contain namespaces, and that we do not intend to
+  XML document doesn’t contain namespaces, and that we do not intend to
   validate the XML file against a grammar.
 
 Once the two steps above are done, we can simply call the procedure `Parse` to
@@ -393,7 +393,7 @@ Understanding SAX error messages
 ================================
 
 XML/Ada error messages try to be as explicit as possible. They are not,
-however, meant to be understood by someone who doesn't know XML.
+however, meant to be understood by someone who doesn’t know XML.
 
 In addition to the location of the error (line and column in the file),
 they might contain one of the following abbreviations:
@@ -413,7 +413,7 @@ they might contain one of the following abbreviations:
 
   This abbreviation indicates that the error message is related to an
   unsatisfied validity-constraint, as defined in the XML standard. The XML
-  document is well-formed, although it doesn't match the semantic rules
+  document is well-formed, although it doesn’t match the semantic rules
   that the grammar defines. For instance, if you are trying to validate an
   XML document against a DTD, the document must contain a DTD that defines the
   name of the root element.

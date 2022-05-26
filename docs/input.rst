@@ -11,8 +11,8 @@ access files and manipulate standard Ada strings.
 A top-level tagged type is provided that must be extended for the various
 streams. It is assumed that the pointer to the current character in the stream
 can only go forward, and never backward. As a result, it is possible to
-implement this package for sockets or other streams where it isn't even
-possible to go backward. This also means that one doesn't have to provide
+implement this package for sockets or other streams where it isn’t even
+possible to go backward. This also means that one doesn’t have to provide
 buffers in such cases, and thus that it is possible to provide memory-efficient
 readers.
 
@@ -28,7 +28,7 @@ They all provide the following primitive operations:
 
 `Open`
 
-  Although this operation isn't exactly overridden, since its parameters
+  Although this operation isn’t exactly overridden, since its parameters
   depend on the type of stream you want to read from, it is nice to
   use a standard name for this constructor.
 
@@ -37,7 +37,7 @@ They all provide the following primitive operations:
   is no longer possible to read from the stream afterwards.
 
 `Next_Char`
-  Return the next Unicode character in the stream. Note this character doesn't
+  Return the next Unicode character in the stream. Note this character doesn’t
   have to be associated specifically with a single byte, but that it depends on
   the encoding chosen for the stream (see the unicode module documentation for
   more information).
@@ -58,13 +58,13 @@ detect the encoding to use for a file, based on a header read directly from the
 file.
 
 Based on the first four bytes of the stream (assuming this is valid XML), they
-will automatically detect whether the file was encoded as Utf8, Utf16,... If
+will automatically detect whether the file was encoded as Utf8, Utf16…  If
 you are writing your own input streams, consider adding this automatic
 detection as well.
 
 However, it is always possible to override the default through a call to
-`Set_Encoding`. This allows you to specify both the character set (Latin1, ...)
-and the character encoding scheme (Utf8,...).
+`Set_Encoding`. This allows you to specify both the character set (Latin1…)
+and the character encoding scheme (Utf8…).
 
 The user is also encouraged to set the identifiers for the stream they are
 parsing, through calls to `Set_System_Id` and `Set_Public_Id`. These are used

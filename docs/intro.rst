@@ -15,6 +15,6 @@ standards related to XML.
 We have tried to follow as closely as possible the XML standard, so that you
 can easily analyze and reuse languages produced for other languages.
 
-This document isn't a tutorial on what XML is, nor on the various standards
+This document isn’t a tutorial on what XML is, nor on the various standards
 like DOM and SAX. Although we will try and give a few examples, we refer the
 reader to the standards themselves, which are all easily readable.

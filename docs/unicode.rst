@@ -53,9 +53,9 @@ Several representations are possible, mostly depending on the exact font used
 at that time. A single glyph can correspond to a sequence of characters, or a
 single character to a sequence of glyphs.
 
-The Unicode standard doesn't deal with glyphs, although a suggested
+The Unicode standard doesn’t deal with glyphs, although a suggested
 representation is given for each character in the standard. Likewise, this
-module doesn't provide any graphical support for Unicode, and will just deal
+module doesn’t provide any graphical support for Unicode, and will just deal
 with textual memory representation and encodings.
 
 Take a look at the **GtkAda** library that provides the graphical interface for
@@ -85,7 +85,7 @@ a portable manner.
 
 Given its size, most applications will only support a subset of Unicode.  Some
 of the scripts, most notably Arabic and Asian languages, require a special
-support in the application (right-to-left writing,...), and thus will not be
+support in the application (right-to-left writing…), and thus will not be
 supported by some applications.
 
 The Unicode standard includes a set of internal catalogs, called collections.
@@ -119,7 +119,7 @@ contains 128 characters. A super-set of it is the ISO/8859-1 character set.
 Another character set is the JIS X 0208, used to encode Japanese characters.
 
 Note that a character set is different from a repertoire. For instance, the
-same character C with cedilla doesn't have the same integer value in the
+same character C with cedilla doesn’t have the same integer value in the
 ISO/8859-1 character set and the ISO/8859-2 character set.
 
 Unicode is also such a character set, that contains all the possible characters
@@ -129,7 +129,7 @@ that it also specifies algorithms for rendering presentation forms of some
 scripts (say Arabic), handling of bi-directional texts that mix for instance
 Latin and Hebrew, algorithms for sorting and string comparison, and much more.
 
-Currently, our Unicode package doesn't include any support for these
+Currently, our Unicode package doesn’t include any support for these
 algorithms.
 
 Unicode and ISO 10646 define formally a 31-bit character set. However, of this
@@ -197,7 +197,7 @@ computer architecture.
 There exists a number of possible encoding schemes. Some of them encode all
 integers on the same number of bytes. They are called fixed-width encoding
 forms, and include the standard encoding for Internet emails (**7bits**, but it
-can't encode all characters), as well as the simple **8bits** scheme, or the
+can’t encode all characters), as well as the simple **8bits** scheme, or the
 **EBCDIC** scheme. Among them is also the **UTF-32** scheme which is defined in
 the Unicode standard.
 
@@ -205,7 +205,7 @@ Another set of encoding schemes encode integers on a variable number of bytes.
 These include two schemes that are also defined in the Unicode standard, namely
 **Utf-8** and **Utf-16**.
 
-Unicode doesn't impose any specific encoding. However, it is most often
+Unicode doesn’t impose any specific encoding. However, it is most often
 associated with one of the Utf encodings. They each have their own properties
 and advantages:
 
@@ -293,10 +293,10 @@ single type, `Unicode.Encodings.Unicode_Encoding`.
 
 This package provides additional functions to manipulate these encodings, for
 instance to retrieve them by the common name that is associated with them (for
-instance "utf-8", "iso-8859-15",...), since very often the encoding scheme is
+instance ``utf-8``, ``iso-8859-15``…), since very often the encoding scheme is
 implicit. If you are speaking of utf-8 string, most people always assume you
 also use the unicode character set. Likewise, if you are speaking of
-"iso-8859-1", most people will assume you string is encoded as 8 byte
+``iso-8859-1``, most people will assume you string is encoded as 8 byte
 characters.
 
 The goal of the `Unicode.Encodings` package is to make these implicit

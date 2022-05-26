@@ -6,7 +6,7 @@ Using the library
 
 XML/Ada is a library. When compiling an application that uses it, you
 thus need to declare this dependency. The default installation implies the
-use of GNAT project files. See the GPRbuild and GPR Companion Tools User's
+use of GNAT project files. See the GPRbuild and GPR Companion Tools User’s
 Guide for more information on the project files and
 how to create them for your application.
 
@@ -34,9 +34,9 @@ and you build your application with::
 Note in the project file the first line, which indicates that your
 application requires XML/Ada to build. This will automatically set the
 appropriate compiler and linker switches to use XML/Ada. Your application
-will be linked against all modules of XML/Ada (DOM, SAX, ...).
+will be linked against all modules of XML/Ada (DOM, SAX…).
 
-If your application doesn't use DOM, you can replace the first line with
+If your application doesn’t use DOM, you can replace the first line with
 something like::
 
   with "xmlada_sax";
@@ -46,7 +46,7 @@ linked with.
 
 If the installation prefix is the same as your GNAT installation (which is
 the case of the preinstalled version of the library), then GPRbuild will
-automatically find XML/Ada's project files. If XML/Ada is not installed into
+automatically find XML/Ada’s project files. If XML/Ada is not installed into
 a predefined location (e.g. because you rebuilt it from sources), you need to
 let GPRbuild know where to find the project files. This is done by setting the
 `GPR_PROJECT_PATH` environment variable, by adding to it the directory that
@@ -78,7 +78,7 @@ Running on VxWorks
 
 On VxWorks, XML Ada processing might require more stack space than what is
 typically available from the VxWorks shell, the tasks spawned from there with
-"sp", or Ada tasks with no or a too small Storage_Size value attached.
+``sp``, or Ada tasks with no or a too small Storage_Size value attached.
 
 Such stack overflow conditions are typically characterized by non-deterministic
 erratic behavior and can be cured by allocating more stack space for the tasks
