@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -28,9 +28,9 @@
 --  However, then can be used to read files that contain accented characters,
 --  in combination with Unicode.CCS.Iso_8859_1 for instance
 
+with Ada.Unchecked_Deallocation;
 with Unicode.CES.Utf32;
 with Unicode.CCS;
-with Unchecked_Deallocation;
 
 package Unicode.CES.Basic_8bit is
 
@@ -115,7 +115,7 @@ package Unicode.CES.Basic_8bit is
    -- Deallocation --
    ------------------
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Basic_8bit_String, Basic_8bit_String_Access);
 
 private

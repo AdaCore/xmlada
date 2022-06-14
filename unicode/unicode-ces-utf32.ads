@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -34,7 +34,7 @@
 --  always convert your Utf32 strings to little-endian before usage (see
 --  To_Utf32_LE below).
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 with Unicode.CCS;
 
 package Unicode.CES.Utf32 is
@@ -147,9 +147,9 @@ package Unicode.CES.Utf32 is
    -- Deallocation --
    ------------------
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Utf32_String, Utf32_String_Access);
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Utf32_LE_String, Utf32_LE_String_Access);
    --  Free the memory occupied by a utf32-encoded string
 

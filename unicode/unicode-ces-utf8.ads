@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -43,9 +43,9 @@
 --  is only a sequence of bytes. It is self-synchronizing, in that you can
 --  start anywhere in the string and find a synchronization point easily.
 
+with Ada.Unchecked_Deallocation;
 with Unicode.CES.Utf32;
 with Unicode.CCS;
-with Unchecked_Deallocation;
 
 package Unicode.CES.Utf8 is
 
@@ -167,7 +167,7 @@ package Unicode.CES.Utf8 is
    -- Deallocation --
    ------------------
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Utf8_String, Utf8_String_Access);
    --  Free the memory occupied by a utf8-encoded string
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -30,7 +30,7 @@
 --  encoding. This BOM is always optional, and can never be mixed up with
 --  other characters.
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package Unicode.CES is
 
@@ -43,7 +43,7 @@ package Unicode.CES is
    type Cst_Byte_Sequence_Access is access constant Byte_Sequence;
    --  A sequence of bytes. The encoding is unknown.
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Byte_Sequence, Byte_Sequence_Access);
 
    -------------------------

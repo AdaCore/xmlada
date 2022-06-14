@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -21,10 +21,10 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
-with Unicode.CES;            use Unicode.CES;
-with Unchecked_Deallocation;
-with Sax.Models;             use Sax.Models;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
+with Unicode.CES;                use Unicode.CES;
+with Sax.Models;                 use Sax.Models;
 
 package body Sax.Attributes is
 
@@ -33,7 +33,7 @@ package body Sax.Attributes is
    --  This doesn't free the memory allocated for Attr itself, nor any other
    --  node in the list.
 
-   procedure Free_Node is new Unchecked_Deallocation
+   procedure Free_Node is new Ada.Unchecked_Deallocation
      (Attribute, Attribute_Access);
 
    function Get

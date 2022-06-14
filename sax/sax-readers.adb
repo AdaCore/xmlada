@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2020, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -36,7 +36,6 @@ with Sax.Exceptions;            use Sax.Exceptions;
 with Sax.Locators;              use Sax.Locators;
 with Sax.Models;                use Sax.Models;
 with Sax.Symbols;               use Sax.Symbols;
-with Unchecked_Deallocation;
 with Unicode.CES;               use Unicode.CES;
 with Unicode.CES.Basic_8bit;    use Unicode.CES.Basic_8bit;
 with Unicode.Names.Basic_Latin; use Unicode.Names.Basic_Latin;
@@ -467,9 +466,9 @@ package body Sax.Readers is
    -- Internal subprograms --
    --------------------------
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Input_Source'Class, Input_Source_Access);
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Hook_Data'Class, Hook_Data_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Sax_Attribute_Array, Sax_Attribute_Array_Access);
@@ -797,7 +796,7 @@ package body Sax.Readers is
    ----------
 
    procedure Free (Elem : in out Element_Access) is
-      procedure Free_Element is new Unchecked_Deallocation
+      procedure Free_Element is new Ada.Unchecked_Deallocation
         (Element, Element_Access);
       Tmp : constant Element_Access := Elem.Parent;
    begin
@@ -1532,7 +1531,7 @@ package body Sax.Readers is
      (Parser : in out Sax_Reader'Class;
       Inputs : in out Entity_Input_Source_Access)
    is
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
         (Entity_Input_Source, Entity_Input_Source_Access);
       Input_A : Entity_Input_Source_Access;
    begin

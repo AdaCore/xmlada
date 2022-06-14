@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -36,9 +36,9 @@
 --  in a string with the standard string manipulation functions, since you
 --  might find the high-byte of a two-byte sequence.
 
+with Ada.Unchecked_Deallocation;
 with Unicode.CES.Utf32;
 with Unicode.CCS;
-with Unchecked_Deallocation;
 
 package Unicode.CES.Utf16 is
 
@@ -156,9 +156,9 @@ package Unicode.CES.Utf16 is
    -- Deallocation --
    ------------------
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Utf16_String, Utf16_String_Access);
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Utf16_LE_String, Utf16_LE_String_Access);
    --  Free the memory occupied by a utf16-encoded string
 
