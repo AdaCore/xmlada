@@ -109,14 +109,13 @@ This Byte_Sequence must always be encoded in the encoding defined in the
 package `Sax.Encoding` (as described earlier, changing this package requires
 recompiling XML/Ada). By default, this is UTF-8.
 
-.. highlight:: ada
-
 Therefore, if you need to set an attribute to a string encoded for
 instance in iso-8859-15, you should use the subprogram
 `Unicode.Encodings.Convert` to convert it appropriately.
-The code would thus look as follows::
+The code would thus look as follows:
 
-    Set_Attribute (N, Convert ("å", From => Get_By_Name ("iso-8859-15")));
+.. literalinclude:: dom/convert.adb
+   :language: ada
   
 Printing DOM tress
 ==================
