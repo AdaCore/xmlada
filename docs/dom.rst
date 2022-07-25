@@ -6,7 +6,7 @@ The DOM module
 
 DOM is another standard associated with XML, in which the XML stream is
 represented as a tree in memory. This tree can be manipulated at will, to add
-new nodes, remove existing nodes, change attributes,...
+new nodes, remove existing nodes, change attributes...
 
 Since it contains the whole XML information, it can then in turn be dumped to a
 stream.
@@ -103,7 +103,7 @@ fully.
 
 One important note however is related to the use of strings. Various
 subprograms allow you to set the textual content of a node, modify its
-attributes,.... Such subprograms take a Byte_Sequence as a parameter.
+attributes... Such subprograms take a Byte_Sequence as a parameter.
 
 This Byte_Sequence must always be encoded in the encoding defined in the
 package `Sax.Encoding` (as described earlier, changing this package requires

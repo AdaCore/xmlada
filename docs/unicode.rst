@@ -85,7 +85,7 @@ a portable manner.
 
 Given its size, most applications will only support a subset of Unicode.  Some
 of the scripts, most notably Arabic and Asian languages, require a special
-support in the application (right-to-left writing,...), and thus will not be
+support in the application (right-to-left writing...), and thus will not be
 supported by some applications.
 
 The Unicode standard includes a set of internal catalogs, called collections.
@@ -293,7 +293,7 @@ single type, `Unicode.Encodings.Unicode_Encoding`.
 
 This package provides additional functions to manipulate these encodings, for
 instance to retrieve them by the common name that is associated with them (for
-instance "utf-8", "iso-8859-15",...), since very often the encoding scheme is
+instance "utf-8", "iso-8859-15"...), since very often the encoding scheme is
 implicit. If you are speaking of utf-8 string, most people always assume you
 also use the unicode character set. Likewise, if you are speaking of
 "iso-8859-1", most people will assume you string is encoded as 8 byte

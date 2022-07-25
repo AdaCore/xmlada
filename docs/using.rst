@@ -34,7 +34,7 @@ and you build your application with::
 Note in the project file the first line, which indicates that your
 application requires XML/Ada to build. This will automatically set the
 appropriate compiler and linker switches to use XML/Ada. Your application
-will be linked against all modules of XML/Ada (DOM, SAX, ...).
+will be linked against all modules of XML/Ada (DOM, SAX...).
 
 If your application doesn't use DOM, you can replace the first line with
 something like::
