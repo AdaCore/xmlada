@@ -78,7 +78,7 @@ Running on VxWorks
 
 On VxWorks, XML Ada processing might require more stack space than what is
 typically available from the VxWorks shell, the tasks spawned from there with
-"sp", or Ada tasks with no or a too small Storage_Size value attached.
+``sp``, or Ada tasks with no or a too small Storage_Size value attached.
 
 Such stack overflow conditions are typically characterized by non-deterministic
 erratic behavior and can be cured by allocating more stack space for the tasks

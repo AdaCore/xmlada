@@ -84,8 +84,8 @@ a tutorial (`http://www.w3.org/TR/xmlschema-0/
 
 The typical extension for a schema file is :file:`.xsd`.
 
-A schema file must be a valid XML file, and thus start with the usual `<?xml
-version="1.0" ?>` line. The root node must be named `schema`, and belong to the
+A schema file must be a valid XML file, and thus start with the usual
+``<?xml version="1.0" ?>`` line. The root node must be named `schema`, and belong to the
 namespace (`http://www.w3.org/2001/XMLSchema/
 <http://www.w3.org/2001/XMLSchema/>`_). The handling of namespaces is fairly
 powerful, but also complex. A given XML document might have nodes belonging to
@@ -336,7 +336,7 @@ validating a file.
 
     This attribute is a list of strings, alternatively the prefix of
     a namespace and the name of an xsd file to use for that
-    namespace. For instance, `"ns1 file1.xsd ns2 file2.xsd"`.
+    namespace. For instance, ``"ns1 file1.xsd ns2 file2.xsd"``.
 
   When it encounters any of these two attributes, XML/Ada will
   automatically parse the corresponding schema files, and use the result

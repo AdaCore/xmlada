@@ -293,10 +293,10 @@ single type, `Unicode.Encodings.Unicode_Encoding`.
 
 This package provides additional functions to manipulate these encodings, for
 instance to retrieve them by the common name that is associated with them (for
-instance "utf-8", "iso-8859-15"...), since very often the encoding scheme is
+instance ``utf-8``, ``iso-8859-15``...), since very often the encoding scheme is
 implicit. If you are speaking of utf-8 string, most people always assume you
 also use the unicode character set. Likewise, if you are speaking of
-"iso-8859-1", most people will assume you string is encoded as 8 byte
+``iso-8859-1``, most people will assume you string is encoded as 8 byte
 characters.
 
 The goal of the `Unicode.Encodings` package is to make these implicit
