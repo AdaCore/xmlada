@@ -132,7 +132,7 @@ on the disk, to a socket, or be used to transform the tree into a string
 in memory.
 
 An example is provided in the XML/Ada distribution, called
-:file:`dom/test/tostring.adb` which shows how you can create a stream to
+:file:`tests/dom/tostring.adb` which shows how you can create a stream to
 convert the tree in memory, without going through a file on the disk.
 
 Adding information to the tree
