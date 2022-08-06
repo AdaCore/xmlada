@@ -2,7 +2,7 @@
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
 --                     Copyright (C) 2016, Nicolas Boulenguez               --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -21,8 +21,6 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 ------------------------------------------------------------------------------
-
-pragma Ada_2012;
 
 with Ada.Command_Line;
 with Ada.Containers.Indefinite_Vectors;
@@ -47,6 +45,7 @@ procedure Convert is
    Path_To_Name_Aliases_Txt : String renames Ada.Command_Line.Argument (2);
    Path_To_Unicode_Data_Txt : String renames Ada.Command_Line.Argument (3);
 
+   Path_To_License : constant String := "license.txt";
    Output_Dir : constant String := "generated/";
 
    type A_Code is range 0 .. 16#10FFFF# + 1;
@@ -196,6 +195,7 @@ procedure Convert is
       Pkg  : constant String := Block_Translator.Translated
         (Block_Translator.New_Translation (Block_Name));
       File :  File_Type;
+      License : File_Type;
    begin
       --  On VMS, Filename lengths are limited to 39.39 characters.
       pragma Assert (14 + Pkg'Length <= 39, "file name too long: " & Pkg);
@@ -207,8 +207,15 @@ procedure Convert is
       Put_Line (File, "--  unicode web site (http://www.unicode.org)");
       Put (File, "--  in version ");
       Put (File, ASB.To_String (Unicode_Version));
-      Put (File, '.');
+      Put (File, " and thus is a subject to unicode license:");
       New_Line (File);
+
+      Open (License, In_File, Path_To_License);
+      while not End_Of_File (License) loop
+         Put_Line (File, Get_Line (License));
+      end loop;
+      Close (License);
+
       Put (File, "package Unicode.Names.");
       Put (File, Pkg);
       Put (File, " is");

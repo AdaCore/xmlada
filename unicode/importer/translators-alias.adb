@@ -2,7 +2,7 @@
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
 --                     Copyright (C) 2016, Nicolas Boulenguez               --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -102,6 +102,7 @@ package body Translators.Alias is
       --  Uniquify names only differing only by a dash.
       Add ("TIBETAN LETTER -A",             "Tibetan_Letter_Dash_A");
       Add ("TIBETAN SUBJOINED LETTER -A",   "Tibetan_Subjoined_Letter_Dash_A");
+      Add ("MARCHEN LETTER -A",             "Marchen_Letter_Dash_A");
    end Set_Exceptions;
 
 end Translators.Alias;

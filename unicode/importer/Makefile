@@ -1,4 +1,6 @@
 MAIN := convert
+UNICODE_VERSION := 14.0.0
+UNICODE_URL := ftp://ftp.unicode.org/Public/$(UNICODE_VERSION)/ucd
 UNICODE_FILES := Blocks.txt NameAliases.txt UnicodeData.txt
 
 .PHONY: all clean ${MAIN}
@@ -10,11 +12,8 @@ all: $(MAIN) $(UNICODE_FILES)
 $(MAIN):
 	gprbuild -p -Pconvert
 
-$(filter-out NameAliases.txt,$(UNICODE_FILES)):
-	wget ftp://ftp.unicode.org/Public/8.0.0/ucd/$@
-NameAliases.txt:
-	wget ftp://ftp.unicode.org/Public/8.0.0/ucd/$@
-	patch -p0 < NameAliases.diff
+$(UNICODE_FILES):
+	wget $(UNICODE_URL)/$@
 
 clean:
 	rm -f $(UNICODE_FILES)

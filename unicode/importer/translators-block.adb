@@ -2,7 +2,7 @@
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
 --                     Copyright (C) 2016, Nicolas Boulenguez               --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -22,7 +22,6 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2012;
 with Ada.Text_IO;
 
 package body Translators.Block is
@@ -41,7 +40,6 @@ package body Translators.Block is
       for I in Original'Range loop
          case Original (I) is
             when 'A' .. 'Z' =>
-               pragma Assert (Word_Start);
                Result (I) := Original (I);
                Word_Start := False;
             when 'a' .. 'z' =>
@@ -78,21 +76,19 @@ package body Translators.Block is
            "Ancient_Greek_Music");
       Add ("Arabic Mathematical Alphabetic Symbols",
            "Arabic_Math_Alpha_Symb");
-      --  TODO: why not Forms_A instead of FormsA?
       Add ("Arabic Presentation Forms-A",
-           "Arabic_Present_FormsA");
+           "Arabic_Present_Forms_A");
       Add ("Arabic Presentation Forms-B",
-           "Arabic_Present_FormsB");
+           "Arabic_Present_Forms_B");
 
-      --  TODO: why not CJK instead of Cjk?
       Add ("CJK Compatibility Ideographs",
-           "Cjk_Compat_Ideographs");
+           "CJK_Compat_Ideographs");
       Add ("CJK Compatibility Ideographs Supplement",
-           "Cjk_Compat_Ideo_Sup");
+           "CJK_Compat_Ideo_Sup");
       Add ("CJK Symbols and Punctuation",
-           "Cjk_Symbols_And_Punct");
+           "CJK_Symbols_And_Punct");
       Add ("Enclosed CJK Letters and Months",
-           "Cjk_Letters_Months");
+           "CJK_Letters_Months");
 
       Add ("Combining Diacritical Marks",
            "Combining_Diacritical");
@@ -148,22 +144,19 @@ package body Translators.Block is
            "Transport_And_Map_Symbols");
       Add ("Sutton SignWriting",
            "Sutton_Signwriting");
-
-      --  TODO: those should not be case exceptions, case makes sense.
-      Add ("IPA Extensions",
-           "Ipa_Extensions");
-      Add ("NKo",
-           "Nko");
-      Add ("CJK Radicals Supplement",
-           "Cjk_Radicals_Supplement");
-      Add ("CJK Strokes",
-           "Cjk_Strokes");
-      Add ("CJK Compatibility",
-           "Cjk_Compatibility");
       Add ("Phags-pa",
            "Phags_Pa");
-      Add ("CJK Compatibility Forms",
-           "Cjk_Compatibility_Forms");
+
+      Add ("Ideographic Symbols and Punctuation",
+           "Ideograph_Symb_Punct");
+      Add ("Egyptian Hieroglyph Format Controls",
+           "Egypt_Hieroglyph_Fmt_Ctrl");
+      Add ("Symbols and Pictographs Extended-A",
+           "Symbols_Pictographs_Ext_A");
+      Add ("Symbols for Legacy Computing",
+           "Symbols_Legacy_Computing");
+      Add ("Unified Canadian Aboriginal Syllabics Extended-A",
+           "Canadian_Aboriginal_Ext_A");
    end Set_Exceptions;
 
 end Translators.Block;

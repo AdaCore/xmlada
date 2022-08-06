@@ -2,7 +2,7 @@
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
 --                     Copyright (C) 2016, Nicolas Boulenguez               --
---                     Copyright (C) 2016-2017, AdaCore                     --
+--                     Copyright (C) 2016-2022, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -21,8 +21,6 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 ------------------------------------------------------------------------------
-
-pragma Ada_2012;
 
 package body Translators is
 
