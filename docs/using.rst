@@ -34,7 +34,7 @@ and you build your application with::
 Note in the project file the first line, which indicates that your
 application requires XML/Ada to build. This will automatically set the
 appropriate compiler and linker switches to use XML/Ada. Your application
-will be linked against all modules of XML/Ada (DOM, SAX, ...).
+will be linked against all modules of XML/Ada (DOM, SAX...).
 
 If your application doesn't use DOM, you can replace the first line with
 something like::
@@ -78,7 +78,7 @@ Running on VxWorks
 
 On VxWorks, XML Ada processing might require more stack space than what is
 typically available from the VxWorks shell, the tasks spawned from there with
-"sp", or Ada tasks with no or a too small Storage_Size value attached.
+``sp``, or Ada tasks with no or a too small Storage_Size value attached.
 
 Such stack overflow conditions are typically characterized by non-deterministic
 erratic behavior and can be cured by allocating more stack space for the tasks

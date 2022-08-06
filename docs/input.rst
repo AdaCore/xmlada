@@ -58,13 +58,13 @@ detect the encoding to use for a file, based on a header read directly from the
 file.
 
 Based on the first four bytes of the stream (assuming this is valid XML), they
-will automatically detect whether the file was encoded as Utf8, Utf16,... If
+will automatically detect whether the file was encoded as Utf8, Utf16... If
 you are writing your own input streams, consider adding this automatic
 detection as well.
 
 However, it is always possible to override the default through a call to
-`Set_Encoding`. This allows you to specify both the character set (Latin1, ...)
-and the character encoding scheme (Utf8,...).
+`Set_Encoding`. This allows you to specify both the character set (Latin1...)
+and the character encoding scheme (Utf8...).
 
 The user is also encouraged to set the identifiers for the stream they are
 parsing, through calls to `Set_System_Id` and `Set_Public_Id`. These are used
