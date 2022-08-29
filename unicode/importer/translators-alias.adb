@@ -103,6 +103,8 @@ package body Translators.Alias is
       Add ("TIBETAN LETTER -A",             "Tibetan_Letter_Dash_A");
       Add ("TIBETAN SUBJOINED LETTER -A",   "Tibetan_Subjoined_Letter_Dash_A");
       Add ("MARCHEN LETTER -A",             "Marchen_Letter_Dash_A");
+      Add ("SOYOMBO LETTER -A",             "Soyombo_Letter_Dash_A");
+      Add ("ZANABAZAR SQUARE LETTER -A",    "Zanabazar_Square_Letter_Dash_A");
    end Set_Exceptions;
 
 end Translators.Alias;
