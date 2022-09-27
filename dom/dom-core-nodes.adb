@@ -244,7 +244,7 @@ package body DOM.Core.Nodes is
    function First_Child (N : Node) return Node is
       List : constant Node_List := Child_Nodes (N);
    begin
-      if List.Items = null then
+      if List.Items = null or List.Last < 0 then
          return null;
       else
          return List.Items (0);
@@ -258,7 +258,7 @@ package body DOM.Core.Nodes is
    function Last_Child (N : Node) return Node is
       List : constant Node_List := Child_Nodes (N);
    begin
-      if List.Items = null then
+      if List.Items = null or List.Last < 0 then
          return null;
       else
          return List.Items (List.Last);
