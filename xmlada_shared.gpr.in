@@ -30,7 +30,7 @@ abstract project XmlAda_Shared is
 
    for Source_Dirs use ();
 
-   type Mode_Type is ("distrib", "Debug", "Production", "profile", "coverage",
+   type Mode_Type is ("distrib", "debug", "production", "profile", "coverage",
                       "nochecks");
    Mode : Mode_Type := external ("XMLADA_BUILD_MODE",
                                  external ("BUILD", "@BUILD_TYPE@"));
@@ -41,10 +41,10 @@ abstract project XmlAda_Shared is
 
    package Builder is
        case Mode is
-          when "Production" | "nochecks" =>
+          when "production" | "nochecks" =>
              for Global_Configuration_Pragmas use "gnat_optimize.adc";
              for Switches ("Ada") use ("-j" & Processors);
-          when "Debug" =>
+          when "debug" =>
              for Global_Configuration_Pragmas use "gnat_debug.adc";
              for Switches ("Ada") use ("-g", "-j" & Processors);
           when others =>
@@ -64,11 +64,11 @@ abstract project XmlAda_Shared is
               & ("-g", "-gnata", "-gnatwe",
                  "-fprofile-arcs", "-ftest-coverage");
 
-         when "Debug" =>
+         when "debug" =>
             for Switches ("Ada") use warnings & ("-g", "-gnata", "-gnatwe");
             --  & ("-g", "-gnata", "-gnatVaMI");
 
-         when "Production" =>
+         when "production" =>
             for Switches ("Ada") use warnings & ("-O2", "-gnatn");
 
          when "nochecks" =>
@@ -81,9 +81,9 @@ abstract project XmlAda_Shared is
 
    package binder is
       case Mode is
-         when "Debug" =>
+         when "debug" =>
             for Switches ("Ada") use ("-E");
-         when "distrib" | "Production" | "profile" | "coverage" | "nochecks" =>
+         when "distrib" | "production" | "profile" | "coverage" | "nochecks" =>
             null;
       end case;
    end binder;
@@ -93,7 +93,7 @@ abstract project XmlAda_Shared is
          when "profile" =>
             for Switches ("Ada") use ("-pg");
 
-         when "Debug" =>
+         when "debug" =>
 --           for Switches ("Ada") use ("-lgmem");
 
          when "coverage" =>
@@ -102,7 +102,7 @@ abstract project XmlAda_Shared is
          when "distrib" =>
             null;
 
-         when "Production" | "nochecks" =>
+         when "production" | "nochecks" =>
       end case;
    end linker;
 
