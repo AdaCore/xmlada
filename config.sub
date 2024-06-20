@@ -1060,6 +1060,9 @@ case $cpu-$vendor in
 	m9s12z-* | m68hcs12z-* | hcs12z-* | s12z-*)
 		cpu=s12z
 		;;
+	morello-*)
+		cpu=aarch64
+		;;
 	openrisc-*)
 		cpu=or32
 		;;

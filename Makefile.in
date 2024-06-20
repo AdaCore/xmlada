@@ -52,7 +52,7 @@ endif
 # with rtp-large, gprconfig ensures that -mcmodel=large is used,
 # but it is managed here for the default (kernel).
 GPROPTS_EXTRA=
-ifneq ($(strip $(filter aarch64-wrs-vxworks7r2 powerpc64-wrs-vxworks7r2 x86_64-wrs-vxworks7r2,${TARGET_ALIAS})),)
+ifneq ($(strip $(filter aarch64-wrs-vxworks7r2 morello-wrs-vxworks7r2 powerpc64-wrs-vxworks7r2 x86_64-wrs-vxworks7r2,${TARGET_ALIAS})),)
 ifndef RTS
 # This covers the kernel RTS because for rtp, the RTS variable is defined to rtp.
 # kernel is the default and the RTS variable is not defined in that case.
