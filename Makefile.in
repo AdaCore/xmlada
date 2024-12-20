@@ -16,9 +16,9 @@ GPRBUILD_OPTIONS=
 PROCESSORS?=0
 GPRBUILD=@gprbuild@ -j${PROCESSORS} -m ${GPRBUILD_OPTIONS}
 GPRINSTALL=@gprinstall@
-TARGET=@target@
-TARGET_ALIAS=@target_alias@
-HOST=@host@
+TARGET=@host@
+TARGET_ALIAS=@host_alias@
+HOST=@build@
 
 # Compiler mode: one of "distrib", "Debug", "Production", "profile", "coverage"
 MODE=@BUILD_TYPE@
