@@ -1,0 +1,19 @@
+stages:
+  - build
+  - test
+  - check
+
+include:
+# Issue check
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/check-issue@~latest
+
+# Build & test
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/build@~latest
+    inputs:
+      anod-args: run build --latest
+      save-component: true
+
+  - component: $CI_SERVER_FQDN/eng/gitlab-templates/test@~latest
+    inputs:
+      anod-args: run test
+
