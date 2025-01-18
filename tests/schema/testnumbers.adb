@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2007-2017, AdaCore                     --
+--                     Copyright (C) 2007-2025, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -73,7 +73,6 @@ procedure TestNumbers is
    procedure Assert_Nan (Num : String) is
       Error : Symbol;
       N : Arbitrary_Precision_Number;
-      pragma Unreferenced (N);
    begin
       Value (Symbols, Num, N, Error);
       if Error = No_Symbol then
