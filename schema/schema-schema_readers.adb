@@ -910,6 +910,18 @@ package body Schema.Schema_Readers is
                               Details.Extension.Loc);
                         end if;
 
+                        --  When complexType is an extension of another
+                        --  complexType whose base type is simple type,
+                        --  `Simple_Content` is not set, but necessary
+                        --  for validation, so set it.
+
+                        if In_Type.Simple_Content = No_Simple_Type_Index
+                          and then Base_Descr.Simple_Content
+                                     /= No_Simple_Type_Index
+                        then
+                           In_Type.Simple_Content := Base_Descr.Simple_Content;
+                        end if;
+
                         Process_Details
                           (In_Type,
                            Shared.Types.Table (Internal_Type).Details,
