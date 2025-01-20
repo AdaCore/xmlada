@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2010-2017, AdaCore                     --
+--                     Copyright (C) 2010-2025, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -1819,7 +1819,7 @@ package body Schema.Simple_Types is
                      when 'w' =>
                         Append (Tmp, "a-zA-Z0-9`");
 
-                     when 'I' | 'C' | '?' =>
+                     when 'I' | 'C' =>
                         Raise_Exception
                           (XML_Not_Implemented'Identity,
                            "Unsupported regexp construct: \" & C);
