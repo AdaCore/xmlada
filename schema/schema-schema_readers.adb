@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2004-2021, AdaCore                     --
+--                     Copyright (C) 2004-2025, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -890,7 +890,9 @@ package body Schema.Schema_Readers is
                         Details.Extension.Loc);
                   end if;
 
-                  if Base_Descr.Simple_Content = No_Simple_Type_Index then
+                  if Base_Descr.Complex_Content /= No_State then
+                     --  Base type is a complex type
+
                      if Internal_Type /= No_Internal_Type_Index then
                         --  We have all the details, and just have to copy them
                         --  Details might be null, for instance for an
@@ -906,6 +908,18 @@ package body Schema.Schema_Readers is
                               "Circular inheritance of type "
                               & To_QName (Details.Extension.Base),
                               Details.Extension.Loc);
+                        end if;
+
+                        --  When complexType is an extension of another
+                        --  complexType whose base type is simple type,
+                        --  `Simple_Content` is not set, but necessary
+                        --  for validation, so set it.
+
+                        if In_Type.Simple_Content = No_Simple_Type_Index
+                          and then Base_Descr.Simple_Content
+                                     /= No_Simple_Type_Index
+                        then
+                           In_Type.Simple_Content := Base_Descr.Simple_Content;
                         end if;
 
                         Process_Details
@@ -928,7 +942,8 @@ package body Schema.Schema_Readers is
                         Details.Extension.Details, Start, S, Nested_End,
                         Mask);
                   else
-                     --  ??? Should handle simple types
+                     --  Base type is a simple type
+
                      Nested_End := Start;
 
                      --  The test is correct. However, it makes
