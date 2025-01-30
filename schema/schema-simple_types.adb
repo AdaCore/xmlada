@@ -1814,7 +1814,9 @@ package body Schema.Simple_Types is
                         Append (Tmp, "A-Za-z:_");
 
                      when 'c' =>
-                        Append (Tmp, "a-z:A-Z0-9._-");
+                        Append (Tmp, "a-z:A-Z0-9._\-");
+                        --  `-` is a special syntax character inside character
+                        --  class expression, so escape it.
 
                      when 'w' =>
                         Append (Tmp, "a-zA-Z0-9`");
