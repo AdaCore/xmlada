@@ -919,6 +919,21 @@ package body Schema.Schema_Readers is
                           and then Base_Descr.Simple_Content
                                      /= No_Simple_Type_Index
                         then
+                           --  Check one of cases of [XML Schema 1.0] 3.4.6
+                           --  (1.4.3.2.2.1):
+                           --
+                           --  "Both {content type}s must be mixed or both must
+                           --  be element-only."
+
+                           if Details.Extension.Details /= null then
+                              Validation_Error
+                                (Parser,
+                                 "base type "
+                                 & To_QName (Details.Extension.Base)
+                                 & " can't be mixed content",
+                                 Details.Extension.Loc);
+                           end if;
+
                            In_Type.Simple_Content := Base_Descr.Simple_Content;
                         end if;
 
