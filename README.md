@@ -197,5 +197,5 @@ The list of subdirectories (aka modules) is:
 BUG REPORTS
 -----------
 
-Please send questions and bug reports to report@gnat.com following
+Please send questions and bug reports to support@gnat.com following
 the same procedures used to submit reports with the GNAT toolset itself.
