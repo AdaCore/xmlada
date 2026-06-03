@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2022, AdaCore                     --
+--                     Copyright (C) 2001-2026, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -2653,51 +2653,62 @@ package body Sax.Readers is
                   Next           => Parser.Inputs);
 
                if V.External then
-                  if Parser.State.Name = Attlist_Str_Def_State.Name
-                    or else Parser.State.Name = Attr_Value_State.Name
+                  --  External general entities are disabled by feature
+                  --  flag; leave Parser.Inputs.Input as null so that the
+                  --  check below will call Skipped_Entity and resume.
+
+                  if Is_Entity_Ref /= Entity
+                    or else Parser.Feature_External_General_Entities
                   then
-                     Fatal_Error (Parser, Error_Attribute_External_Entity, Id);
-                  end if;
-
-                  declare
-                     URI : constant Symbol :=
-                       Resolve_URI (Parser, Old_System_Id, V.Value);
-                  begin
-                     Parser.Inputs.Input := Resolve_Entity
-                       (Parser,
-                        Public_Id => Get (V.Public).all,
-                        System_Id => Get (URI).all);
-
-                     --  If either there is no entity resolver or if the
-                     --  standard algorithm should be used
-
-                     if Parser.Inputs.Input = null then
-                        Parser.Inputs.Input := new File_Input;
-                        Open (Get (URI).all,
-                              File_Input (Parser.Inputs.Input.all));
-                        Set_Public_Id
-                          (Parser.Inputs.Input.all, Get (V.Value).all);
-                        Set_System_Id (Parser.Inputs.Input.all, Get (URI).all);
+                     if Parser.State.Name = Attlist_Str_Def_State.Name
+                       or else Parser.State.Name = Attr_Value_State.Name
+                     then
+                        Fatal_Error
+                          (Parser, Error_Attribute_External_Entity, Id);
                      end if;
 
-                     Parser.Inputs.Name := Find_Symbol
-                       (Parser, Get_System_Id (Parser.Inputs.Input.all));
+                     declare
+                        URI : constant Symbol :=
+                          Resolve_URI (Parser, Old_System_Id, V.Value);
+                     begin
+                        Parser.Inputs.Input := Resolve_Entity
+                          (Parser,
+                           Public_Id => Get (V.Public).all,
+                           System_Id => Get (URI).all);
 
-                     Set_System_Id (Parser.Locator, URI);
-                     Set_Public_Id (Parser.Locator, V.Value);
+                        --  If either there is no entity resolver or if the
+                        --  standard algorithm should be used
 
-                  exception
-                     when Name_Error =>
-                        Error
-                          (Parser, Error_External_Entity_Not_Found
-                           & Get (URI).all, Id);
-                        Unchecked_Free (Parser.Inputs.Input);
-                     when E : Mismatching_BOM =>
-                        Error (Parser, Exception_Message (E));
-                        Unchecked_Free (Parser.Inputs.Input);
-                  end;
+                        if Parser.Inputs.Input = null then
+                           Parser.Inputs.Input := new File_Input;
+                           Open (Get (URI).all,
+                                 File_Input (Parser.Inputs.Input.all));
+                           Set_Public_Id
+                             (Parser.Inputs.Input.all, Get (V.Value).all);
+                           Set_System_Id
+                             (Parser.Inputs.Input.all, Get (URI).all);
+                        end if;
 
-                  Parser.In_External_Entity := True;
+                        Parser.Inputs.Name := Find_Symbol
+                          (Parser, Get_System_Id (Parser.Inputs.Input.all));
+
+                        Set_System_Id (Parser.Locator, URI);
+                        Set_Public_Id (Parser.Locator, V.Value);
+
+                     exception
+                        when Name_Error =>
+                           Error
+                             (Parser, Error_External_Entity_Not_Found
+                              & Get (URI).all, Id);
+                           Unchecked_Free (Parser.Inputs.Input);
+                        when E : Mismatching_BOM =>
+                           Error (Parser, Exception_Message (E));
+                           Unchecked_Free (Parser.Inputs.Input);
+                     end;
+
+                     Parser.In_External_Entity := True;
+                  end if;
+
                else
                   Parser.Inputs.Input := new String_Input;
 
@@ -2724,20 +2735,17 @@ package body Sax.Readers is
 
                if Parser.Inputs.Input = null then
                   Skipped_Entity (Parser, V.Name);
-                  Next_Char (Input, Parser);
-                  Next_Token (Input, Parser, Id);
 
                else
                   Set_Line_Number (Parser.Locator, 1);
                   Set_Column_Number
                     (Parser.Locator,
                      Prolog_Size (Parser.Inputs.Input.all));
-
-                  Next_Char (Input, Parser);
-                  Next_Token (Input, Parser, Id);
-
-                  V.Already_Read := False;
                end if;
+
+               V.Already_Read := False;
+               Next_Char (Input, Parser);
+               Next_Token (Input, Parser, Id);
             end if;
          end;
       end if;
