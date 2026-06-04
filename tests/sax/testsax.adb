@@ -11,16 +11,19 @@ procedure TestSAX is
    Silent     : Boolean := False;
    Color      : Boolean := True;
 
-   No_External_General_Entities : Boolean := False;
+   No_External_General_Entities   : Boolean := False;
+   No_External_Parameter_Entities : Boolean := False;
 
 begin
    loop
-      case Getopt ("silent nocolor -noextgen") is
+      case Getopt ("silent nocolor -noextgen -noextpar") is
          when 's' => Silent := True;
          when 'n' => Color  := False;
          when '-' =>
             if Full_Switch = "-noextgen" then
                No_External_General_Entities := True;
+            elsif Full_Switch = "-noextpar" then
+               No_External_Parameter_Entities := True;
             end if;
          when others => exit;
       end case;
@@ -55,6 +58,10 @@ begin
      (My_Reader,
       External_General_Entities_Feature,
       not No_External_General_Entities);
+   Set_Feature
+     (My_Reader,
+      External_Parameter_Entities_Feature,
+      not No_External_Parameter_Entities);
 
    Parse (My_Reader, Read);
    Close (Read);

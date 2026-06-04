@@ -1,6 +1,7 @@
 TESTS= test_unicode \
 		 test_state \
 		 test_sax_noextgen \
+		 test_sax_noextpar \
 		 test_xml \
 		 test_adacore_dom \
 		 test_schema \
@@ -37,12 +38,27 @@ test_sax_noextgen:
 	@cd sax; \
 		mkdir -p obj; \
 		gprbuild -q -P sax_test.gpr; \
-		./obj/testsax noextgenent.xml --noextgen -nocolor > obj/testsax_noextgenent.tmp_out; \
+		./obj/testsax noextent.xml --noextgen -nocolor > obj/testsax_noextgenent.tmp_out; \
 		tr -d '\r' < obj/testsax_noextgenent.tmp_out > $(RESULTS)/testsax_noextgenent.out ; \
 		diff noextgenent.expected $(RESULTS)/testsax_noextgenent.out > $(RESULTS)/testsax_noextgenent.diff; \
 		if test -s $(RESULTS)/testsax_noextgenent.diff; then \
 			echo "DIFF"; \
 			cat $(RESULTS)/testsax_noextgenent.diff ; \
+		else \
+			echo "OK"; \
+		fi
+
+test_sax_noextpar:
+	@echo "sax/testsax noextent.xml --noextpar -nocolor"
+	@cd sax; \
+		mkdir -p obj; \
+		gprbuild -q -P sax_test.gpr; \
+		./obj/testsax noextent.xml --noextpar -nocolor > obj/testsax_noextpar.tmp_out; \
+		tr -d '\r' < obj/testsax_noextpar.tmp_out > $(RESULTS)/testsax_noextpar.out ; \
+		diff noextparent.expected $(RESULTS)/testsax_noextpar.out > $(RESULTS)/testsax_noextpar.diff; \
+		if test -s $(RESULTS)/testsax_noextpar.diff; then \
+			echo "DIFF"; \
+			cat $(RESULTS)/testsax_noextpar.diff ; \
 		else \
 			echo "OK"; \
 		fi

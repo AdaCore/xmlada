@@ -1,7 +1,7 @@
 <!DOCTYPE test [
- <!ENTITY % dtd_sys SYSTEM "noextgenent.dtd">
+ <!ENTITY % dtd_sys SYSTEM "noextent.dtd">
  %dtd_sys;
- <!ENTITY noextgenent_sys SYSTEM "noextgenent.ent">
+ <!ENTITY noextgenent_sys SYSTEM "noextent.ent">
  <!ENTITY noextgenent "&noextgenent_sys;">
 ]>
 
