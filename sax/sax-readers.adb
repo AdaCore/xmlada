@@ -2653,12 +2653,15 @@ package body Sax.Readers is
                   Next           => Parser.Inputs);
 
                if V.External then
-                  --  External general entities are disabled by feature
-                  --  flag; leave Parser.Inputs.Input as null so that the
-                  --  check below will call Skipped_Entity and resume.
+                  --  External entities can be disabled by feature flags;
+                  --  leave Parser.Inputs.Input as null so that the check
+                  --  below will call Skipped_Entity and resume parsing.
 
-                  if Is_Entity_Ref /= Entity
-                    or else Parser.Feature_External_General_Entities
+                  if (Is_Entity_Ref /= Entity
+                        or else Parser.Feature_External_General_Entities)
+                     and then
+                       (Is_Entity_Ref /= Param_Entity
+                          or else Parser.Feature_External_Parameter_Entities)
                   then
                      if Parser.State.Name = Attlist_Str_Def_State.Name
                        or else Parser.State.Name = Attr_Value_State.Name
