@@ -2,6 +2,7 @@ TESTS= test_unicode \
 		 test_state \
 		 test_sax_noextgen \
 		 test_sax_noextpar \
+		 test_sax_noextdtd \
 		 test_xml \
 		 test_adacore_dom \
 		 test_schema \
@@ -59,6 +60,21 @@ test_sax_noextpar:
 		if test -s $(RESULTS)/testsax_noextpar.diff; then \
 			echo "DIFF"; \
 			cat $(RESULTS)/testsax_noextpar.diff ; \
+		else \
+			echo "OK"; \
+		fi
+
+test_sax_noextdtd:
+	@echo "sax/testsax noextdtd.xml --noextdtd -nocolor"
+	@cd sax; \
+		mkdir -p obj; \
+		gprbuild -q -P sax_test.gpr; \
+		./obj/testsax noextdtd.xml --noextdtd -nocolor > obj/testsax_noextdtd.tmp_out; \
+		tr -d '\r' < obj/testsax_noextdtd.tmp_out > $(RESULTS)/testsax_noextdtd.out ; \
+		diff noextdtd.expected $(RESULTS)/testsax_noextdtd.out > $(RESULTS)/testsax_noextdtd.diff; \
+		if test -s $(RESULTS)/testsax_noextdtd.diff; then \
+			echo "DIFF"; \
+			cat $(RESULTS)/testsax_noextdtd.diff ; \
 		else \
 			echo "OK"; \
 		fi

@@ -13,10 +13,11 @@ procedure TestSAX is
 
    No_External_General_Entities   : Boolean := False;
    No_External_Parameter_Entities : Boolean := False;
+   No_Load_External_DTD           : Boolean := False;
 
 begin
    loop
-      case Getopt ("silent nocolor -noextgen -noextpar") is
+      case Getopt ("silent nocolor -noextgen -noextpar -noextdtd") is
          when 's' => Silent := True;
          when 'n' => Color  := False;
          when '-' =>
@@ -24,6 +25,8 @@ begin
                No_External_General_Entities := True;
             elsif Full_Switch = "-noextpar" then
                No_External_Parameter_Entities := True;
+            elsif Full_Switch = "-noextdtd" then
+               No_Load_External_DTD := True;
             end if;
          when others => exit;
       end case;
@@ -62,6 +65,10 @@ begin
      (My_Reader,
       External_Parameter_Entities_Feature,
       not No_External_Parameter_Entities);
+   Set_Feature
+     (My_Reader,
+      Load_External_DTD_Feature,
+      not No_Load_External_DTD);
 
    Parse (My_Reader, Read);
    Close (Read);
