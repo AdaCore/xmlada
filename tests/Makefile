@@ -1,5 +1,6 @@
 TESTS= test_unicode \
 		 test_state \
+		 test_sax_noextgen \
 		 test_xml \
 		 test_adacore_dom \
 		 test_schema \
@@ -30,6 +31,21 @@ test_base64: generic_test_base64
 
 test_state: EXEC=sax/teststate
 test_state: generic_test_state
+
+test_sax_noextgen:
+	@echo "sax/testsax noextgenent.xml --noextgen -nocolor"
+	@cd sax; \
+		mkdir -p obj; \
+		gprbuild -q -P sax_test.gpr; \
+		./obj/testsax noextgenent.xml --noextgen -nocolor > obj/testsax_noextgenent.tmp_out; \
+		tr -d '\r' < obj/testsax_noextgenent.tmp_out > $(RESULTS)/testsax_noextgenent.out ; \
+		diff noextgenent.expected $(RESULTS)/testsax_noextgenent.out > $(RESULTS)/testsax_noextgenent.diff; \
+		if test -s $(RESULTS)/testsax_noextgenent.diff; then \
+			echo "DIFF"; \
+			cat $(RESULTS)/testsax_noextgenent.diff ; \
+		else \
+			echo "OK"; \
+		fi
 
 test_xml: EXEC=dom/testxml
 test_xml: ARGS=-auto

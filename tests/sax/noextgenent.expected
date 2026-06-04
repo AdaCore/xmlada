@@ -1,0 +1,44 @@
+Sax.Set_Document_Locator ()
+Sax.Start_Document () at noextgenent.xml:1
+Sax.Start_DTD (test, , ) at noextgenent.xml:1:17
+Sax.External_Entity_Decl (%dtd_sys, , noextgenent.dtd) at noextgenent.xml:2:46
+Sax.Start_Entity (%dtd_sys) at noextgenent.xml:3:10
+Sax.Resolve_Entity (, /home/godunko/AdaCore/xmlada_env/xmlada/tests/sax/noextgenent.dtd) at noextgenent.xml:3:10
+Sax.External_Entity_Decl (%noextgenent_sys, , noextgenent.ent) at noextgenent.dtd:1:53[entity expansion at noextgenent.xml:3:10]
+Sax.Resolve_Entity (, /home/godunko/AdaCore/xmlada_env/xmlada/tests/sax/noextgenent.ent) at noextgenent.dtd:2:43
+Sax.Internal_Entity_Decl (noextgenent_dtd, External General Entity
+) at noextgenent.dtd:2:46[entity expansion at noextgenent.xml:3:10]
+Sax.End_Entity (/home/godunko/AdaCore/xmlada_env/xmlada/tests/sax/noextgenent.dtd) at noextgenent.xml:3:11
+Sax.External_Entity_Decl (noextgenent_sys, , noextgenent.ent) at noextgenent.xml:4:52
+Sax.Internal_Entity_Decl (noextgenent, &noextgenent_sys;) at noextgenent.xml:5:43
+Sax.End_DTD () at noextgenent.xml:6:3
+Sax.Ignorable_Whitespace ( 10 10, 2) at noextgenent.xml:8:1
+Sax.Start_Element (, test, test) at noextgenent.xml:8:7
+Sax.Ignorable_Whitespace ( 10 32 32, 3) at noextgenent.xml:9:3
+Sax.Start_Element (, text, text) at noextgenent.xml:9:9
+Sax.Start_Entity (noextgenent) at noextgenent.xml:9:21
+Sax.Start_Entity (noextgenent_sys) at entity noextgenent:1:17[entity expansion at noextgenent.xml:9:21]
+Sax.Skipped_Entity (noextgenent_sys) at entity noextgenent:1:17[entity expansion at entity noextgenent:1:17[entity expansion at noextgenent.xml:9:21]]
+Sax.End_Entity (noextgenent_sys) at entity noextgenent:1:17[entity expansion at noextgenent.xml:9:21]
+Sax.Characters (, 0) at noextgenent.xml:9:22[entity expansion at noextgenent.xml:9:21]
+Sax.End_Entity (noextgenent) at noextgenent.xml:9:22
+Sax.End_Element (, text, text) at noextgenent.xml:9:29
+Sax.Ignorable_Whitespace ( 10 32 32, 3) at noextgenent.xml:10:3
+Sax.Start_Element (, text, text) at noextgenent.xml:10:9
+Sax.Start_Entity (noextgenent_sys) at noextgenent.xml:10:25
+Sax.Skipped_Entity (noextgenent_sys) at noextgenent.xml:10:25[entity expansion at noextgenent.xml:10:25]
+Sax.End_Entity (noextgenent_sys) at noextgenent.xml:10:26
+Sax.End_Element (, text, text) at noextgenent.xml:10:33
+Sax.Ignorable_Whitespace ( 10 32 32, 3) at noextgenent.xml:11:3
+Sax.Start_Element (, text, text) at noextgenent.xml:11:9
+Sax.Start_Entity (noextgenent_dtd) at noextgenent.xml:11:25
+Sax.Characters (External, 8) at entity noextgenent_dtd:1:9[entity expansion at noextgenent.xml:11:25]
+Sax.Characters ( General Entity
+, 16) at entity noextgenent_dtd:2[entity expansion at noextgenent.xml:11:25]
+Sax.End_Entity (noextgenent_dtd) at noextgenent.xml:11:26
+Sax.End_Element (, text, text) at noextgenent.xml:11:33
+Sax.Ignorable_Whitespace ( 10, 1) at noextgenent.xml:12:1
+Sax.End_Element (, test, test) at noextgenent.xml:12:8
+Sax.Ignorable_Whitespace ( 10, 1) at noextgenent.xml:13
+Sax.End_Prefix_Mapping (xml) at noextgenent.xml:13
+Sax.End_Document () at noextgenent.xml:13

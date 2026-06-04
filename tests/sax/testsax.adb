@@ -11,11 +11,17 @@ procedure TestSAX is
    Silent     : Boolean := False;
    Color      : Boolean := True;
 
+   No_External_General_Entities : Boolean := False;
+
 begin
    loop
-      case Getopt ("silent nocolor") is
+      case Getopt ("silent nocolor -noextgen") is
          when 's' => Silent := True;
          when 'n' => Color  := False;
+         when '-' =>
+            if Full_Switch = "-noextgen" then
+               No_External_General_Entities := True;
+            end if;
          when others => exit;
       end case;
    end loop;
@@ -44,6 +50,11 @@ begin
    --  If True, xmlns:* attributes will be reported in Start_Element
    Set_Feature (My_Reader, Namespace_Prefixes_Feature, False);
    Set_Feature (My_Reader, Validation_Feature, False);
+
+   Set_Feature
+     (My_Reader,
+      External_General_Entities_Feature,
+      not No_External_General_Entities);
 
    Parse (My_Reader, Read);
    Close (Read);
