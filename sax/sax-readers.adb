@@ -5165,7 +5165,9 @@ package body Sax.Readers is
          --  Read the external subset if required. This needs to be read
          --  after the internal subset only, so that the latter gets
          --  priority (XML specifications 2.8)
-         if System_End.Last >= System_Start.First then
+         if System_End.Last >= System_Start.First
+           and then Parser.Feature_Load_External_DTD
+         then
             declare
                Loc : constant Sax.Locators.Location :=
                  Get_Location (Parser.Locator);
@@ -5227,6 +5229,10 @@ package body Sax.Readers is
             end;
 
          else
+            if System_End.Last >= System_Start.First then
+               Skipped_Entity (Parser, Find_Symbol (Parser, "[dtd]"));
+            end if;
+
             if NS_Id /= Null_Token then
                Reset_Buffer (Parser, NS_Id);
             else
@@ -6098,6 +6104,9 @@ package body Sax.Readers is
       elsif Name = External_Parameter_Entities_Feature then
          return Parser.Feature_External_Parameter_Entities;
 
+      elsif Name = Load_External_DTD_Feature then
+         return Parser.Feature_Load_External_DTD;
+
       elsif Name = Validation_Feature then
          return Parser.Feature_Validation;
 
@@ -6135,6 +6144,9 @@ package body Sax.Readers is
 
       elsif Name = External_Parameter_Entities_Feature then
          Parser.Feature_External_Parameter_Entities := Value;
+
+      elsif Name = Load_External_DTD_Feature then
+         Parser.Feature_Load_External_DTD := Value;
 
       elsif Name = Validation_Feature then
          Parser.Feature_Validation := Value;
