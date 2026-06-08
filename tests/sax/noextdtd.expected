@@ -1,0 +1,12 @@
+Sax.Set_Document_Locator ()
+Sax.Start_Document () at noextdtd.xml:1
+Sax.Start_DTD (test, , noextdtd.dtd) at noextdtd.xml:1:38
+Sax.Skipped_Entity ([dtd]) at noextdtd.xml:1:38
+Sax.End_DTD () at noextdtd.xml:1:38
+Sax.Ignorable_Whitespace ( 10 10, 2) at noextdtd.xml:3:1
+Sax.Start_Element (, test, test) at noextdtd.xml:3:7
+Sax.Ignorable_Whitespace ( 10 32 32, 3) at noextdtd.xml:4:3
+Sax.Start_Element (, text, text) at noextdtd.xml:4:9
+Sax.Skipped_Entity (noextdtdent) at noextdtd.xml:4:21
+Sax.Fatal_Error (noextdtd.xml:4:9: Undefined entity 'noextdtdent') at noextdtd.xml:4:21
+Sax.End_Document () at noextdtd.xml:4:21

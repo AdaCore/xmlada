@@ -1,5 +1,8 @@
 TESTS= test_unicode \
 		 test_state \
+		 test_sax_noextgen \
+		 test_sax_noextpar \
+		 test_sax_noextdtd \
 		 test_xml \
 		 test_adacore_dom \
 		 test_schema \
@@ -30,6 +33,51 @@ test_base64: generic_test_base64
 
 test_state: EXEC=sax/teststate
 test_state: generic_test_state
+
+test_sax_noextgen:
+	@echo "sax/testsax noextgenent.xml --noextgen -nocolor"
+	@cd sax; \
+		mkdir -p obj; \
+		gprbuild -q -P sax_test.gpr; \
+		./obj/testsax noextent.xml --noextgen -nocolor > obj/testsax_noextgenent.tmp_out; \
+		tr -d '\r' < obj/testsax_noextgenent.tmp_out > $(RESULTS)/testsax_noextgenent.out ; \
+		diff noextgenent.expected $(RESULTS)/testsax_noextgenent.out > $(RESULTS)/testsax_noextgenent.diff; \
+		if test -s $(RESULTS)/testsax_noextgenent.diff; then \
+			echo "DIFF"; \
+			cat $(RESULTS)/testsax_noextgenent.diff ; \
+		else \
+			echo "OK"; \
+		fi
+
+test_sax_noextpar:
+	@echo "sax/testsax noextent.xml --noextpar -nocolor"
+	@cd sax; \
+		mkdir -p obj; \
+		gprbuild -q -P sax_test.gpr; \
+		./obj/testsax noextent.xml --noextpar -nocolor > obj/testsax_noextpar.tmp_out; \
+		tr -d '\r' < obj/testsax_noextpar.tmp_out > $(RESULTS)/testsax_noextpar.out ; \
+		diff noextparent.expected $(RESULTS)/testsax_noextpar.out > $(RESULTS)/testsax_noextpar.diff; \
+		if test -s $(RESULTS)/testsax_noextpar.diff; then \
+			echo "DIFF"; \
+			cat $(RESULTS)/testsax_noextpar.diff ; \
+		else \
+			echo "OK"; \
+		fi
+
+test_sax_noextdtd:
+	@echo "sax/testsax noextdtd.xml --noextdtd -nocolor"
+	@cd sax; \
+		mkdir -p obj; \
+		gprbuild -q -P sax_test.gpr; \
+		./obj/testsax noextdtd.xml --noextdtd -nocolor > obj/testsax_noextdtd.tmp_out; \
+		tr -d '\r' < obj/testsax_noextdtd.tmp_out > $(RESULTS)/testsax_noextdtd.out ; \
+		diff noextdtd.expected $(RESULTS)/testsax_noextdtd.out > $(RESULTS)/testsax_noextdtd.diff; \
+		if test -s $(RESULTS)/testsax_noextdtd.diff; then \
+			echo "DIFF"; \
+			cat $(RESULTS)/testsax_noextdtd.diff ; \
+		else \
+			echo "OK"; \
+		fi
 
 test_xml: EXEC=dom/testxml
 test_xml: ARGS=-auto

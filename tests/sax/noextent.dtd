@@ -1,0 +1,2 @@
+<!ENTITY % noextgenent_sys SYSTEM "noextent.ent">
+<!ENTITY noextgenent_dtd "%noextgenent_sys;">

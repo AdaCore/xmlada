@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                     XML/Ada - An XML suite for Ada95                     --
 --                                                                          --
---                     Copyright (C) 2001-2017, AdaCore                     --
+--                     Copyright (C) 2001-2026, AdaCore                     --
 --                                                                          --
 -- This library is free software;  you can redistribute it and/or modify it --
 -- under terms of the  GNU General Public License  as published by the Free --
@@ -170,6 +170,15 @@ package Sax.Readers is
      "http://xml.org/sax/features/lexical-handler/parameter-entities";
    --  True if the SAX parser will reports parameter entities through its
    --  Lexical_Handler.
+
+   Load_External_DTD_Feature : constant String :=
+     "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+   --  If True, the parser attempts to load the external DTD subset,
+   --  even if it does not read external parameter entities. This is
+   --  useful to get default attribute values from the DTD, without
+   --  reading parameter entities.
+   --
+   --  Default is True.
 
    Test_Valid_Chars_Feature : constant String :=
      "http://www.adacore.com/sax/features/test_valid_chars";
@@ -1165,6 +1174,7 @@ private
       Feature_Namespace_Prefixes          : Boolean := False;
       Feature_External_General_Entities   : Boolean := True;
       Feature_External_Parameter_Entities : Boolean := True;
+      Feature_Load_External_DTD           : Boolean := True;
       Feature_Validation                  : Boolean := False;
       Feature_Test_Valid_Chars            : Boolean := False;
       Feature_Schema_Validation           : Boolean := True;
