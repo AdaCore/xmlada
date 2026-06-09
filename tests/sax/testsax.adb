@@ -15,26 +15,61 @@ procedure TestSAX is
    No_External_Parameter_Entities : Boolean := False;
    No_Load_External_DTD           : Boolean := False;
    No_Doctype_Decl                : Boolean := False;
+   Max_Expansion_Count            : Integer := 0;
+   Max_Expansion_Size             : Integer := 0;
+
+   function Normalize_Parameter (P : String) return String;
+   --  Return parameter value without a leading '='.
+
+   -------------------------
+   -- Normalize_Parameter --
+   -------------------------
+
+   function Normalize_Parameter (P : String) return String is
+   begin
+      if P'Length > 0 and then P (P'First) = '=' then
+         return P (P'First + 1 .. P'Last);
+      end if;
+
+      return P;
+   end Normalize_Parameter;
 
 begin
    loop
       case Getopt
-        ("silent nocolor -noextgen -noextpar -noextdtd "
-         & "-nodoctype")
+         ("silent nocolor -noextgen -noextpar -noextdtd -nodoctype"
+          & " -max-expansion-count: -max-expansion-size:")
       is
-         when 's' => Silent := True;
-         when 'n' => Color  := False;
+         when 's' =>
+            Silent := True;
+
+         when 'n' =>
+            Color := False;
+
          when '-' =>
             if Full_Switch = "-noextgen" then
                No_External_General_Entities := True;
+
             elsif Full_Switch = "-noextpar" then
                No_External_Parameter_Entities := True;
+
             elsif Full_Switch = "-noextdtd" then
                No_Load_External_DTD := True;
+
             elsif Full_Switch = "-nodoctype" then
                No_Doctype_Decl := True;
+
+            elsif Full_Switch = "-max-expansion-count" then
+               Max_Expansion_Count := Integer'Value
+                 (Normalize_Parameter (Parameter));
+
+            elsif Full_Switch = "-max-expansion-size" then
+               Max_Expansion_Size := Integer'Value
+                 (Normalize_Parameter (Parameter));
             end if;
-         when others => exit;
+
+         when others =>
+            exit;
       end case;
    end loop;
 
@@ -79,6 +114,11 @@ begin
      (My_Reader,
       Disallow_Doctype_Decl_Feature,
       No_Doctype_Decl);
+
+   Set_Property
+     (My_Reader, Entity_Expansion_Limit_Property, Max_Expansion_Count);
+   Set_Property
+     (My_Reader, Total_Entity_Size_Limit_Property, Max_Expansion_Size);
 
    Parse (My_Reader, Read);
    Close (Read);

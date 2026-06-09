@@ -1,0 +1,71 @@
+==================================
+== Entity Expansion Count Limit ==
+==================================
+Sax.Set_Document_Locator ()
+Sax.Start_Document () at bomb.xml:1
+Sax.Ignorable_Whitespace ( 10, 1) at bomb.xml:2:1
+Sax.Start_DTD (bomb, , ) at bomb.xml:2:17
+Sax.Internal_Entity_Decl (e0, A) at bomb.xml:3:19
+Sax.Internal_Entity_Decl (e1, &e0;&e0;) at bomb.xml:4:26
+Sax.Internal_Entity_Decl (e2, &e1;&e1;) at bomb.xml:5:26
+Sax.Internal_Entity_Decl (e3, &e2;&e2;) at bomb.xml:6:26
+Sax.Internal_Entity_Decl (e4, &e3;&e3;) at bomb.xml:7:26
+Sax.Internal_Entity_Decl (e5, &e4;&e4;) at bomb.xml:8:26
+Sax.Internal_Entity_Decl (e6, &e5;&e5;) at bomb.xml:9:26
+Sax.Internal_Entity_Decl (e7, &e6;&e6;) at bomb.xml:10:26
+Sax.Internal_Entity_Decl (e8, &e7;&e7;) at bomb.xml:11:26
+Sax.Internal_Entity_Decl (e9, &e8;&e8;) at bomb.xml:12:26
+Sax.Internal_Entity_Decl (e10, &e9;&e9;) at bomb.xml:13:27
+Sax.Internal_Entity_Decl (e11, &e10;&e10;) at bomb.xml:14:29
+Sax.Internal_Entity_Decl (e12, &e11;&e11;) at bomb.xml:15:29
+Sax.Internal_Entity_Decl (e13, &e12;&e12;) at bomb.xml:16:29
+Sax.Internal_Entity_Decl (e14, &e13;&e13;) at bomb.xml:17:29
+Sax.Internal_Entity_Decl (e15, &e14;&e14;) at bomb.xml:18:29
+Sax.End_DTD () at bomb.xml:19:3
+Sax.Ignorable_Whitespace ( 10, 1) at bomb.xml:20:1
+Sax.Start_Element (, root, root) at bomb.xml:20:7
+Sax.Start_Entity (e15) at bomb.xml:20:11
+Sax.Start_Entity (e14) at entity e15:1:5[entity expansion at bomb.xml:20:11]
+Sax.Start_Entity (e13) at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]
+Sax.Start_Entity (e12) at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]
+Sax.Start_Entity (e11) at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]
+Sax.Start_Entity (e10) at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]
+Sax.Start_Entity (e9) at entity e10:1:4[entity expansion at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]]
+Sax.Start_Entity (e8) at entity e9:1:4[entity expansion at entity e10:1:4[entity expansion at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]]]
+Sax.Start_Entity (e7) at entity e8:1:4[entity expansion at entity e9:1:4[entity expansion at entity e10:1:4[entity expansion at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]]]]
+Sax.Start_Entity (e6) at entity e7:1:4[entity expansion at entity e8:1:4[entity expansion at entity e9:1:4[entity expansion at entity e10:1:4[entity expansion at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]]]]]
+Sax.Start_Entity (e5) at entity e6:1:4[entity expansion at entity e7:1:4[entity expansion at entity e8:1:4[entity expansion at entity e9:1:4[entity expansion at entity e10:1:4[entity expansion at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]]]]]]
+Sax.Fatal_Error (entity e6:1:1: Entity expansion limit exceeded (limit => 10)) at entity e6:1:4[entity expansion at entity e6:1:4[entity expansion at entity e7:1:4[entity expansion at entity e8:1:4[entity expansion at entity e9:1:4[entity expansion at entity e10:1:4[entity expansion at entity e11:1:5[entity expansion at entity e12:1:5[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]]]]]]]]
+Sax.End_Document () at entity e6:1:4
+==================================
+== Entity Expansion Size Limit ==
+==================================
+Sax.Set_Document_Locator ()
+Sax.Start_Document () at bomb.xml:1
+Sax.Ignorable_Whitespace ( 10, 1) at bomb.xml:2:1
+Sax.Start_DTD (bomb, , ) at bomb.xml:2:17
+Sax.Internal_Entity_Decl (e0, A) at bomb.xml:3:19
+Sax.Internal_Entity_Decl (e1, &e0;&e0;) at bomb.xml:4:26
+Sax.Internal_Entity_Decl (e2, &e1;&e1;) at bomb.xml:5:26
+Sax.Internal_Entity_Decl (e3, &e2;&e2;) at bomb.xml:6:26
+Sax.Internal_Entity_Decl (e4, &e3;&e3;) at bomb.xml:7:26
+Sax.Internal_Entity_Decl (e5, &e4;&e4;) at bomb.xml:8:26
+Sax.Internal_Entity_Decl (e6, &e5;&e5;) at bomb.xml:9:26
+Sax.Internal_Entity_Decl (e7, &e6;&e6;) at bomb.xml:10:26
+Sax.Internal_Entity_Decl (e8, &e7;&e7;) at bomb.xml:11:26
+Sax.Internal_Entity_Decl (e9, &e8;&e8;) at bomb.xml:12:26
+Sax.Internal_Entity_Decl (e10, &e9;&e9;) at bomb.xml:13:27
+Sax.Internal_Entity_Decl (e11, &e10;&e10;) at bomb.xml:14:29
+Sax.Internal_Entity_Decl (e12, &e11;&e11;) at bomb.xml:15:29
+Sax.Internal_Entity_Decl (e13, &e12;&e12;) at bomb.xml:16:29
+Sax.Internal_Entity_Decl (e14, &e13;&e13;) at bomb.xml:17:29
+Sax.Internal_Entity_Decl (e15, &e14;&e14;) at bomb.xml:18:29
+Sax.End_DTD () at bomb.xml:19:3
+Sax.Ignorable_Whitespace ( 10, 1) at bomb.xml:20:1
+Sax.Start_Element (, root, root) at bomb.xml:20:7
+Sax.Start_Entity (e15) at bomb.xml:20:11
+Sax.Start_Entity (e14) at entity e15:1:5[entity expansion at bomb.xml:20:11]
+Sax.Start_Entity (e13) at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]
+Sax.Start_Entity (e12) at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]
+Sax.Fatal_Error (entity e12:1:2: Entity expansion limit exceeded (limit => 16)) at entity e12:1:2[entity expansion at entity e13:1:5[entity expansion at entity e14:1:5[entity expansion at entity e15:1:5[entity expansion at bomb.xml:20:11]]]]
+Sax.End_Document () at entity e12:1:2
