@@ -1206,6 +1206,22 @@ package body Sax.Readers is
          Increase_Column_Number (Parser.Locator);
          Internal (Parser.Inputs.Input.all);
 
+         --  Compute and check entity expansion size limit, if needed.
+
+         Parser.Entity_Expansion_Size := Parser.Entity_Expansion_Size + 1;
+
+         if Parser.Total_Entity_Size_Limit > 0
+           and then Parser.Entity_Expansion_Size
+                      > Parser.Total_Entity_Size_Limit
+         then
+            Fatal_Error
+              (Parser,
+               Error_Entity_Expansion_Limit
+               & " (limit =>"
+               & Natural'Image (Parser.Total_Entity_Size_Limit)
+               & ")");
+         end if;
+
       --  Else read from the initial input stream
       elsif Eof (Input) then
          if Debug_Input then
@@ -6001,6 +6017,7 @@ package body Sax.Readers is
       Parser.In_External_Entity := False;
       Parser.Last_Read_Is_Valid := False;
       Parser.Entity_Expansion_Count := 0;
+      Parser.Entity_Expansion_Size := 0;
       Parser.Buffer := new Byte_Sequence (1 .. Initial_Buffer_Length);
       Set_State (Parser, Default_State);
 
@@ -6200,7 +6217,10 @@ package body Sax.Readers is
      return Integer is
    begin
       if Name = Entity_Expansion_Limit_Property then
-         return Integer (Parser.Entity_Expansion_Limit);
+         return Parser.Entity_Expansion_Limit;
+
+      elsif Name = Total_Entity_Size_Limit_Property then
+         return Parser.Total_Entity_Size_Limit;
       end if;
 
       return 0;
@@ -6219,7 +6239,15 @@ package body Sax.Readers is
               "Entity expansion limit must be non-negative";
          end if;
 
-         Parser.Entity_Expansion_Limit := Natural (Value);
+         Parser.Entity_Expansion_Limit := Value;
+
+      elsif Name = Total_Entity_Size_Limit_Property then
+         if Value < 0 then
+            raise Constraint_Error with
+              "Total entity size limit must be non-negative";
+         end if;
+
+         Parser.Total_Entity_Size_Limit := Value;
       end if;
    end Set_Property;
 

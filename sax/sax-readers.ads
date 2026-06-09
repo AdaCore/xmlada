@@ -217,6 +217,12 @@ package Sax.Readers is
    --  parser will perform. This can help prevent denial-of-service attacks
    --  that exploit excessive entity expansions.
 
+   Total_Entity_Size_Limit_Property : constant String :=
+     "http://www.oracle.com/xml/jaxp/properties/totalEntitySizeLimit";
+   --  This property is used to limit the total size of all entity expansions
+   --  that the parser will perform. This can help prevent denial-of-service
+   --  attacks that exploit excessive entity expansions.
+
    -------------------
    -- Error handler --
    -------------------
@@ -1203,11 +1209,16 @@ private
       Feature_Schema_Validation           : Boolean := True;
       Feature_Allow_Relative_IRI          : Boolean := False;
 
-      Entity_Expansion_Limit : Natural := 0;
-      --  Configurable limit for Entity_Expansion_Limit_Property.
+      Entity_Expansion_Limit  : Natural := 0;
+      --  Configurable limit for Entity_Expansion_Limit property.
+      Total_Entity_Size_Limit : Natural := 0;
+      --  Configurable limit for Total_Entity_Size_Limit property.
 
       Entity_Expansion_Count : Natural := 0;
       --  Number of entity expansions performed while parsing a document.
+      Entity_Expansion_Size  : Natural := 0;
+      --  Number of characters effectively consumed from expanded entity
+      --  streams while parsing a document.
    end record;
 
    type Reader is new Sax_Reader with null record;
