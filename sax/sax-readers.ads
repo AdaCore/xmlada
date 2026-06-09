@@ -86,6 +86,12 @@ package Sax.Readers is
    --  Name is a fully qualified URI, see below in "Recognized features" for
    --  more information.
 
+   procedure Set_Property
+     (Parser : in out Sax_Reader; Name : String; Value : Integer);
+   function Get_Property (Parser : Sax_Reader; Name : String) return Integer;
+   --  Set or lookup the value of a property. Name is a fully qualified URI,
+   --  see below in "Recognized properties" for more information.
+
    procedure Use_Basename_In_Error_Messages
      (Parser       : in out Sax_Reader;
       Use_Basename : Boolean := True);
@@ -200,6 +206,16 @@ package Sax.Readers is
    --  W3C in the past, and some documents might still be using them.
    --  If this feature is set to True, then XML/Ada will emit a warning upon
    --  seeing a relative URI, otherwise it emits an error.
+
+   ---------------------------
+   -- Recognized Properties --
+   ---------------------------
+
+   Entity_Expansion_Limit_Property : constant String :=
+     "http://www.oracle.com/xml/jaxp/properties/entityExpansionLimit";
+   --  This property is used to limit the number of entity expansions that the
+   --  parser will perform. This can help prevent denial-of-service attacks
+   --  that exploit excessive entity expansions.
 
    -------------------
    -- Error handler --
@@ -1186,6 +1202,12 @@ private
       Feature_Test_Valid_Chars            : Boolean := False;
       Feature_Schema_Validation           : Boolean := True;
       Feature_Allow_Relative_IRI          : Boolean := False;
+
+      Entity_Expansion_Limit : Natural := 0;
+      --  Configurable limit for Entity_Expansion_Limit_Property.
+
+      Entity_Expansion_Count : Natural := 0;
+      --  Number of entity expansions performed while parsing a document.
    end record;
 
    type Reader is new Sax_Reader with null record;
