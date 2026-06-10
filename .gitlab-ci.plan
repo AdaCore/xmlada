@@ -1,7 +1,4 @@
 
-def build():
+def build_and_test():
     anod_build("xmlada")
-
-def test():
-    anod_install("xmlada")
     anod_test("xmlada")
