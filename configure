@@ -2198,7 +2198,7 @@ esac
 LIB=`basename $libdir`
 
 
-ac_config_files="$ac_config_files xmlada_shared.gpr Makefile tests/dom/default.gpr"
+ac_config_files="$ac_config_files xmlada_shared.gpr Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -2903,7 +2903,6 @@ do
   case $ac_config_target in
     "xmlada_shared.gpr") CONFIG_FILES="$CONFIG_FILES xmlada_shared.gpr" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "tests/dom/default.gpr") CONFIG_FILES="$CONFIG_FILES tests/dom/default.gpr" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
