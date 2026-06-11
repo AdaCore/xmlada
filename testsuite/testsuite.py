@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
-from os.path import abspath, dirname
+from os import environ
+from os.path import abspath, dirname, join
 from pathlib import Path
 import sys
+from typing import List
 
 from e3.testsuite import Testsuite
+from e3.testsuite.driver.diff import DiffTestDriver, OutputRefiner, ReplacePath
 from e3.testsuite.driver.classic import ClassicTestDriver
 from e3.testsuite.result import FailureReason, Log, TestResult, TestStatus
 
@@ -67,8 +70,29 @@ class XMLAdaLegacyDriver(ClassicTestDriver):
         return super().analyze()
 
 
+class XMLAdaScriptDriver(DiffTestDriver):
+
+    def set_up(self):
+        super().set_up()
+
+        self.test_environ = environ
+        self.test_environ["XMLADA_ROOT"] = dirname(dirname(__file__))
+        print(self.test_environ["XMLADA_ROOT"])
+
+    def run(self):
+        script_path = join(self.test_env["test_dir"], "test.sh")
+
+        self.shell(args=["bash", script_path], env=self.test_environ)
+
+    @property
+    def output_refiners(self) -> List[OutputRefiner]:
+        return super().output_refiners + [
+            ReplacePath(self.working_dir(), "<<WORKING_DIR>>")
+        ]
+
+
 class XMLAdaTestsuite(Testsuite):
-    test_driver_map = {"legacy": XMLAdaLegacyDriver}
+    test_driver_map = {"legacy": XMLAdaLegacyDriver, "script": XMLAdaScriptDriver}
     default_driver = "legacy"
 
 
