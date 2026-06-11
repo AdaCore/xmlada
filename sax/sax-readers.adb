@@ -2746,9 +2746,9 @@ package body Sax.Readers is
                      Prolog_Size (Parser.Inputs.Input.all));
                end if;
 
-               V.Already_Read := False;
                Next_Char (Input, Parser);
                Next_Token (Input, Parser, Id);
+               V.Already_Read := False;
             end if;
          end;
       end if;
