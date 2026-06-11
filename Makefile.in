@@ -80,10 +80,10 @@ static-pic:
 # Rebuild the tests (and not the XML/Ada code itself)
 test: force
 	${GPRBUILD} -p -XLIBRARY_TYPE=static ${GPROPTS} \
-		-XTESTS_ACTIVATED=Only xmlada.gpr ${GPROPTS_EXTRA}
+		tests/xmlada_tests.gpr ${GPROPTS_EXTRA}
 
 # Run the tests. This requires an install of XML/Ada first
-run_test: force
+check: force
 	@make --no-print-directory -C tests tests
 
 run_test_valgrind: test
@@ -123,13 +123,12 @@ install-static-pic:
 
 clean_%: force
 	-gprclean -XLIBRARY_TYPE=$* -q xmlada.gpr
-	-gprclean -XLIBRARY_TYPE=$* -q -XTESTS_ACTIVATED=Yes xmlada.gpr
+	-gprclean -XLIBRARY_TYPE=$* -q tests/xmlada_tests.gpr
 
 clean: clean_relocatable clean_static clean_static-pic
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
-	${RM} tests/dom/default.gpr
 	${RM} Makefile config.cache config.log config.status Makefile.314
 
 force:

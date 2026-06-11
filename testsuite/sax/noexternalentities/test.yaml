@@ -1,0 +1,2 @@
+description: Check SAX parser features to disable use of external resources
+driver: script
