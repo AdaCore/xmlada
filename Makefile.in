@@ -129,7 +129,6 @@ clean: clean_relocatable clean_static clean_static-pic
 	cd docs; ${MAKE} -e clean
 
 distclean: clean
-	${RM} tests/dom/default.gpr
 	${RM} Makefile config.cache config.log config.status Makefile.314
 
 force:
