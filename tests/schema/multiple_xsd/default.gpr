@@ -1,4 +1,5 @@
-with "xmlada";
+with "xmlada_schema";
+
 project Default is
    for Main use ("validate.adb");
    package Binder is
