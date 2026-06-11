@@ -19,7 +19,10 @@ TESTS= test_unicode \
 # Force running all the tests
 .PHONY: ${TESTS}
 
-tests: ${TESTS}
+tests: build ${TESTS}
+
+build:
+	make -C .. test
 
 EXECDIR=./obj/
 RESULTS=$(shell pwd)/results
@@ -38,7 +41,6 @@ test_sax_noextgen:
 	@echo "sax/testsax noextgenent.xml --noextgen -nocolor"
 	@cd sax; \
 		mkdir -p obj; \
-		gprbuild -q -P sax_test.gpr; \
 		./obj/testsax noextent.xml --noextgen -nocolor > obj/testsax_noextgenent.tmp_out; \
 		tr -d '\r' < obj/testsax_noextgenent.tmp_out > $(RESULTS)/testsax_noextgenent.out ; \
 		diff noextgenent.expected $(RESULTS)/testsax_noextgenent.out > $(RESULTS)/testsax_noextgenent.diff; \
@@ -53,7 +55,6 @@ test_sax_noextpar:
 	@echo "sax/testsax noextent.xml --noextpar -nocolor"
 	@cd sax; \
 		mkdir -p obj; \
-		gprbuild -q -P sax_test.gpr; \
 		./obj/testsax noextent.xml --noextpar -nocolor > obj/testsax_noextpar.tmp_out; \
 		tr -d '\r' < obj/testsax_noextpar.tmp_out > $(RESULTS)/testsax_noextpar.out ; \
 		diff noextparent.expected $(RESULTS)/testsax_noextpar.out > $(RESULTS)/testsax_noextpar.diff; \
@@ -68,7 +69,6 @@ test_sax_noextdtd:
 	@echo "sax/testsax noextdtd.xml --noextdtd -nocolor"
 	@cd sax; \
 		mkdir -p obj; \
-		gprbuild -q -P sax_test.gpr; \
 		./obj/testsax noextdtd.xml --noextdtd -nocolor > obj/testsax_noextdtd.tmp_out; \
 		tr -d '\r' < obj/testsax_noextdtd.tmp_out > $(RESULTS)/testsax_noextdtd.out ; \
 		diff noextdtd.expected $(RESULTS)/testsax_noextdtd.out > $(RESULTS)/testsax_noextdtd.diff; \
@@ -129,7 +129,6 @@ generic_not_run_%:
 test_multiple_xsd:
 	@echo "multiple xsd"
 	@cd schema/multiple_xsd; \
-		gprbuild -q -Pdefault.gpr; \
 		./validate > $(RESULTS)/multiple_xsd.out; \
 		cp $(RESULTS)/multiple_xsd.out $(RESULTS)/multiple_xsd.diff; \
 		cat $(RESULTS)/multiple_xsd.diff
@@ -137,7 +136,6 @@ test_multiple_xsd:
 test_examples_dom:
 	@echo "test examples dom"
 	@cd ../docs/dom; \
-		gprbuild -q -p -Pdefault.gpr 2> $(RESULTS)/domexample.out; \
 		./domexample >> $(RESULTS)/domexample.out; \
 		cp $(RESULTS)/domexample.out $(RESULTS)/domexample.diff; \
 		cat $(RESULTS)/domexample.diff; \
@@ -152,7 +150,6 @@ test_examples_dom:
 test_examples_sax:
 	@echo "test examples sax"
 	@cd ../docs/sax; \
-		gprbuild -q -p -Pdefault.gpr 2> $(RESULTS)/saxexample_main.out; \
 		./saxexample_main >> $(RESULTS)/saxexample_main.out; \
 		diff -b $(EXAMPLE_EXPECTED)/saxexample_main.expected $(RESULTS)/saxexample_main.out > $(RESULTS)/saxexample_main.diff; \
 		if test -s $(RESULTS)/saxexample_main.diff; then \
@@ -162,7 +159,6 @@ test_examples_sax:
 test_examples_schema:
 	@echo "test examples schema"
 	@cd ../docs/schema; \
-		gprbuild -q -p -Pdefault.gpr 2> $(RESULTS)/schemaexample.out; \
 		./schemaexample >> $(RESULTS)/schemaexample.out; \
 		cp $(RESULTS)/schemaexample.out $(RESULTS)/schemaexample.diff; \
 		cat $(RESULTS)/schemaexample.diff
