@@ -83,7 +83,7 @@ test: force
 		tests/xmlada_tests.gpr ${GPROPTS_EXTRA}
 
 # Run the tests. This requires an install of XML/Ada first
-run_test: force
+check: force
 	@make --no-print-directory -C tests tests
 
 run_test_valgrind: test

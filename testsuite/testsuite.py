@@ -18,7 +18,7 @@ class XMLAdaLegacyDriver(ClassicTestDriver):
         root_dir = dirname(dirname(abspath(__file__)))
 
         self.shell(
-            args=["make", "test", "run_test"],
+            args=["make", "check"],
             cwd=root_dir,
             env=self.env.environ,
             analyze_output=True,
