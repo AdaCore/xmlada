@@ -7,7 +7,12 @@ import sys
 from typing import List
 
 from e3.testsuite import Testsuite
-from e3.testsuite.driver.diff import DiffTestDriver, OutputRefiner, ReplacePath
+from e3.testsuite.driver.diff import (
+    DiffTestDriver,
+    OutputRefiner,
+    ReplacePath,
+    Substitute,
+)
 from e3.testsuite.driver.classic import ClassicTestDriver
 from e3.testsuite.result import FailureReason, Log, TestResult, TestStatus
 
@@ -87,7 +92,8 @@ class XMLAdaScriptDriver(DiffTestDriver):
     @property
     def output_refiners(self) -> List[OutputRefiner]:
         return super().output_refiners + [
-            ReplacePath(self.working_dir(), "<<WORKING_DIR>>")
+            ReplacePath(self.working_dir(), "<<WORKING_DIR>>"),
+            Substitute("<<WORKING_DIR>>\\", "<<WORKING_DIR>>/"),
         ]
 
 
