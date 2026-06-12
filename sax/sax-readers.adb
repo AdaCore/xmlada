@@ -5127,6 +5127,10 @@ package body Sax.Readers is
          Name_Id : Token;
          NS_Id : Token;
       begin
+         if Parser.Feature_Disallow_Doctype_Decl then
+            Fatal_Error (Parser, "DOCTYPE declarations are disallowed", Id);
+         end if;
+
          Set_State (Parser, DTD_State);
 
          Next_NS_Token_Skip_Spaces (Input, Parser, NS_Id, Name_Id);
@@ -6107,6 +6111,9 @@ package body Sax.Readers is
       elsif Name = Load_External_DTD_Feature then
          return Parser.Feature_Load_External_DTD;
 
+      elsif Name = Disallow_Doctype_Decl_Feature then
+         return Parser.Feature_Disallow_Doctype_Decl;
+
       elsif Name = Validation_Feature then
          return Parser.Feature_Validation;
 
@@ -6147,6 +6154,9 @@ package body Sax.Readers is
 
       elsif Name = Load_External_DTD_Feature then
          Parser.Feature_Load_External_DTD := Value;
+
+      elsif Name = Disallow_Doctype_Decl_Feature then
+         Parser.Feature_Disallow_Doctype_Decl := Value;
 
       elsif Name = Validation_Feature then
          Parser.Feature_Validation := Value;

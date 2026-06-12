@@ -180,6 +180,12 @@ package Sax.Readers is
    --
    --  Default is True.
 
+   Disallow_Doctype_Decl_Feature : constant String :=
+     "http://apache.org/xml/features/disallow-doctype-decl";
+   --  If True, documents with a DOCTYPE declaration are rejected.
+   --
+   --  Default is False.
+
    Test_Valid_Chars_Feature : constant String :=
      "http://www.adacore.com/sax/features/test_valid_chars";
    --  True if the SAX parser will check for each character read from the
@@ -1175,6 +1181,7 @@ private
       Feature_External_General_Entities   : Boolean := True;
       Feature_External_Parameter_Entities : Boolean := True;
       Feature_Load_External_DTD           : Boolean := True;
+      Feature_Disallow_Doctype_Decl       : Boolean := False;
       Feature_Validation                  : Boolean := False;
       Feature_Test_Valid_Chars            : Boolean := False;
       Feature_Schema_Validation           : Boolean := True;

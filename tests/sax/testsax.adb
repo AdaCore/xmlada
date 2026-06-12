@@ -14,10 +14,14 @@ procedure TestSAX is
    No_External_General_Entities   : Boolean := False;
    No_External_Parameter_Entities : Boolean := False;
    No_Load_External_DTD           : Boolean := False;
+   No_Doctype_Decl                : Boolean := False;
 
 begin
    loop
-      case Getopt ("silent nocolor -noextgen -noextpar -noextdtd") is
+      case Getopt
+        ("silent nocolor -noextgen -noextpar -noextdtd "
+         & "-nodoctype")
+      is
          when 's' => Silent := True;
          when 'n' => Color  := False;
          when '-' =>
@@ -27,6 +31,8 @@ begin
                No_External_Parameter_Entities := True;
             elsif Full_Switch = "-noextdtd" then
                No_Load_External_DTD := True;
+            elsif Full_Switch = "-nodoctype" then
+               No_Doctype_Decl := True;
             end if;
          when others => exit;
       end case;
@@ -69,6 +75,10 @@ begin
      (My_Reader,
       Load_External_DTD_Feature,
       not No_Load_External_DTD);
+   Set_Feature
+     (My_Reader,
+      Disallow_Doctype_Decl_Feature,
+      No_Doctype_Decl);
 
    Parse (My_Reader, Read);
    Close (Read);

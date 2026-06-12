@@ -1,0 +1,4 @@
+Sax.Set_Document_Locator ()
+Sax.Start_Document () at noextdtd.xml:1
+Sax.Fatal_Error (noextdtd.xml:1:1: DOCTYPE declarations are disallowed) at noextdtd.xml:1:10
+Sax.End_Document () at noextdtd.xml:1:10
