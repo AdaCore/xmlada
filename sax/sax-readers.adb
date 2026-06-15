@@ -134,6 +134,8 @@ package body Sax.Readers is
      "Entity declared in external subset, but document is standalone"; --  4.1
    Error_Entity_Self_Ref  : constant String :=
      "Entity cannot reference itself"; --  4.1
+   Error_Entity_Expansion_Limit : constant String :=
+     "Entity expansion limit exceeded";
    Error_Entity_Toplevel  : constant String :=
      "Entity references cannot appear at top-level"; --  2.1
    Error_Entity_Undefined : constant String := "Undefined entity"; --  4.1
@@ -1203,6 +1205,22 @@ package body Sax.Readers is
          Parser.Last_Read_Is_Valid := True;
          Increase_Column_Number (Parser.Locator);
          Internal (Parser.Inputs.Input.all);
+
+         --  Compute and check entity expansion size limit, if needed.
+
+         Parser.Entity_Expansion_Size := Parser.Entity_Expansion_Size + 1;
+
+         if Parser.Total_Entity_Size_Limit > 0
+           and then Parser.Entity_Expansion_Size
+                      > Parser.Total_Entity_Size_Limit
+         then
+            Fatal_Error
+              (Parser,
+               Error_Entity_Expansion_Limit
+               & " (limit =>"
+               & Natural'Image (Parser.Total_Entity_Size_Limit)
+               & ")");
+         end if;
 
       --  Else read from the initial input stream
       elsif Eof (Input) then
@@ -2629,6 +2647,23 @@ package body Sax.Readers is
                end if;
 
                V.Already_Read := True;
+
+               --  Protect against exponential entity expansion attacks.
+               Parser.Entity_Expansion_Count :=
+                 Parser.Entity_Expansion_Count + 1;
+
+               if Parser.Entity_Expansion_Limit > 0
+                 and then Parser.Entity_Expansion_Count
+                            > Parser.Entity_Expansion_Limit
+               then
+                  Fatal_Error
+                    (Parser,
+                     Error_Entity_Expansion_Limit
+                     & " (limit =>"
+                     & Natural'Image (Parser.Entity_Expansion_Limit)
+                     & ")",
+                     Id);
+               end if;
 
                Parser.Element_Id := Parser.Element_Id + 1;
 
@@ -5981,6 +6016,8 @@ package body Sax.Readers is
       Parser.Ignore_State_Special := False;
       Parser.In_External_Entity := False;
       Parser.Last_Read_Is_Valid := False;
+      Parser.Entity_Expansion_Count := 0;
+      Parser.Entity_Expansion_Size := 0;
       Parser.Buffer := new Byte_Sequence (1 .. Initial_Buffer_Length);
       Set_State (Parser, Default_State);
 
@@ -6171,6 +6208,48 @@ package body Sax.Readers is
          Parser.Feature_Allow_Relative_IRI := Value;
       end if;
    end Set_Feature;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   function Get_Property (Parser : Sax_Reader; Name : String)
+     return Integer is
+   begin
+      if Name = Entity_Expansion_Limit_Property then
+         return Parser.Entity_Expansion_Limit;
+
+      elsif Name = Total_Entity_Size_Limit_Property then
+         return Parser.Total_Entity_Size_Limit;
+      end if;
+
+      return 0;
+   end Get_Property;
+
+   ------------------
+   -- Set_Property --
+   ------------------
+
+   procedure Set_Property
+     (Parser : in out Sax_Reader; Name : String; Value : Integer) is
+   begin
+      if Name = Entity_Expansion_Limit_Property then
+         if Value < 0 then
+            raise Constraint_Error with
+              "Entity expansion limit must be non-negative";
+         end if;
+
+         Parser.Entity_Expansion_Limit := Value;
+
+      elsif Name = Total_Entity_Size_Limit_Property then
+         if Value < 0 then
+            raise Constraint_Error with
+              "Total entity size limit must be non-negative";
+         end if;
+
+         Parser.Total_Entity_Size_Limit := Value;
+      end if;
+   end Set_Property;
 
    -----------------
    -- Fatal_Error --
