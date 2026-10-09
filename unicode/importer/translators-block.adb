@@ -157,6 +157,18 @@ package body Translators.Block is
            "Symbols_Legacy_Computing");
       Add ("Unified Canadian Aboriginal Syllabics Extended-A",
            "Canadian_Aboriginal_Ext_A");
+
+      --  Unicode 16
+      Add ("Egyptian Hieroglyphs Extended-A",
+           "Egypt_Hieroglyphs_Ext_A");
+      Add ("Symbols for Legacy Computing Supplement",
+           "Legacy_Computing_Supp");
+
+      --  Unicode 17
+      Add ("Tangut Components Supplement",
+           "Tangut_Components_Supp");
+      Add ("Miscellaneous Symbols Supplement",
+           "Misc_Symbols_Supplement");
    end Set_Exceptions;
 
 end Translators.Block;
